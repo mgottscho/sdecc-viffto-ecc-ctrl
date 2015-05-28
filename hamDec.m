@@ -42,17 +42,24 @@ function [xcorr, err] = hamDec(y)
        if mod(sum(s),2) == 1
           % odd number of errors ocurred
           err = 1;
+          notfound = 1;
           
            % find single bit error and correct it
-           for i=1:n           
+           for i=1:n          
               if sum(s == H(:,i)) == r
-                 bit = i; 
+                 bit = i;
+                 notfound = 0;
               end
            end
 
-           e = zeros(1,n);
-           e(bit) = 1;
-           xcorr = mod(xcorr + e,2);
+           if notfound == 1
+              err = 3;
+           else
+               e = zeros(1,n);
+               e(bit) = 1;
+               xcorr = mod(xcorr + e,2);       
+           end
+
        end
         
     end

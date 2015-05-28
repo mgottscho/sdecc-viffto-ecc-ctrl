@@ -51,7 +51,9 @@ for i=1:ln
                cwmod(k) = mod(cwmod(k)+1,2);
                
                [decCwmod, e] = hamDec(cwmod);
-               cwList(k,:) = decCwmod;
+               if 
+               
+               cwList(idx,:) = decCwmod;
            end           
         end
     end
