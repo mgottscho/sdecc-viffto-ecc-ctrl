@@ -1,21 +1,11 @@
-% Hamming SEC-DED Encoder:
-% out is the codeword
-function out = hamEnc(in)
- 
-    % set codeword length: 8/72
-    if length(in) == 4 
-        n=8;
-    elseif length(in) == 64
-        n=72;
-    else
-       out = -1; 
-       return;
-    end
-    
-    % get generator matrix
-    [G, H] = getHamCodes(n);
+% Hamming SEC-DED Encoder
+% We assume that the length of message is k bits represented as char. G must be k x n bits (represented as decimal numerics).
+% The output is the generated codeword represented as n-bit char array.
+%
+% Author: Clayton Schoeny and Mark Gottshco
+% Email: cschoeny@gmail.com, mgottscho@ucla.edu
 
-    % encode
-    out = mod(in*G,2);
-    
+function codeword = hamEnc(message,G)
+    codeword = mod(message*G,2);
+    codeword = dec2bin(codeword)';
 end
