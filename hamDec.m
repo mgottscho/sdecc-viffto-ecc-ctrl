@@ -30,8 +30,8 @@ function [decoded_message, num_error_bits] = hamDec(received_codeword, H)
         return;
     end
            
-    %% DECODING FOR HSIAO (72, 64) CODE:
-    if n == 72
+    %% DECODING FOR HSIAO (72, 64) or (39,32) CODES:
+    if n == 72 || n == 39
        %% CASE 1: Syndrome is even, so there are an even # of errors. Maximum likelihood decoding means we interpret as 2-bit error.
        if mod(sum(s),2) == 0
           num_error_bits = 2;
@@ -53,7 +53,8 @@ function [decoded_message, num_error_bits] = hamDec(received_codeword, H)
              num_error_bits = 3;
           else % Correct the error
              num_error_bits = 1;
-             error = repmat('0',num_error_patterns,n);
+             
+             error = repmat('0',1,n);
              error(bit) = '1';
              decoded_codeword = dec2bin(bitxor(bin2dec(received_codeword), bin2dec(error)), n);
              decoded_message = decoded_codeword(1:k);       

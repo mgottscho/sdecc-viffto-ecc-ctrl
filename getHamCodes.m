@@ -1,7 +1,7 @@
 function [G, H] = getHamCodes(n)
     
-    % so far we support [8,4] and [72, 64] codes:
-    if n ~= 8 && n ~= 72
+    % so far we support [8,4], [39,32], and [72, 64] codes:
+    if n ~= 8 && n~= 39 && n ~= 72
        G=0;
        H=0;
        return;
@@ -23,8 +23,56 @@ function [G, H] = getHamCodes(n)
          return;
     end
     
+    Gp39 = [
+        1 0 0 0 0 1 1
+        1 0 0 0 1 0 1
+        1 0 0 1 1 0 0
+        1 0 1 0 0 0 1
+        1 1 0 0 0 0 1
+        1 0 0 0 1 1 0
+        1 0 0 1 0 1 0
+        1 1 0 0 1 0 0
+        0 1 0 0 0 1 1
+        0 1 0 0 1 0 1
+        0 1 0 1 0 0 1
+        0 1 1 0 0 0 1
+        0 1 0 0 1 1 0
+        0 1 0 1 0 1 0
+        1 1 0 0 0 1 0
+        0 1 0 1 1 0 0
+        0 0 1 1 0 1 0
+        0 0 1 0 0 1 1
+        0 1 1 0 0 1 0
+        1 0 1 0 0 1 0
+        0 0 1 0 1 1 0
+        0 1 1 0 1 0 0
+        1 0 1 0 1 0 0
+        0 0 1 0 1 0 1
+        1 1 0 1 0 0 0
+        0 0 0 1 1 0 1
+        0 0 1 1 1 0 0
+        0 0 1 1 0 0 1
+        0 0 0 1 1 1 0
+        0 1 1 1 0 0 0
+        1 0 1 1 0 0 0
+        1 0 0 1 0 0 1
+%        1 0 0 0 0 0 0
+%        0 1 0 0 0 0 0
+%        0 0 1 0 0 0 0
+%        0 0 0 1 0 0 0
+%        0 0 0 0 1 0 0
+%        0 0 0 0 0 1 0
+%        0 0 0 0 0 0 1
+        ];
+   
+    if n == 39
+        G = [eye(32), Gp39];
+        H = [Gp39' eye(7)];
+    end    
+        
+    
     % just the parity bits, we'll derive the rest from this:
-     Gp = [
+     Gp72 = [
      1     1     0     1     0     0     0     0
      1     1     0     1     1     1     0     0
      1     1     1     0     1     1     0     0
@@ -93,7 +141,7 @@ function [G, H] = getHamCodes(n)
  
     % standard form generator and parity-check matrices
     if n == 72
-        G = [eye(64), Gp];
-        H = [Gp' eye(8)];
+        G = [eye(64), Gp72];
+        H = [Gp72' eye(8)];
     end
 end

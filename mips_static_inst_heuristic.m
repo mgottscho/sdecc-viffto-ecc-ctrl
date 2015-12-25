@@ -25,8 +25,8 @@ r = n-k;
 %% Read instructions as bit-strings from file
 fid = fopen(filename);
 trace_hex = textread(filename, '%8c');
-trace_bin = hex2dec(trace);
-trace_bin = dec2bin(trace,k);
+trace_bin = hex2dec(trace_hex);
+trace_bin = dec2bin(trace_bin,k);
 fclose(fid);
 
 %% Construct a matrix containing all possible 2-bit error patterns as bit-strings.
@@ -45,16 +45,19 @@ end
 [G,H] = getHamCodes(n);
 
 %% Iterate over all instructions in the trace, and do the fun parts.
-num_inst = size(trace,1);
+num_inst = size(trace_bin,1);
 %%%%%% FEEL FREE TO OVERRIDE %%%%%%
-num_inst = 100;
+num_inst = 1;
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-parfor i=1:num_inst % Parallelize loop across separate threads, since this could take a long time. Each instruction is a totally independent procedure to perform.
+
+results_candidate_messages = NaN(num_inst,num_error_patterns); % Init
+results_valid_messages = NaN(num_inst,num_error_patterns); % Init
+for i=1:num_inst % Parallelize loop across separate threads, since this could take a long time. Each instruction is a totally independent procedure to perform.
     %% Progress indicator
     % This will not show accurate progress if the loop is parallelized
     % across threads with parfor, since they can execute out-of-order
     if mod(i,100) == 0
-        display(['Inst # ' i ' out of ' num2str(num_inst)]);
+        display(['Inst # ' num2str(i) ' out of ' num2str(num_inst)]);
     end
     
     %% Get the "message," which is the original instruction, i.e., the ground truth.
@@ -66,11 +69,11 @@ parfor i=1:num_inst % Parallelize loop across separate threads, since this could
     % input values are valid.
     status = unix(['./mipsdecode-mac ' message_hex ' >/dev/null']);
     if status ~= 0
-       display(['Instruction #' i ' in the input was found to be ILLEGAL, with value ' message_hex]);
+       display(['Instruction #' num2str(i) ' in the input was found to be ILLEGAL, with value ' message_hex]);
     end
     
     %% Encode the message.
-    codeword = hamEnc(message,G);
+    codeword = hamEnc(message_bin,G);
     
     %% Iterate over all possible 2-bit error patterns.
     for j=1:num_error_patterns
@@ -78,51 +81,53 @@ parfor i=1:num_inst % Parallelize loop across separate threads, since this could
         error = error_patterns(j,:);
         received_codeword = dec2bin(bitxor(bin2dec(codeword), bin2dec(error)), n);
         
+        %% Attempt to decode the corrupted codeword, check that num_error_bits is 2
+        [decoded_message, num_error_bits] = hamDec(received_codeword, H);
         
+        % Sanity check
+        if num_error_bits ~= 2
+           display(['OOPS! Problem with error pattern #' num2str(j) ' on codeword #' num2str(i) '. Got ' num2str(num_error_bits) ' error bits in error.']);
+           continue;
+        end
+        
+        %% Flip 1 bit at a time on the received codeword, and attempt decoding on each. We should find several bit positions that decode successfully with just a single-bit error.
+        %candidate_correct_messages = repmat('0',1,k); % Init
+        x = 1;
+        for pos=1:n
+           %% Flip the bit
+           error = repmat('0',1,n);
+           error(pos) = '1';
+           candidate_codeword = dec2bin(bitxor(bin2dec(received_codeword), bin2dec(error)), n);
+           
+           %% Attempt to decode
+           [decoded_message, num_error_bits] = hamDec(candidate_codeword, H);
+           
+           if num_error_bits == 1           
+               % We now know that num_error_bits == 1 if we got this far. This
+               % is a candidate codeword.
+               candidate_correct_messages(x,:) = decoded_message;
+               x = x+1;
+           end
+        end
+        
+        %% Uniquify the candidate messages
+        candidate_correct_messages = unique(candidate_correct_messages,'rows');
+        
+        %% Now check each of the candidate codewords to see which are valid instructions :)
+        num_candidate_messages = size(candidate_correct_messages,1);
+        num_valid_messages = 0;
+        for x=1:num_candidate_messages
+            %% Convert message to hex string representation
+            message = candidate_correct_messages(x,:);
+            message_hex = dec2hex(bin2dec(message));
+            
+            %% Test the candidate message to see if it is a valid instruction
+            status = unix(['./mipsdecode-mac ' message_hex ' >/dev/null']);
+            if status == 0 % It is valid!
+               num_valid_messages = num_valid_messages+1;
+            end
+        end
+        results_candidate_messages(i,j) = num_candidate_messages;
+        results_valid_messages(i,j) = num_valid_messages;
     end
-    
 end
-
-%This vector will hold the sizes of all the equiprobably codewords for each
-%(2-error) combination.
-% ThreeD = zeros(72,72);
-% size_vec=zeros(nchoosek(n,2),1);
-% count=1;
-% for i=1:n-1
-%     for j=i+1:n
-%         % generate an error:
-%         err = zeros(1,n);
-%         err(i) = 1;
-%         err(j) = 1;
-% 
-%         % encode our codeword
-%         cw = hamEnc(mess);
-% 
-%         % receive an word (poss. in error)
-%         reccw = mod(cw+err,2);
-% 
-%         % decode our received codeword
-%         [decCw, e] = hamDec(reccw);
-% 
-%        
-% 
-%             % let's run the decoder through every codeword that flips a bit
-%             % from the received word.
-% 
-%         idx = 0;
-%         cwList=[];
-%         for k=1:n
-%            cwmod = reccw;
-%            cwmod(k) = mod(cwmod(k)+1,2);
-%            [decCwmod, e] = hamDec(cwmod);
-%             if (e==1)
-%                 idx=idx+1;
-%                 cwList(idx,:) = decCwmod;
-%             end
-%         end
-%         [equidistant,tmp] = size(unique(cwList,'rows'));
-%         size_vec(count)= equidistant;
-%         count=count+1;
-%         ThreeD(i,j)=equidistant;
-%     end
-% end

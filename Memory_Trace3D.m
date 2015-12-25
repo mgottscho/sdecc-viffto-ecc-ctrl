@@ -2,9 +2,11 @@ clear
 clc
 %% Generate ThreeD
 % Code parameters:
-n = 72;
-k = 64;
+n = 39;
+k = 32;
 r = n-k;
+
+[G,H] = getHamCodes(n);
 
 %All zeroes message
 mess = zeros(1,k);
@@ -22,13 +24,13 @@ for i=1:n-1
         err(j) = 1;
 
         % encode our codeword
-        cw = hamEnc(mess);
+        cw = hamEnc(mess,G);
 
         % receive an word (poss. in error)
         reccw = mod(cw+err,2);
 
         % decode our received codeword
-        [decCw, e] = hamDec(reccw);
+        [decCw, e] = hamDec(reccw,H);
 
        
 
@@ -40,7 +42,7 @@ for i=1:n-1
         for k=1:n
            cwmod = reccw;
            cwmod(k) = mod(cwmod(k)+1,2);
-           [decCwmod, e] = hamDec(cwmod);
+           [decCwmod, e] = hamDec(cwmod,H);
             if (e==1)
                 idx=idx+1;
                 cwList(idx,:) = decCwmod;
