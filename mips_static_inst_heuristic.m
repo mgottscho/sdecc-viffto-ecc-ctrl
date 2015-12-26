@@ -10,13 +10,13 @@
 % The script then uses the MIPS instruction decoder to determine which of
 % the X candidate messages are valid instructions.
 %
-% Author: Mark Gottscho
-% Email: mgottscho@ucla.edu
+% Authors: Mark Gottscho and Clayton Schoeny
+% Email: mgottscho@ucla.edu, cschoeny@gmail.com
 
 %% Set parameters for the script
 
 %%%%%% CHANGE THESE AS NEEDED %%%%%%%%
-filename = 'mips-bzip2-text-section-inst.txt';
+filename = 'mips-mcf-text-section-inst.txt';
 n = 39; % codeword width
 k = 32; % instruction width
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -47,12 +47,12 @@ end
 %% Iterate over all instructions in the trace, and do the fun parts.
 num_inst = size(trace_bin,1);
 %%%%%% FEEL FREE TO OVERRIDE %%%%%%
-num_inst = 1;
+num_inst = 100;
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 results_candidate_messages = NaN(num_inst,num_error_patterns); % Init
 results_valid_messages = NaN(num_inst,num_error_patterns); % Init
-for i=1:num_inst % Parallelize loop across separate threads, since this could take a long time. Each instruction is a totally independent procedure to perform.
+parfor i=1:num_inst % Parallelize loop across separate threads, since this could take a long time. Each instruction is a totally independent procedure to perform.
     %% Progress indicator
     % This will not show accurate progress if the loop is parallelized
     % across threads with parfor, since they can execute out-of-order
@@ -93,6 +93,7 @@ for i=1:num_inst % Parallelize loop across separate threads, since this could ta
         %% Flip 1 bit at a time on the received codeword, and attempt decoding on each. We should find several bit positions that decode successfully with just a single-bit error.
         %candidate_correct_messages = repmat('0',1,k); % Init
         x = 1;
+        candidate_correct_messages = repmat('0',n,k); % Pre-allocate for worst-case capacity
         for pos=1:n
            %% Flip the bit
            error = repmat('0',1,n);
