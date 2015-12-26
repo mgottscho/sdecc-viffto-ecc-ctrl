@@ -16,7 +16,7 @@
 %% Set parameters for the script
 
 %%%%%% CHANGE THESE AS NEEDED %%%%%%%%
-filename = 'mips-mcf-text-section-inst.txt';
+filename = 'mips-mcf-disassembly-text-section-inst.txt';
 n = 39; % codeword width
 k = 32; % instruction width
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -24,10 +24,15 @@ r = n-k;
 
 %% Read instructions as bit-strings from file
 fid = fopen(filename);
-trace_hex = textread(filename, '%8c');
+file_contents = textscan(fid, '%s', 'Delimiter', ':');
+fclose(fid);
+file_contents = file_contents{1};
+file_contents = reshape(file_contents, 3, size(file_contents,1)/3)';
+%trace_hex = textread(filename, '%8c');
+trace_hex = char(file_contents(:,2));
 trace_bin = hex2dec(trace_hex);
 trace_bin = dec2bin(trace_bin,k);
-fclose(fid);
+trace_inst_disassembly = char(file_contents(:,3));
 
 %% Construct a matrix containing all possible 2-bit error patterns as bit-strings.
 num_error_patterns = nchoosek(n,2);
@@ -44,14 +49,45 @@ end
 %% Get our ECC encoder and decoder matrices
 [G,H] = getHamCodes(n);
 
-%% Iterate over all instructions in the trace, and do the fun parts.
 num_inst = size(trace_bin,1);
+
+%% Obtain overall static distribution of instructions in the program
+instruction_opcode_hotness = containers.Map(); % Init
+for i=1:num_inst
+    message_disassembly = trace_inst_disassembly(i,:);
+    opcode = strtok(message_disassembly);
+    if ~instruction_opcode_hotness.isKey(opcode)
+        instruction_opcode_hotness(opcode) = 1;
+    else
+        instruction_opcode_hotness(opcode) = instruction_opcode_hotness(opcode)+1;
+    end
+end
+
+unique_inst = instruction_opcode_hotness.keys()';
+unique_inst_counts = zeros(size(unique_inst,1),1);
+for i=1:size(unique_inst,1)
+   unique_inst_counts(i) = instruction_opcode_hotness(unique_inst{i}); 
+   results_instruction_opcode_hotness{i,1} = unique_inst{i};
+   results_instruction_opcode_hotness{i,2} = unique_inst_counts(i);
+end
+
+% Normalize
+for i=1:size(unique_inst,1)
+    results_instruction_opcode_hotness{i,2} = results_instruction_opcode_hotness{i,2} ./ num_inst;
+end
+results_instruction_opcode_hotness = sortrows(results_instruction_opcode_hotness, 2);
+
+%% Iterate over all instructions in the trace, and do the fun parts.
+
 %%%%%% FEEL FREE TO OVERRIDE %%%%%%
-num_inst = 100;
+if num_inst > 1000
+    num_inst = 1000;
+end
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 results_candidate_messages = NaN(num_inst,num_error_patterns); % Init
 results_valid_messages = NaN(num_inst,num_error_patterns); % Init
+
 parfor i=1:num_inst % Parallelize loop across separate threads, since this could take a long time. Each instruction is a totally independent procedure to perform.
     %% Progress indicator
     % This will not show accurate progress if the loop is parallelized
@@ -63,6 +99,7 @@ parfor i=1:num_inst % Parallelize loop across separate threads, since this could
     %% Get the "message," which is the original instruction, i.e., the ground truth.
     message_hex = trace_hex(i,:);
     message_bin = trace_bin(i,:);
+    message_disassembly = trace_inst_disassembly(i,:);
     
     %% Check that the message is actually a valid instruction to begin with.
     % Comment this out to save time if you are absolutely sure that all
