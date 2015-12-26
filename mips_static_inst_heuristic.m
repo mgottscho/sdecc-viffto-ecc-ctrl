@@ -16,7 +16,7 @@
 %% Set parameters for the script
 
 %%%%%% CHANGE THESE AS NEEDED %%%%%%%%
-filename = 'mips-mcf-text-section-inst.txt';
+filename = 'mips-povray-text-section-inst.txt';
 n = 39; % codeword width
 k = 32; % instruction width
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -47,7 +47,7 @@ end
 %% Iterate over all instructions in the trace, and do the fun parts.
 num_inst = size(trace_bin,1);
 %%%%%% FEEL FREE TO OVERRIDE %%%%%%
-num_inst = 100;
+%num_inst = 100;
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 results_candidate_messages = NaN(num_inst,num_error_patterns); % Init
@@ -67,7 +67,8 @@ parfor i=1:num_inst % Parallelize loop across separate threads, since this could
     %% Check that the message is actually a valid instruction to begin with.
     % Comment this out to save time if you are absolutely sure that all
     % input values are valid.
-    status = unix(['./mipsdecode-mac ' message_hex ' >/dev/null']);
+    status = dos(['mipsdecode ' message_hex ' >nul']);
+    %status = unix(['./mipsdecode-mac ' message_hex ' > /dev/null']);
     if status ~= 0
        display(['Instruction #' num2str(i) ' in the input was found to be ILLEGAL, with value ' message_hex]);
     end
@@ -123,7 +124,8 @@ parfor i=1:num_inst % Parallelize loop across separate threads, since this could
             message_hex = dec2hex(bin2dec(message));
             
             %% Test the candidate message to see if it is a valid instruction
-            status = unix(['./mipsdecode-mac ' message_hex ' >/dev/null']);
+            %status = unix(['./mipsdecode-mac ' message_hex ' >/dev/null']);
+            status = dos(['mipsdecode ' message_hex ' >nul']);
             if status == 0 % It is valid!
                num_valid_messages = num_valid_messages+1;
             end
