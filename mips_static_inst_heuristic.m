@@ -16,7 +16,7 @@
 %% Set parameters for the script
 
 %%%%%% CHANGE THESE AS NEEDED %%%%%%%%
-filename = 'mips-mcf-disassembly-text-section-inst.txt';
+filename = 'mips-bzip2-disassembly-text-section-inst.txt';
 n = 39; % codeword width
 k = 32; % instruction width
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -81,14 +81,15 @@ results_instruction_opcode_hotness = sortrows(results_instruction_opcode_hotness
 
 %%%%%% FEEL FREE TO OVERRIDE %%%%%%
 if num_inst > 1000
-    num_inst = 1000;
+    num_inst = 2;
 end
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 results_candidate_messages = NaN(num_inst,num_error_patterns); % Init
 results_valid_messages = NaN(num_inst,num_error_patterns); % Init
+achieved_correct_decoding = NaN(num_inst, num_error_patterns); % Init
 
-parfor i=1:num_inst % Parallelize loop across separate threads, since this could take a long time. Each instruction is a totally independent procedure to perform.
+for i=1:num_inst % Parallelize loop across separate threads, since this could take a long time. Each instruction is a totally independent procedure to perform.
     %% Progress indicator
     % This will not show accurate progress if the loop is parallelized
     % across threads with parfor, since they can execute out-of-order
@@ -104,8 +105,8 @@ parfor i=1:num_inst % Parallelize loop across separate threads, since this could
     %% Check that the message is actually a valid instruction to begin with.
     % Comment this out to save time if you are absolutely sure that all
     % input values are valid.
-    status = dos(['mipsdecode ' message_hex ' >nul']);
-    %status = unix(['./mipsdecode-mac ' message_hex ' > /dev/null']);
+    %status = dos(['mipsdecode ' message_hex ' >nul']);
+    status = unix(['./mipsdecode-mac ' message_hex ' > /dev/null']);
     if status ~= 0
        display(['Instruction #' num2str(i) ' in the input was found to be ILLEGAL, with value ' message_hex]);
     end
@@ -155,19 +156,76 @@ parfor i=1:num_inst % Parallelize loop across separate threads, since this could
         %% Now check each of the candidate codewords to see which are valid instructions :)
         num_candidate_messages = size(candidate_correct_messages,1);
         num_valid_messages = 0;
+        candidate_valid_messages = repmat('0',1,k); % Init
         for x=1:num_candidate_messages
             %% Convert message to hex string representation
             message = candidate_correct_messages(x,:);
             message_hex = dec2hex(bin2dec(message));
             
             %% Test the candidate message to see if it is a valid instruction
-            %status = unix(['./mipsdecode-mac ' message_hex ' >/dev/null']);
-            status = dos(['mipsdecode ' message_hex ' >nul']);
+            status = unix(['./mipsdecode-mac ' message_hex ' >/dev/null']);
+            %status = dos(['mipsdecode ' message_hex ' >nul']);
             if status == 0 % It is valid!
                num_valid_messages = num_valid_messages+1;
+               candidate_valid_messages(num_valid_messages,:) = message;
             end
         end
+        
+        %% Store results of the number of candidate and valid messages for this instruction/error pattern pair
         results_candidate_messages(i,j) = num_candidate_messages;
         results_valid_messages(i,j) = num_valid_messages;
+               
+        %% Disassemble all valid candidate messages and pick the final decode target as the most frequently occurring operation in the program binary
+        valid_messages_disassembly = cell(num_valid_messages,1);
+        for x=1:num_valid_messages
+            message = candidate_valid_messages(x,:);
+            message_hex = dec2hex(bin2dec(message));
+            
+            %% Extract disassembly of the message hex
+            status = unix(['./mipsdecode-mac ' message_hex ' >tmp_disassembly.txt']);
+            %status = dos(['mipsdecode ' message_hex ' >tmp_disassembly.txt']); 
+            
+            % Sanity check
+            if status == 1
+               display('OOPS! This should not have happened!');
+               valid_messages_disassembly{x,1} = 'ERROR';
+               continue;
+            end
+                
+            % Read disassembly of instruction from file
+            tmpfid = fopen('tmp_disassembly.txt');
+            tmp_file_contents = textscan(tmpfid, '%s', 'Delimiter', ':');
+            fclose(tmpfid);
+            tmp_file_contents = tmp_file_contents{1};
+            tmp_file_contents = reshape(tmp_file_contents, 2, size(tmp_file_contents,1)/2)';
+            
+            % Store disassembly in the list
+            valid_messages_disassembly{x,1} = tmp_file_contents{3,2};
+        end
+     
+        %% Now pick the most likely disassembly
+        target_inst_index = -1;
+        highest_rel_freq = 0;
+        for x=1:num_valid_messages
+            instruction = valid_messages_disassembly{x,1};
+            
+            if instruction_opcode_hotness.isKey(instruction)
+                rel_freq = instruction_opcode_hotness(instruction);
+            else
+                rel_freq = 0;
+            end
+            
+            if rel_freq > highest_rel_freq
+               highest_rel_freq = rel_freq;
+               target_inst_index = x;
+            end
+        end
+
+        %% Compute whether we got the correct answer or not for this instruction/error pattern pairing
+        if strcmp(candidate_valid_messages(target_inst_index,:), message_bin) == 1 % Successfully corrected error!
+            achieved_correct_decoding(i,j) = 1;
+        else % Failed to correct error
+            achieved_correct_decoding(i,j) = 0;
+        end
     end
 end
