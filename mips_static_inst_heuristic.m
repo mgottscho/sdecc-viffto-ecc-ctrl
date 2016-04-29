@@ -80,8 +80,8 @@ results_instruction_opcode_hotness = sortrows(results_instruction_opcode_hotness
 %% Iterate over all instructions in the trace, and do the fun parts.
 
 %%%%%% FEEL FREE TO OVERRIDE %%%%%%
-if num_inst > 1000
-    num_inst = 1000;
+if num_inst > 100
+    num_inst = 100;
 end
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -105,8 +105,8 @@ parfor i=1:num_inst % Parallelize loop across separate threads, since this could
     %% Check that the message is actually a valid instruction to begin with.
     % Comment this out to save time if you are absolutely sure that all
     % input values are valid.
-    status = dos(['mipsdecode ' message_hex ' >nul']);
-    %status = unix(['./mipsdecode-mac ' message_hex ' > /dev/null']);
+    %status = dos(['mipsdecode ' message_hex ' >nul']);
+    status = unix(['./mipsdecode-mac ' message_hex ' > /dev/null']);
     if status ~= 0
        display(['Instruction #' num2str(i) ' in the input was found to be ILLEGAL, with value ' message_hex]);
     end
@@ -166,8 +166,8 @@ parfor i=1:num_inst % Parallelize loop across separate threads, since this could
             message_hex = dec2hex(bin2dec(message));
             
             %% Test the candidate message to see if it is a valid instruction and extract disassembly of the message hex
-            %status = unix(['./mipsdecode-mac ' message_hex ' >tmp_disassembly_' num2str(i) '.txt']);
-            status = dos(['mipsdecode ' message_hex ' >tmp_disassembly_' num2str(i) '.txt']);
+            status = unix(['./mipsdecode-mac ' message_hex ' >tmp_disassembly_' num2str(i) '.txt']);
+            %status = dos(['mipsdecode ' message_hex ' >tmp_disassembly_' num2str(i) '.txt']);
             if status == 0 % It is valid!
                num_valid_messages = num_valid_messages+1;
                candidate_valid_messages(num_valid_messages,:) = message;
