@@ -80,8 +80,8 @@ results_instruction_opcode_hotness = sortrows(results_instruction_opcode_hotness
 %% Iterate over all instructions in the trace, and do the fun parts.
 
 %%%%%% FEEL FREE TO OVERRIDE %%%%%%
-if num_inst > 1
-    num_inst = 1;
+if num_inst > 100
+    num_inst = 100;
 end
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -89,7 +89,7 @@ results_candidate_messages = NaN(num_inst,num_error_patterns); % Init
 results_valid_messages = NaN(num_inst,num_error_patterns); % Init
 achieved_correct_decoding = NaN(num_inst, num_error_patterns); % Init
 
-for i=1:num_inst % Parallelize loop across separate threads, since this could take a long time. Each instruction is a totally independent procedure to perform.
+parfor i=1:num_inst % Parallelize loop across separate threads, since this could take a long time. Each instruction is a totally independent procedure to perform.
     %% Progress indicator
     % This will not show accurate progress if the loop is parallelized
     % across threads with parfor, since they can execute out-of-order
