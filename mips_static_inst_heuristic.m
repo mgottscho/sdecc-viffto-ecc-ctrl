@@ -80,8 +80,8 @@ results_instruction_opcode_hotness = sortrows(results_instruction_opcode_hotness
 %% Iterate over all instructions in the trace, and do the fun parts.
 
 %%%%%% FEEL FREE TO OVERRIDE %%%%%%
-if num_inst > 100
-    num_inst = 100;
+if num_inst > 1
+    num_inst = 1;
 end
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -93,9 +93,7 @@ for i=1:num_inst % Parallelize loop across separate threads, since this could ta
     %% Progress indicator
     % This will not show accurate progress if the loop is parallelized
     % across threads with parfor, since they can execute out-of-order
-    %if mod(i,100) == 0
-        display(['Inst # ' num2str(i)]);
-    %end
+    display(['Inst # ' num2str(i)]);
     
     %% Get the "message," which is the original instruction, i.e., the ground truth.
     message_hex = trace_hex(i,:);
@@ -105,8 +103,15 @@ for i=1:num_inst % Parallelize loop across separate threads, since this could ta
     %% Check that the message is actually a valid instruction to begin with.
     % Comment this out to save time if you are absolutely sure that all
     % input values are valid.
-    %status = dos(['mipsdecode ' message_hex ' >nul']);
-    status = unix(['./mipsdecode-mac ' message_hex ' > /dev/null']);
+    if strcmp(computer(), 'PCWIN64') == 1 % Windows version of the mipsdecode program
+        status = dos(['mipsdecode ' message_hex ' >nul']);
+    elseif strcmp(computer(), 'MACI64') == 1 % Mac version of the mipsdecode program
+        status = unix(['./mipsdecode-mac ' message_hex ' > /dev/null']); % Mac version of the mipsdecode program
+    else % Error
+        display('Non-supported operating system detected!');
+        exit(1); % Would prefer to use return, but cannot inside parfor loop.
+    end
+    
     if status ~= 0
        display(['Instruction #' num2str(i) ' in the input was found to be ILLEGAL, with value ' message_hex]);
     end
@@ -130,9 +135,8 @@ for i=1:num_inst % Parallelize loop across separate threads, since this could ta
         end
         
         %% Flip 1 bit at a time on the received codeword, and attempt decoding on each. We should find several bit positions that decode successfully with just a single-bit error.
-        %candidate_correct_messages = repmat('0',1,k); % Init
         x = 1;
-        %candidate_correct_messages = repmat('0',n,k); % Pre-allocate for worst-case capacity
+        candidate_correct_messages = repmat('X',n,k); % Pre-allocate for worst-case capacity. X is placeholder
         for pos=1:n
            %% Flip the bit
            error = repmat('0',1,n);
@@ -151,6 +155,7 @@ for i=1:num_inst % Parallelize loop across separate threads, since this could ta
         end
         
         %% Uniquify the candidate messages
+        candidate_correct_messages = candidate_correct_messages(1:x-1, :);
         candidate_correct_messages = unique(candidate_correct_messages,'rows');
         
         %% Now check each of the candidate codewords to see which are valid instructions :)
@@ -166,8 +171,15 @@ for i=1:num_inst % Parallelize loop across separate threads, since this could ta
             message_hex = dec2hex(bin2dec(message));
             
             %% Test the candidate message to see if it is a valid instruction and extract disassembly of the message hex
-            status = unix(['./mipsdecode-mac ' message_hex ' >tmp_disassembly_' num2str(i) '.txt']);
-            %status = dos(['mipsdecode ' message_hex ' >tmp_disassembly_' num2str(i) '.txt']);
+            if strcmp(computer(), 'PCWIN64') == 1 % Windows version of the mipsdecode program
+                status = dos(['mipsdecode ' message_hex ' >tmp_disassembly_' num2str(i) '.txt']);
+            elseif strcmp(computer(), 'MACI64') == 1 % Mac version of the mipsdecode program
+                status = unix(['./mipsdecode-mac ' message_hex ' >tmp_disassembly_' num2str(i) '.txt']); % Mac version of the mipsdecode program
+            else % Error
+                display('Non-supported operating system detected!');
+                exit(1); % Would prefer to use return, but cannot inside parfor loop.
+            end
+            
             if status == 0 % It is valid!
                num_valid_messages = num_valid_messages+1;
                candidate_valid_messages(num_valid_messages,:) = message;
