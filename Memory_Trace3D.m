@@ -19,15 +19,16 @@ count=1;
 for i=1:n-1
     for j=i+1:n
         % generate an error:
-        err = zeros(1,n);
-        err(i) = 1;
-        err(j) = 1;
+        err = repmat('0',1,n);
+        err(i) = '1';
+        err(j) = '1';
 
         % encode our codeword
         cw = hamEnc(mess,G);
 
         % receive an word (poss. in error)
-        reccw = mod(cw+err,2);
+        reccw = dec2bin(bitxor(bin2dec(cw), bin2dec(err)), n);
+        %reccw = mod(cw+err,2);
 
         % decode our received codeword
         [decCw, e] = hamDec(reccw,H);
@@ -41,7 +42,8 @@ for i=1:n-1
         cwList=[];
         for k=1:n
            cwmod = reccw;
-           cwmod(k) = mod(cwmod(k)+1,2);
+           %cwmod(k) = mod(cwmod(k)+1,2);
+           cwmod(k) = dec2bin(bitxor(bin2dec(cwmod(k)), bin2dec('1')), 1);
            [decCwmod, e] = hamDec(cwmod,H);
             if (e==1)
                 idx=idx+1;
