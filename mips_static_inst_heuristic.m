@@ -89,13 +89,13 @@ results_candidate_messages = NaN(num_inst,num_error_patterns); % Init
 results_valid_messages = NaN(num_inst,num_error_patterns); % Init
 achieved_correct_decoding = NaN(num_inst, num_error_patterns); % Init
 
-parfor i=1:num_inst % Parallelize loop across separate threads, since this could take a long time. Each instruction is a totally independent procedure to perform.
+for i=1:num_inst % Parallelize loop across separate threads, since this could take a long time. Each instruction is a totally independent procedure to perform.
     %% Progress indicator
     % This will not show accurate progress if the loop is parallelized
     % across threads with parfor, since they can execute out-of-order
-    if mod(i,100) == 0
-        display(['Inst # ' num2str(i) ' out of ' num2str(num_inst)]);
-    end
+    %if mod(i,100) == 0
+        display(['Inst # ' num2str(i)]);
+    %end
     
     %% Get the "message," which is the original instruction, i.e., the ground truth.
     message_hex = trace_hex(i,:);
@@ -132,7 +132,7 @@ parfor i=1:num_inst % Parallelize loop across separate threads, since this could
         %% Flip 1 bit at a time on the received codeword, and attempt decoding on each. We should find several bit positions that decode successfully with just a single-bit error.
         %candidate_correct_messages = repmat('0',1,k); % Init
         x = 1;
-        candidate_correct_messages = repmat('0',n,k); % Pre-allocate for worst-case capacity
+        %candidate_correct_messages = repmat('0',n,k); % Pre-allocate for worst-case capacity
         for pos=1:n
            %% Flip the bit
            error = repmat('0',1,n);
