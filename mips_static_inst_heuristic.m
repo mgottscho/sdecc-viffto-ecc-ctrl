@@ -89,7 +89,7 @@ results_candidate_messages = NaN(num_inst,num_error_patterns); % Init
 results_valid_messages = NaN(num_inst,num_error_patterns); % Init
 achieved_correct_decoding = NaN(num_inst, num_error_patterns); % Init
 
-parfor i=1:num_inst % Parallelize loop across separate threads, since this could take a long time. Each instruction is a totally independent procedure to perform.
+for i=1:num_inst % Parallelize loop across separate threads, since this could take a long time. Each instruction is a totally independent procedure to perform.
     %% Progress indicator
     % This will not show accurate progress if the loop is parallelized
     % across threads with parfor, since they can execute out-of-order
@@ -109,7 +109,7 @@ parfor i=1:num_inst % Parallelize loop across separate threads, since this could
         status = unix(['./mipsdecode-mac ' message_hex ' > /dev/null']); % Mac version of the mipsdecode program
     else % Error
         display('Non-supported operating system detected!');
-        exit(1); % Would prefer to use return, but cannot inside parfor loop.
+        status = 1;
     end
     
     if status ~= 0
@@ -155,8 +155,13 @@ parfor i=1:num_inst % Parallelize loop across separate threads, since this could
         end
         
         %% Uniquify the candidate messages
-        candidate_correct_messages = candidate_correct_messages(1:x-1, :);
-        candidate_correct_messages = unique(candidate_correct_messages,'rows');
+        if x > 1
+            candidate_correct_messages = candidate_correct_messages(1:x-1, :);
+            candidate_correct_messages = unique(candidate_correct_messages,'rows');
+        else
+            display(['Something went wrong! x = ' num2str(x)]);
+        end
+        
         
         %% Now check each of the candidate codewords to see which are valid instructions :)
         num_candidate_messages = size(candidate_correct_messages,1);
@@ -177,7 +182,7 @@ parfor i=1:num_inst % Parallelize loop across separate threads, since this could
                 status = unix(['./mipsdecode-mac ' message_hex ' >tmp_disassembly_' num2str(i) '.txt']); % Mac version of the mipsdecode program
             else % Error
                 display('Non-supported operating system detected!');
-                exit(1); % Would prefer to use return, but cannot inside parfor loop.
+                status = 1;
             end
             
             if status == 0 % It is valid!
@@ -209,6 +214,10 @@ parfor i=1:num_inst % Parallelize loop across separate threads, since this could
                   target_inst_index = num_valid_messages;
                end
             end
+        end
+        
+        if target_inst_index < 1 % Sanity check
+            display(['Error! target_inst_index = ' num2str(target_inst_index)]);
         end
         
         %% Store results of the number of candidate and valid messages for this instruction/error pattern pair
