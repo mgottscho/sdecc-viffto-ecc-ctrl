@@ -16,7 +16,7 @@
 %% Set parameters for the script
 
 %%%%%% CHANGE THESE AS NEEDED %%%%%%%%
-filename = 'mips-bzip2-disassembly-text-section-inst.txt';
+filename = 'mips-povray-disassembly-text-section-inst.txt';
 n = 39; % codeword width
 k = 32; % instruction width
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -89,7 +89,7 @@ results_candidate_messages = NaN(num_inst,num_error_patterns); % Init
 results_valid_messages = NaN(num_inst,num_error_patterns); % Init
 achieved_correct_decoding = NaN(num_inst, num_error_patterns); % Init
 
-for i=1:num_inst % Parallelize loop across separate threads, since this could take a long time. Each instruction is a totally independent procedure to perform.
+parfor i=1:num_inst % Parallelize loop across separate threads, since this could take a long time. Each instruction is a totally independent procedure to perform.
     %% Progress indicator
     % This will not show accurate progress if the loop is parallelized
     % across threads with parfor, since they can execute out-of-order
@@ -209,7 +209,7 @@ for i=1:num_inst % Parallelize loop across separate threads, since this could ta
                    rel_freq = 0;
                end
 
-               if rel_freq > highest_rel_freq
+               if rel_freq >= highest_rel_freq
                   highest_rel_freq = rel_freq;
                   target_inst_index = num_valid_messages;
                end
