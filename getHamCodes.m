@@ -1,6 +1,6 @@
 function [G, H] = getHamCodes(n)
     
-    % so far we support [8,4], [39,32], and [72, 64] codes:
+    % so far we support [8,4], [39,32], and [72, 64] SECDED Hsiao codes:
     if n ~= 8 && n~= 39 && n ~= 72
        G=0;
        H=0;
