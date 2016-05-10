@@ -27,6 +27,10 @@ output_filename = [architecture '-' benchmark '-inst-heuristic-recovery.mat']
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 r = n-k;
 
+%% Set up parallel computing
+pctconfig('preservejobs', true);
+matlabpool open local 16;
+
 %% Read instructions as bit-strings from file
 display('Reading inputs...');
 fid = fopen(input_filename);
@@ -247,6 +251,9 @@ parfor i=1:num_inst % Parallelize loop across separate threads, since this could
         end
     end
 end
+
+%% Shut down parallel computing pool
+matlabpool close;
 
 %% Save all variables
 display('Saving outputs...');
