@@ -91,7 +91,7 @@ results_instruction_opcode_hotness = sortrows(results_instruction_opcode_hotness
 
 %%%%%% FEEL FREE TO OVERRIDE %%%%%%
 if num_inst > 100
-    num_inst = 1000;
+    num_inst = 100;
 end
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 display(['Number of instructions to test SWD-ECC: ' num2str(num_inst)]);
