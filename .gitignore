@@ -7,3 +7,5 @@ mips_static_inst_heuristic.cmd
 mips_static_inst_heuristic
 run_mips_static_inst_heuristic.sh
 *.output*
+*.cmd
+*.sh

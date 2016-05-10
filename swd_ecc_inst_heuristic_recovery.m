@@ -13,13 +13,10 @@
 % Authors: Mark Gottscho and Clayton Schoeny
 % Email: mgottscho@ucla.edu, cschoeny@gmail.com
 
-function swd_ecc_inst_heuristic_recovery(architecture,benchmark,n_str,k_str)
+function swd_ecc_inst_heuristic_recovery(architecture, benchmark, n, k)
 
-%% Echo input arguments
-architecture
-benchmark
-n = str2num(n_str)
-k = str2num(k_str)
+n = str2num(n)
+k = str2num(k)
 
 %%%%%% CHANGE THESE AS NEEDED %%%%%%%%
 input_filename = [architecture '-' benchmark '-disassembly-text-section-inst.txt']
@@ -28,8 +25,8 @@ output_filename = [architecture '-' benchmark '-inst-heuristic-recovery.mat']
 r = n-k;
 
 %% Set up parallel computing
-pctconfig('preservejobs', true);
-matlabpool open local 16;
+%pctconfig('preservejobs', true);
+mypool = parpool(16);
 
 %% Read instructions as bit-strings from file
 display('Reading inputs...');
@@ -252,10 +249,10 @@ parfor i=1:num_inst % Parallelize loop across separate threads, since this could
     end
 end
 
-%% Shut down parallel computing pool
-matlabpool close;
-
 %% Save all variables
 display('Saving outputs...');
 save(output_filename, '-v7.3');
 display('Done!');
+
+%% Shut down parallel computing pool
+close(mypool);
