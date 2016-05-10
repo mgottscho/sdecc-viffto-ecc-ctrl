@@ -13,28 +13,35 @@
 % Authors: Mark Gottscho and Clayton Schoeny
 % Email: mgottscho@ucla.edu, cschoeny@gmail.com
 
-%% Set parameters for the script
+function swd_ecc_inst_heuristic_recovery(architecture,benchmark,n_str,k_str)
+
+%% Echo input arguments
+architecture
+benchmark
+n = str2num(n_str)
+k = str2num(k_str)
 
 %%%%%% CHANGE THESE AS NEEDED %%%%%%%%
-filename = 'mips-povray-disassembly-text-section-inst.txt';
-n = 39; % codeword width
-k = 32; % instruction width
+input_filename = [architecture '-' benchmark '-disassembly-text-section-inst.txt']
+output_filename = [architecture '-' benchmark '-inst-heuristic-recovery.mat']
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 r = n-k;
 
 %% Read instructions as bit-strings from file
-fid = fopen(filename);
+display('Reading inputs...');
+fid = fopen(input_filename);
 file_contents = textscan(fid, '%s', 'Delimiter', ':');
 fclose(fid);
 file_contents = file_contents{1};
 file_contents = reshape(file_contents, 3, size(file_contents,1)/3)';
-%trace_hex = textread(filename, '%8c');
+%trace_hex = textread(input_filename, '%8c');
 trace_hex = char(file_contents(:,2));
 trace_bin = hex2dec(trace_hex);
 trace_bin = dec2bin(trace_bin,k);
 trace_inst_disassembly = char(file_contents(:,3));
 
 %% Construct a matrix containing all possible 2-bit error patterns as bit-strings.
+display('Constructing error-pattern matrix...');
 num_error_patterns = nchoosek(n,2);
 error_patterns = repmat('0',num_error_patterns,n);
 num_error = 1;
@@ -47,11 +54,13 @@ for i=1:n-1
 end
 
 %% Get our ECC encoder and decoder matrices
+display('Getting ECC encoder and decoder matrices...');
 [G,H] = getHamCodes(n);
 
 num_inst = size(trace_bin,1);
 
 %% Obtain overall static distribution of instructions in the program
+display('Computing static instruction distribution...');
 instruction_opcode_hotness = containers.Map(); % Init
 for i=1:num_inst
     message_disassembly = trace_inst_disassembly(i,:);
@@ -81,9 +90,11 @@ results_instruction_opcode_hotness = sortrows(results_instruction_opcode_hotness
 
 %%%%%% FEEL FREE TO OVERRIDE %%%%%%
 if num_inst > 100
-    num_inst = 100;
+    num_inst = 1000;
 end
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+display(['Number of instructions to test SWD-ECC: ' num2str(num_inst)]);
+display('Evaluating filter-and-rank SWD-ECC...');
 
 results_candidate_messages = NaN(num_inst,num_error_patterns); % Init
 results_valid_messages = NaN(num_inst,num_error_patterns); % Init
@@ -103,10 +114,12 @@ parfor i=1:num_inst % Parallelize loop across separate threads, since this could
     %% Check that the message is actually a valid instruction to begin with.
     % Comment this out to save time if you are absolutely sure that all
     % input values are valid.
-    if strcmp(computer(), 'PCWIN64') == 1 % Windows version of the mipsdecode program
-        status = dos(['mipsdecode ' message_hex ' >nul']);
-    elseif strcmp(computer(), 'MACI64') == 1 % Mac version of the mipsdecode program
-        status = unix(['./mipsdecode-mac ' message_hex ' > /dev/null']); % Mac version of the mipsdecode program
+    if strcmp(computer(), 'PCWIN64') == 1 % Windows version of the decode program
+        status = dos([architecture 'decode ' message_hex ' >nul']);
+    elseif strcmp(computer(), 'MACI64') == 1 % Mac version of the decode program
+        status = unix(['./' architecture 'decode-mac ' message_hex ' > /dev/null']); % Mac version of the decode program
+    elseif strcmp(computer(), 'GLNXA64') == 1 % Linux version of the decode program
+        status = unix(['./' architecture 'decode-linux ' message_hex ' > /dev/null']); % Linux version of the decode program
     else % Error
         display('Non-supported operating system detected!');
         status = 1;
@@ -176,10 +189,12 @@ parfor i=1:num_inst % Parallelize loop across separate threads, since this could
             message_hex = dec2hex(bin2dec(message));
             
             %% Test the candidate message to see if it is a valid instruction and extract disassembly of the message hex
-            if strcmp(computer(), 'PCWIN64') == 1 % Windows version of the mipsdecode program
-                status = dos(['mipsdecode ' message_hex ' >tmp_disassembly_' num2str(i) '.txt']);
-            elseif strcmp(computer(), 'MACI64') == 1 % Mac version of the mipsdecode program
-                status = unix(['./mipsdecode-mac ' message_hex ' >tmp_disassembly_' num2str(i) '.txt']); % Mac version of the mipsdecode program
+            if strcmp(computer(), 'PCWIN64') == 1 % Windows version of the decode program
+                status = dos([architecture 'decode ' message_hex ' >tmp_disassembly_' num2str(i) '.txt']);
+            elseif strcmp(computer(), 'MACI64') == 1 % Mac version of the decode program
+                status = unix(['./' architecture 'decode-mac ' message_hex ' >tmp_disassembly_' num2str(i) '.txt']); % Mac version of the decode program
+            elseif strcmp(computer(), 'GLNXA64') == 1 % Linux version of the decode program
+                status = unix(['./' architecture 'decode-linux ' message_hex ' >tmp_disassembly_' num2str(i) '.txt']); % Linux version of the decode program
             else % Error
                 display('Non-supported operating system detected!');
                 status = 1;
@@ -232,3 +247,8 @@ parfor i=1:num_inst % Parallelize loop across separate threads, since this could
         end
     end
 end
+
+%% Save all variables
+display('Saving outputs...');
+save(output_filename, '-v7.3');
+display('Done!');
