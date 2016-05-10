@@ -255,4 +255,4 @@ save(output_filename, '-v7.3');
 display('Done!');
 
 %% Shut down parallel computing pool
-close(mypool);
+delete(mypool);
