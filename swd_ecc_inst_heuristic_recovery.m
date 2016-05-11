@@ -251,7 +251,7 @@ end
 
 %% Save all variables
 display('Saving outputs...');
-save(output_filename, '-v7.3');
+save(output_filename);
 display('Done!');
 
 %% Shut down parallel computing pool
