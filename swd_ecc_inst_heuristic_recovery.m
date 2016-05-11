@@ -191,11 +191,11 @@ parfor i=1:num_inst % Parallelize loop across separate threads, since this could
             
             %% Test the candidate message to see if it is a valid instruction and extract disassembly of the message hex
             if strcmp(computer(), 'PCWIN64') == 1 % Windows version of the decode program
-                status = dos([architecture 'decode ' message_hex ' >tmp_disassembly_' num2str(i) '.txt']);
+                status = dos([architecture 'decode ' message_hex ' >tmp_disassembly_' architecture '_' benchmark '_' num2str(i) '.txt']);
             elseif strcmp(computer(), 'MACI64') == 1 % Mac version of the decode program
-                status = unix(['./' architecture 'decode-mac ' message_hex ' >tmp_disassembly_' num2str(i) '.txt']); % Mac version of the decode program
+                status = unix(['./' architecture 'decode-mac ' message_hex ' >tmp_disassembly_' architecture '_' benchmark '_' num2str(i) '.txt']); % Mac version of the decode program
             elseif strcmp(computer(), 'GLNXA64') == 1 % Linux version of the decode program
-                status = unix(['./' architecture 'decode-linux ' message_hex ' >tmp_disassembly_' num2str(i) '.txt']); % Linux version of the decode program
+                status = unix(['./' architecture 'decode-linux ' message_hex ' >tmp_disassembly_' architecture '_' benchmark '_' num2str(i) '.txt']); % Linux version of the decode program
             else % Error
                 display('Non-supported operating system detected!');
                 status = 1;
@@ -206,7 +206,7 @@ parfor i=1:num_inst % Parallelize loop across separate threads, since this could
                candidate_valid_messages(num_valid_messages,:) = message;
                
                % Read disassembly of instruction from file
-               tmpfid = fopen(['tmp_disassembly_' num2str(i) '.txt']);
+               tmpfid = fopen(['tmp_disassembly_' architecture '_' benchmark '_' num2str(i) '.txt']);
                tmp_file_contents = textscan(tmpfid, '%s', 'Delimiter', ':');
                fclose(tmpfid);
 
