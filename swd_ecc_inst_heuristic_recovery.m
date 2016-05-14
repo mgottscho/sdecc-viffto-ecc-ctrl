@@ -83,7 +83,7 @@ end
 
 % Normalize
 for i=1:size(unique_inst,1)
-    results_instruction_opcode_hotness{i,2} = results_instruction_opcode_hotness{i,2} ./ num_inst;
+    results_instruction_opcode_hotness{i,2} = results_instruction_opcode_hotness{i,2} ./ total_num_inst;
 end
 results_instruction_opcode_hotness = sortrows(results_instruction_opcode_hotness, 2);
 
@@ -108,7 +108,7 @@ parfor i=1:num_inst % Parallelize loop across separate threads, since this could
     %% Progress indicator
     % This will not show accurate progress if the loop is parallelized
     % across threads with parfor, since they can execute out-of-order
-    display(['Inst # ' num2str(i) ' is index ' num2str(sampled_inst_indices(i)) in ' the program, disassembly: ' sampled_trace_inst_disassembly(i)]);
+    display(['Inst # ' num2str(i) ' is index ' num2str(sampled_inst_indices(i)) ' in the program, disassembly: ' sampled_trace_inst_disassembly(i,:)]);
     
     %% Get the "message," which is the original instruction, i.e., the ground truth.
     message_hex = sampled_trace_hex(i,:);
