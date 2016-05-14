@@ -58,12 +58,12 @@ end
 display('Getting ECC encoder and decoder matrices...');
 [G,H] = getHamCodes(n);
 
-num_inst = size(trace_bin,1);
+total_num_inst = size(trace_bin,1);
 
 %% Obtain overall static distribution of instructions in the program
 display('Computing static instruction distribution...');
 instruction_opcode_hotness = containers.Map(); % Init
-for i=1:num_inst
+for i=1:total_num_inst
     message_disassembly = trace_inst_disassembly(i,:);
     opcode = strtok(message_disassembly);
     if ~instruction_opcode_hotness.isKey(opcode)
@@ -87,14 +87,17 @@ for i=1:size(unique_inst,1)
 end
 results_instruction_opcode_hotness = sortrows(results_instruction_opcode_hotness, 2);
 
-%% Iterate over all instructions in the trace, and do the fun parts.
+%% Randomly choose instructions from the trace, and do the fun parts on those
 
 %%%%%% FEEL FREE TO OVERRIDE %%%%%%
-if num_inst > 100
-    num_inst = 100;
-end
+num_inst = 10000;  % Number of instructions to randomly sample
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-display(['Number of instructions to test SWD-ECC: ' num2str(num_inst)]);
+sampled_inst_indices = randperm(total_num_inst, num_inst); % Randomly permute the indices of instructions. We will choose the first num_inst of the permuted list to evaluate
+sampled_trace_hex = trace_hex(sampled_inst_indices,:);
+sampled_trace_bin = trace_bin(sampled_inst_indices,:);
+sampled_trace_inst_disassembly = trace_inst_disassembly(sampled_inst_indices,:);
+
+display(['Number of randomly-sampled instructions to test SWD-ECC: ' num2str(num_inst)]);
 display('Evaluating filter-and-rank SWD-ECC...');
 
 results_candidate_messages = NaN(num_inst,num_error_patterns); % Init
@@ -105,12 +108,12 @@ parfor i=1:num_inst % Parallelize loop across separate threads, since this could
     %% Progress indicator
     % This will not show accurate progress if the loop is parallelized
     % across threads with parfor, since they can execute out-of-order
-    display(['Inst # ' num2str(i)]);
+    display(['Inst # ' num2str(i) ' is index ' num2str(sampled_inst_indices(i)) in ' the program, disassembly: ' sampled_trace_inst_disassembly(i)]);
     
     %% Get the "message," which is the original instruction, i.e., the ground truth.
-    message_hex = trace_hex(i,:);
-    message_bin = trace_bin(i,:);
-    message_disassembly = trace_inst_disassembly(i,:);
+    message_hex = sampled_trace_hex(i,:);
+    message_bin = sampled_trace_bin(i,:);
+    message_disassembly = sampled_trace_inst_disassembly(i,:);
     
     %% Check that the message is actually a valid instruction to begin with.
     % Comment this out to save time if you are absolutely sure that all
