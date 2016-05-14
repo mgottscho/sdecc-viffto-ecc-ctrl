@@ -90,7 +90,7 @@ results_instruction_opcode_hotness = sortrows(results_instruction_opcode_hotness
 %% Randomly choose instructions from the trace, and do the fun parts on those
 
 %%%%%% FEEL FREE TO OVERRIDE %%%%%%
-num_inst = 10000;  % Number of instructions to randomly sample
+num_inst = 100;  % Number of instructions to randomly sample
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 sampled_inst_indices = randperm(total_num_inst, num_inst); % Randomly permute the indices of instructions. We will choose the first num_inst of the permuted list to evaluate
 sampled_trace_hex = trace_hex(sampled_inst_indices,:);
