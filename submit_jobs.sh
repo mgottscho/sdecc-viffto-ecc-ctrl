@@ -19,6 +19,10 @@ NUM_INST=10000
 N=39
 K=32
 
+INPUT_DIRECTORY=$PWD
+ROOT_OUTPUT_DIRECTORY=~/project-puneet/swd_ecc_output
+OUTPUT_DIRECTORY=$ROOT_OUTPUT_DIRECTORY/$ISA
+
 # qsub options used:
 # -V: export environment variables from this calling script to each job
 # -N: name the job. I made these so that each job will be uniquely identified by its benchmark running as well as the output file string ID
@@ -28,7 +32,20 @@ K=32
 MAX_TIME_PER_RUN=23:00:00 	# Maximum time of each script that will be invoked, HH:MM:SS. If this is exceeded, job will be killed.
 MAX_MEM_PER_RUN=4096M 		# Maximum memory needed per script that will be invoked. If this is exceeded, job will be killed.
 MAILING_LIST=mgottsch 		# List of users to email with status updates, separated by commas
+
+# Set up library path for MATLAB
+MCRROOT=/u/local/apps/matlab/8.6
+LD_LIBRARY_PATH=.:${MCRROOT}/runtime/glnxa64 ;
+LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:${MCRROOT}/bin/glnxa64 ;
+LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:${MCRROOT}/sys/os/glnxa64;
+LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:${MCRROOT}/sys/opengl/lib/glnxa64;
+export LD_LIBRARY_PATH;
 ###############################################################################################
+
+# Prepare directories
+mkdir $ROOT_OUTPUT_DIRECTORY
+mkdir $OUTPUT_DIRECTORY
+
 
 # Submit all the SPEC CPU2006 benchmarks
 echo "Submitting jobs..."
@@ -36,7 +53,7 @@ echo ""
 for SPEC_BENCHMARK in $SPEC_BENCHMARKS; do
 	echo "$SPEC_BENCHMARK..."
 	JOB_NAME="swd_ecc_inst_heuristic_recovery_${ISA}_${SPEC_BENCHMARK}"
-	qsub -V -N $JOB_NAME -l h_rt=$MAX_TIME_PER_RUN,h_data=$MAX_MEM_PER_RUN -M $MAILING_LIST ./run_swd_ecc_inst_heuristic_recovery.sh $ISA $SPEC_BENCHMARK $N $K
+	qsub -V -N $JOB_NAME -l h_rt=$MAX_TIME_PER_RUN,h_data=$MAX_MEM_PER_RUN -M $MAILING_LIST run_swd_ecc.sh $ISA $SPEC_BENCHMARK $NUM_INST $N $K $INPUT_DIRECTORY $OUTPUT_DIRECTORY
 done
 
 echo "Done submitting jobs."
