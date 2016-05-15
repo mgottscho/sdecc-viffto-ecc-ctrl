@@ -53,7 +53,7 @@ echo ""
 for SPEC_BENCHMARK in $SPEC_BENCHMARKS; do
 	echo "$SPEC_BENCHMARK..."
 	JOB_NAME="swd_ecc_inst_heuristic_recovery_${ISA}_${SPEC_BENCHMARK}"
-	qsub -V -N $JOB_NAME -l h_rt=$MAX_TIME_PER_RUN,h_data=$MAX_MEM_PER_RUN -M $MAILING_LIST run_swd_ecc.sh $ISA $SPEC_BENCHMARK $NUM_INST $N $K $INPUT_DIRECTORY $OUTPUT_DIRECTORY
+	qsub -V -N $JOB_NAME -l h_rt=$MAX_TIME_PER_RUN,h_data=$MAX_MEM_PER_RUN -M $MAILING_LIST run_swd_ecc.sh $ISA $SPEC_BENCHMARK $N $K $NUM_INST $INPUT_DIRECTORY $OUTPUT_DIRECTORY
 done
 
 echo "Done submitting jobs."
