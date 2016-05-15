@@ -13,10 +13,11 @@
 % Authors: Mark Gottscho and Clayton Schoeny
 % Email: mgottscho@ucla.edu, cschoeny@gmail.com
 
-function swd_ecc_inst_heuristic_recovery(architecture, benchmark, n, k)
+function swd_ecc_inst_heuristic_recovery(architecture, benchmark, n, k, num_inst)
 
 n = str2num(n)
 k = str2num(k)
+num_inst = str2num(num_inst);
 
 %%%%%% CHANGE THESE AS NEEDED %%%%%%%%
 input_filename = [architecture '-' benchmark '-disassembly-text-section-inst.txt']
@@ -90,7 +91,7 @@ results_instruction_opcode_hotness = sortrows(results_instruction_opcode_hotness
 %% Randomly choose instructions from the trace, and do the fun parts on those
 
 %%%%%% FEEL FREE TO OVERRIDE %%%%%%
-num_inst = 100;  % Number of instructions to randomly sample
+%num_inst = 100;  % Number of instructions to randomly sample
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 sampled_inst_indices = randperm(total_num_inst, num_inst); % Randomly permute the indices of instructions. We will choose the first num_inst of the permuted list to evaluate
 sampled_trace_hex = trace_hex(sampled_inst_indices,:);
