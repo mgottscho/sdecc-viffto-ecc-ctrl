@@ -15,9 +15,11 @@
 
 function swd_ecc_inst_heuristic_recovery(architecture, benchmark, n, k, num_inst, input_directory, output_directory)
 
+architecture
+benchmark
 n = str2num(n)
 k = str2num(k)
-num_inst = str2num(num_inst);
+num_inst = str2num(num_inst)
 
 %%%%%% CHANGE THESE AS NEEDED %%%%%%%%
 input_filename = [input_directory filesep architecture '-' benchmark '-disassembly-text-section-inst.txt']
@@ -27,7 +29,7 @@ r = n-k;
 
 %% Set up parallel computing
 %pctconfig('preservejobs', true);
-mypool = parpool(16);
+%mypool = parpool(16);
 
 %% Read instructions as bit-strings from file
 display('Reading inputs...');
@@ -105,7 +107,7 @@ results_candidate_messages = NaN(num_inst,num_error_patterns); % Init
 results_valid_messages = NaN(num_inst,num_error_patterns); % Init
 achieved_correct_decoding = NaN(num_inst, num_error_patterns); % Init
 
-parfor i=1:num_inst % Parallelize loop across separate threads, since this could take a long time. Each instruction is a totally independent procedure to perform.
+for i=1:num_inst % Parallelize loop across separate threads, since this could take a long time. Each instruction is a totally independent procedure to perform.
     %% Progress indicator
     % This will not show accurate progress if the loop is parallelized
     % across threads with parfor, since they can execute out-of-order
@@ -265,4 +267,4 @@ save(output_filename);
 display('Done!');
 
 %% Shut down parallel computing pool
-delete(mypool);
+%delete(mypool);
