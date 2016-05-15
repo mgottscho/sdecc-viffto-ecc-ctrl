@@ -118,16 +118,17 @@ parfor i=1:num_inst % Parallelize loop across separate threads, since this could
     %% Check that the message is actually a valid instruction to begin with.
     % Comment this out to save time if you are absolutely sure that all
     % input values are valid.
-    if strcmp(computer(), 'PCWIN64') == 1 % Windows version of the decode program
-        status = dos([architecture 'decode ' message_hex ' >nul']);
-    elseif strcmp(computer(), 'MACI64') == 1 % Mac version of the decode program
-        status = unix(['./' architecture 'decode-mac ' message_hex ' > /dev/null']); % Mac version of the decode program
-    elseif strcmp(computer(), 'GLNXA64') == 1 % Linux version of the decode program
-        status = unix(['./' architecture 'decode-linux ' message_hex ' > /dev/null']); % Linux version of the decode program
-    else % Error
-        display('Non-supported operating system detected!');
-        status = 1;
-    end
+    %if strcmp(computer(), 'PCWIN64') == 1 % Windows version of the decode program
+    %    status = dos([architecture 'decode ' message_hex ' >nul']);
+    %elseif strcmp(computer(), 'MACI64') == 1 % Mac version of the decode program
+    %    status = unix(['./' architecture 'decode-mac ' message_hex ' > /dev/null']); % Mac version of the decode program
+    %elseif strcmp(computer(), 'GLNXA64') == 1 % Linux version of the decode program
+        %status = unix(['./' architecture 'decode-linux ' message_hex ' > /dev/null']); % Linux version of the decode program
+        status = MyMipsDecoder(message_hex);
+    %else % Error
+    %    display('Non-supported operating system detected!');
+    %    status = 1;
+    %end
     
     if status ~= 0
        display(['Instruction #' num2str(i) ' in the input was found to be ILLEGAL, with value ' message_hex]);
@@ -193,31 +194,36 @@ parfor i=1:num_inst % Parallelize loop across separate threads, since this could
             message_hex = dec2hex(bin2dec(message));
             
             %% Test the candidate message to see if it is a valid instruction and extract disassembly of the message hex
-            if strcmp(computer(), 'PCWIN64') == 1 % Windows version of the decode program
-                status = dos([architecture 'decode ' message_hex ' >tmp_disassembly_' architecture '_' benchmark '_' num2str(i) '.txt']);
-            elseif strcmp(computer(), 'MACI64') == 1 % Mac version of the decode program
-                status = unix(['./' architecture 'decode-mac ' message_hex ' >tmp_disassembly_' architecture '_' benchmark '_' num2str(i) '.txt']); % Mac version of the decode program
-            elseif strcmp(computer(), 'GLNXA64') == 1 % Linux version of the decode program
-                status = unix(['./' architecture 'decode-linux ' message_hex ' >tmp_disassembly_' architecture '_' benchmark '_' num2str(i) '.txt']); % Linux version of the decode program
-            else % Error
-                display('Non-supported operating system detected!');
-                status = 1;
-            end
+            %if strcmp(computer(), 'PCWIN64') == 1 % Windows version of the decode program
+            %    status = dos([architecture 'decode ' message_hex ' >tmp_disassembly_' architecture '_' benchmark '_' num2str(i) '.txt']);
+            %elseif strcmp(computer(), 'MACI64') == 1 % Mac version of the decode program
+            %    status = unix(['./' architecture 'decode-mac ' message_hex ' >tmp_disassembly_' architecture '_' benchmark '_' num2str(i) '.txt']); % Mac version of the decode program
+            %elseif strcmp(computer(), 'GLNXA64') == 1 % Linux version of the decode program
+                %status = unix(['./' architecture 'decode-linux ' message_hex ' >tmp_disassembly_' architecture '_' benchmark '_' num2str(i) '.txt']); % Linux version of the decode program
+                [status, decoderOutput] = MyMipsDecoder(message_hex);
+            %else % Error
+            %    display('Non-supported operating system detected!');
+            %    status = 1;
+            %end
             
             if status == 0 % It is valid!
                num_valid_messages = num_valid_messages+1;
                candidate_valid_messages(num_valid_messages,:) = message;
                
                % Read disassembly of instruction from file
-               tmpfid = fopen(['tmp_disassembly_' architecture '_' benchmark '_' num2str(i) '.txt']);
-               tmp_file_contents = textscan(tmpfid, '%s', 'Delimiter', ':');
-               fclose(tmpfid);
+               %tmpfid = fopen(['tmp_disassembly_' architecture '_' benchmark '_' num2str(i) '.txt']);
+               %tmp_file_contents = textscan(tmpfid, '%s', 'Delimiter', ':');
+               output_contents = textscan(decoderOutput, '%s', 'Delimiter', ':');
+               %fclose(tmpfid);
 
-               tmp_file_contents = tmp_file_contents{1};
-               tmp_file_contents = reshape(tmp_file_contents, 2, size(tmp_file_contents,1)/2)';
+               %tmp_file_contents = tmp_file_contents{1};
+               output_contents = output_contents{1};
+               %tmp_file_contents = reshape(tmp_file_contents, 2, size(tmp_file_contents,1)/2)';
+               output_contents = reshape(output_contents, 2, size(output_contents,1)/2)';
 
                % Store disassembly in the list
-               instruction = tmp_file_contents{3,2};
+               %instruction = tmp_file_contents{3,2};
+               instruction = output_contents{3,2};
                valid_messages_disassembly{num_valid_messages,1} = instruction;
                
                % Decide whether this valid candidate instruction should be
