@@ -101,8 +101,8 @@ function [G, H] = getHamCodes(n)
      ];
    
     if n == 39
-        G = [eye(32), Gp39alt];
-        H = [Gp39alt' eye(7)];
+        G = [eye(32), Gp39];
+        H = [Gp39' eye(7)];
     end    
         
     
