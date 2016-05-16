@@ -34,7 +34,7 @@ echo "Running jobs..."
 echo ""
 for SPEC_BENCHMARK in $SPEC_BENCHMARKS; do
 	echo "$SPEC_BENCHMARK..."
-	./run_swd_ecc.sh $ISA $SPEC_BENCHMARK $N $K $NUM_INST $INPUT_DIRECTORY $OUTPUT_DIRECTORY > $OUTPUT_DIRECTORY/swd_ecc_${ISA}_${SPEC_BENCHMARK}.runscript 2>&1
+	./run_swd_ecc.sh $ISA $SPEC_BENCHMARK $N $K $NUM_INST $INPUT_DIRECTORY $OUTPUT_DIRECTORY #> $OUTPUT_DIRECTORY/swd_ecc_${ISA}_${SPEC_BENCHMARK}.runscript
 done
 
 echo "Done."
