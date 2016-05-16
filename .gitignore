@@ -9,4 +9,3 @@ run_mips_static_inst_heuristic.sh
 *.output*
 *.cmd
 *.mat
-swd_ecc_inst_heuristic_recovery
