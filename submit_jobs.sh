@@ -17,8 +17,8 @@ ISA=mips    # Set the target ISA; benchmarks must be disassembled for this as we
 SPEC_BENCHMARKS="astar bzip2 gobmk h264ref hmmer lbm libquantum mcf milc namd omnetpp perlbench povray sjeng soplex specrand998 specrand999 sphinx3"		# String of SPEC CPU2006 benchmark names to run, delimited by spaces.
 N=39
 K=32
-NUM_INST=10000
-NUM_THREADS=8
+NUM_INST=1000
+NUM_THREADS=1
 
 INPUT_DIRECTORY=~/project-puneet/swd_ecc_input/$ISA
 OUTPUT_DIRECTORY=~/project-puneet/swd_ecc_output/$ISA
