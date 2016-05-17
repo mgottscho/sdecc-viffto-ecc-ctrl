@@ -15,18 +15,17 @@ fi
 ########################## FEEL FREE TO CHANGE THESE OPTIONS ##################################
 ISA=mips    # Set the target ISA; benchmarks must be disassembled for this as well
 SPEC_BENCHMARKS="astar bzip2 gobmk h264ref hmmer lbm libquantum mcf milc namd omnetpp perlbench povray sjeng soplex specrand998 specrand999 sphinx3"		# String of SPEC CPU2006 benchmark names to run, delimited by spaces.
-NUM_INST=10000
 N=39
 K=32
+NUM_INST=10000
+NUM_THREADS=8
 
-INPUT_DIRECTORY=$PWD
-ROOT_OUTPUT_DIRECTORY=~/project-puneet/swd_ecc_output
-OUTPUT_DIRECTORY=$ROOT_OUTPUT_DIRECTORY/$ISA
+INPUT_DIRECTORY=~/project-puneet/swd_ecc_input/$ISA
+OUTPUT_DIRECTORY=~/project-puneet/swd_ecc_output/$ISA
 ###############################################################################################
 
 # Prepare directories
-mkdir $ROOT_OUTPUT_DIRECTORY
-mkdir $OUTPUT_DIRECTORY
+mkdir -p $OUTPUT_DIRECTORY
 
 
 # Submit all the SPEC CPU2006 benchmarks
@@ -34,7 +33,9 @@ echo "Running jobs..."
 echo ""
 for SPEC_BENCHMARK in $SPEC_BENCHMARKS; do
 	echo "$SPEC_BENCHMARK..."
-	./run_swd_ecc.sh $ISA $SPEC_BENCHMARK $N $K $NUM_INST $INPUT_DIRECTORY $OUTPUT_DIRECTORY #> $OUTPUT_DIRECTORY/swd_ecc_${ISA}_${SPEC_BENCHMARK}.runscript
+    INPUT_FILE="$INPUT_DIRECTORY/${ISA}-${SPEC_BENCHMARK}-disassembly-text-section-inst.txt"
+    OUTPUT_FILE="$OUTPUT_DIRECTORY/${ISA}-${SPEC_BENCHMARK}-inst-heuristic-recovery.mat"
+	./run_swd_ecc.sh $ISA $SPEC_BENCHMARK $N $K $NUM_INST $INPUT_FILE $OUTPUT_FILE $NUM_THREADS
 done
 
 echo "Done."

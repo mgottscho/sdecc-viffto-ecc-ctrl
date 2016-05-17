@@ -13,23 +13,22 @@
 % Authors: Mark Gottscho and Clayton Schoeny
 % Email: mgottscho@ucla.edu, cschoeny@gmail.com
 
-function swd_ecc_inst_heuristic_recovery(architecture, benchmark, n, k, num_inst, input_directory, output_directory)
+function swd_ecc_inst_heuristic_recovery(architecture, benchmark, n, k, num_inst, input_filename, output_filename, n_threads)
 
 architecture
 benchmark
 n = str2num(n)
 k = str2num(k)
 num_inst = str2num(num_inst)
+input_filename
+output_filename
+n_threads = str2num(n_threads)
 
-%%%%%% CHANGE THESE AS NEEDED %%%%%%%%
-input_filename = [input_directory filesep architecture '-' benchmark '-disassembly-text-section-inst.txt']
-output_filename = [output_directory filesep architecture '-' benchmark '-inst-heuristic-recovery.mat']
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 r = n-k;
 
 %% Set up parallel computing
 pctconfig('preservejobs', true);
-mypool = parpool(16);
+mypool = parpool(n_threads);
 
 %% Read instructions as bit-strings from file
 display('Reading inputs...');
