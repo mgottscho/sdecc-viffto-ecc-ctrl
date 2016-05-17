@@ -127,7 +127,14 @@ parfor i=1:num_inst % Parallelize loop across separate threads, since this could
     %    status = unix(['./' architecture 'decode-mac ' message_hex ' > /dev/null']); % Mac version of the decode program
     %elseif strcmp(computer(), 'GLNXA64') == 1 % Linux version of the decode program
         %status = unix(['./' architecture 'decode-linux ' message_hex ' > /dev/null']); % Linux version of the decode program
+    if strcmp(isa,'mips') == 1
         status = MyMipsDecoder(message_hex);
+    elseif strcmp(isa,'alpha') == 1
+        status = MyAlphaDecoder(message_hex);
+    else
+        display('ERROR! Supported ISAs are mips and alpha');
+%        exit(1);
+    end 
     %else % Error
     %    display('Non-supported operating system detected!');
     %    status = 1;
@@ -203,7 +210,14 @@ parfor i=1:num_inst % Parallelize loop across separate threads, since this could
             %    status = unix(['./' architecture 'decode-mac ' message_hex ' >tmp_disassembly_' architecture '_' benchmark '_' num2str(i) '.txt']); % Mac version of the decode program
             %elseif strcmp(computer(), 'GLNXA64') == 1 % Linux version of the decode program
                 %status = unix(['./' architecture 'decode-linux ' message_hex ' >tmp_disassembly_' architecture '_' benchmark '_' num2str(i) '.txt']); % Linux version of the decode program
-                [status, decoderOutput] = MyMipsDecoder(message_hex);
+                if strcmp(isa,'mips') == 1
+                    [status, decoderOutput] = MyMipsDecoder(message_hex);
+                elseif strcmp(isa,'alpha') == 1
+                    [status, decoderOutput] = MyAlphaDecoder(message_hex);
+                else
+                    display('ERROR! Supported ISAs are mips and alpha');
+            %        exit(1);
+                end 
             %else % Error
             %    display('Non-supported operating system detected!');
             %    status = 1;
