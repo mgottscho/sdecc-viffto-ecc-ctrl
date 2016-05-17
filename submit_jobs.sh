@@ -55,7 +55,7 @@ for SPEC_BENCHMARK in $SPEC_BENCHMARKS; do
 	JOB_NAME="swd_ecc_inst_heuristic_recovery_${ISA}_${SPEC_BENCHMARK}"
     INPUT_FILE="$INPUT_DIRECTORY/${ISA}-${SPEC_BENCHMARK}-disassembly-text-section-inst.txt"
     OUTPUT_FILE="$OUTPUT_DIRECTORY/${ISA}-${SPEC_BENCHMARK}-inst-heuristic-recovery.mat"
-	qsub -V -N $JOB_NAME -l h_rt=$MAX_TIME_PER_RUN,h_data=$MAX_MEM_PER_RUN -pe shared $NUM_THREADS -M $MAILING_LIST run_swd_ecc.sh $ISA $SPEC_BENCHMARK $N $K $NUM_INST $INPUT_FILE $OUTPUT_FILE $NUM_THREADS
+	qsub -V -N $JOB_NAME -l h_rt=$MAX_TIME_PER_RUN,h_data=$MAX_MEM_PER_RUN -pe shared $NUM_THREADS -M $MAILING_LIST run_swd_ecc.sh $PWD $ISA $SPEC_BENCHMARK $N $K $NUM_INST $INPUT_FILE $OUTPUT_FILE $NUM_THREADS
 done
 
 echo "Done submitting jobs."

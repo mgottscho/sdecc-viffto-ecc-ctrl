@@ -27,8 +27,8 @@ n_threads = str2num(n_threads)
 r = n-k;
 
 %% Set up parallel computing
-pctconfig('preservejobs', true);
-mypool = parpool(n_threads);
+%pctconfig('preservejobs', true);
+%mypool = parpool(n_threads);
 
 %% Read instructions as bit-strings from file
 display('Reading inputs...');
@@ -106,7 +106,7 @@ results_candidate_messages = NaN(num_inst,num_error_patterns); % Init
 results_valid_messages = NaN(num_inst,num_error_patterns); % Init
 achieved_correct_decoding = NaN(num_inst, num_error_patterns); % Init
 
-parfor i=1:num_inst % Parallelize loop across separate threads, since this could take a long time. Each instruction is a totally independent procedure to perform.
+for i=1:num_inst % Parallelize loop across separate threads, since this could take a long time. Each instruction is a totally independent procedure to perform.
     %% Progress indicator
     % This will not show accurate progress if the loop is parallelized
     % across threads with parfor, since they can execute out-of-order
@@ -126,12 +126,13 @@ parfor i=1:num_inst % Parallelize loop across separate threads, since this could
     %    status = unix(['./' architecture 'decode-mac ' message_hex ' > /dev/null']); % Mac version of the decode program
     %elseif strcmp(computer(), 'GLNXA64') == 1 % Linux version of the decode program
         %status = unix(['./' architecture 'decode-linux ' message_hex ' > /dev/null']); % Linux version of the decode program
-    if strcmp(isa,'mips') == 1
+    if strcmp(architecture,'mips') == 1
         status = MyMipsDecoder(message_hex);
-    elseif strcmp(isa,'alpha') == 1
+    elseif strcmp(architecture,'alpha') == 1
         status = MyAlphaDecoder(message_hex);
     else
         display('ERROR! Supported ISAs are mips and alpha');
+        status = -1;
 %        exit(1);
     end 
     %else % Error
@@ -209,12 +210,14 @@ parfor i=1:num_inst % Parallelize loop across separate threads, since this could
             %    status = unix(['./' architecture 'decode-mac ' message_hex ' >tmp_disassembly_' architecture '_' benchmark '_' num2str(i) '.txt']); % Mac version of the decode program
             %elseif strcmp(computer(), 'GLNXA64') == 1 % Linux version of the decode program
                 %status = unix(['./' architecture 'decode-linux ' message_hex ' >tmp_disassembly_' architecture '_' benchmark '_' num2str(i) '.txt']); % Linux version of the decode program
-                if strcmp(isa,'mips') == 1
+                if strcmp(architecture,'mips') == 1
                     [status, decoderOutput] = MyMipsDecoder(message_hex);
-                elseif strcmp(isa,'alpha') == 1
+                elseif strcmp(architecture,'alpha') == 1
                     [status, decoderOutput] = MyAlphaDecoder(message_hex);
                 else
                     display('ERROR! Supported ISAs are mips and alpha');
+                    status = -1;
+                    decoderOutput = '';
             %        exit(1);
                 end 
             %else % Error
@@ -280,4 +283,4 @@ save(output_filename);
 display('Done!');
 
 %% Shut down parallel computing pool
-delete(mypool);
+%delete(mypool);
