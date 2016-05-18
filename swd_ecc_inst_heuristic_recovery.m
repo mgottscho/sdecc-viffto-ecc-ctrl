@@ -154,7 +154,7 @@ parfor i=1:num_inst % Parallelize loop across separate threads, since this could
     %    status = 1;
     %end
    
-    decoderOutput
+    %decoderOutput
     if status ~= 0
        display(['Instruction #' num2str(i) ' in the input was found to be ILLEGAL, with value ' message_hex '. This probably should not happen.']);
     %   decoderOutput
