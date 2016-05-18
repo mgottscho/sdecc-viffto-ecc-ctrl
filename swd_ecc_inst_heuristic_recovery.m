@@ -65,6 +65,10 @@ total_num_inst = size(trace_bin,1);
 %% Obtain overall static distribution of instructions in the program
 display('Computing static instruction distribution...');
 instruction_opcode_hotness = containers.Map(); % Init
+if strcmp(architecture,'alpha') == 1
+    total_inst_dealiased = 0;
+end
+
 for i=1:total_num_inst
     message_disassembly = trace_inst_disassembly(i,:);
     opcode = strtok(message_disassembly);
@@ -72,8 +76,9 @@ for i=1:total_num_inst
     if strcmp(architecture,'alpha') == 1
         tmp_opcode = dealias_alpha_mneumonic(opcode);
         if strcmp(tmp_opcode, opcode) ~= 1
-            display(['Interpreting mneumonic in the input Alpha disassembly: ' opcode ' as ' tmp_opcode ' (dealiased).')]);
+            %display(['Interpreting mneumonic in the input Alpha disassembly: ' opcode ' as ' tmp_opcode ' (dealiased).']);
             opcode = tmp_opcode;
+            total_inst_dealiased = total_inst_dealiased + 1;
         end
     end
     if ~instruction_opcode_hotness.isKey(opcode)
@@ -81,6 +86,9 @@ for i=1:total_num_inst
     else
         instruction_opcode_hotness(opcode) = instruction_opcode_hotness(opcode)+1;
     end
+end
+if strcmp(architecture,'alpha') == 1
+    total_inst_dealiased
 end
 
 unique_inst = instruction_opcode_hotness.keys()';
@@ -112,7 +120,7 @@ results_valid_messages = NaN(num_inst,num_error_patterns); % Init
 achieved_correct_decoding = NaN(num_inst, num_error_patterns); % Init
 
 parfor i=1:num_inst % Parallelize loop across separate threads, since this could take a long time. Each instruction is a totally independent procedure to perform.
-    %% Get the "message," which is the original instruction, i.e., the ground truth.
+    %% Get the "message," which is the original instruction, i.e., the ground truth from input file. No instruction dealiasing is applied here.
     message_hex = sampled_trace_hex(i,:);
     message_bin = sampled_trace_bin(i,:);
     message_disassembly = sampled_trace_inst_disassembly(i,:);
