@@ -90,10 +90,7 @@ end
 results_instruction_opcode_hotness = sortrows(results_instruction_opcode_hotness, 2);
 
 %% Randomly choose instructions from the trace, and do the fun parts on those
-
-%%%%%% FEEL FREE TO OVERRIDE %%%%%%
-%num_inst = 100;  % Number of instructions to randomly sample
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%rng('shuffle'); % Seed RNG based on current time
 sampled_inst_indices = randperm(total_num_inst, num_inst); % Randomly permute the indices of instructions. We will choose the first num_inst of the permuted list to evaluate
 sampled_trace_hex = trace_hex(sampled_inst_indices,:);
 sampled_trace_bin = trace_bin(sampled_inst_indices,:);
@@ -107,15 +104,15 @@ results_valid_messages = NaN(num_inst,num_error_patterns); % Init
 achieved_correct_decoding = NaN(num_inst, num_error_patterns); % Init
 
 parfor i=1:num_inst % Parallelize loop across separate threads, since this could take a long time. Each instruction is a totally independent procedure to perform.
-    %% Progress indicator
-    % This will not show accurate progress if the loop is parallelized
-    % across threads with parfor, since they can execute out-of-order
-    display(['Inst # ' num2str(i) ' is index ' num2str(sampled_inst_indices(i)) ' in the program, disassembly: ' sampled_trace_inst_disassembly(i,:)]);
-    
     %% Get the "message," which is the original instruction, i.e., the ground truth.
     message_hex = sampled_trace_hex(i,:);
     message_bin = sampled_trace_bin(i,:);
     message_disassembly = sampled_trace_inst_disassembly(i,:);
+    
+    %% Progress indicator
+    % This will not show accurate progress if the loop is parallelized
+    % across threads with parfor, since they can execute out-of-order
+    display(['Inst # ' num2str(i) ' is index ' num2str(sampled_inst_indices(i)) ' in the program. hex: ' message_hex ' disassembly: ' message_disassembly]);
     
     %% Check that the message is actually a valid instruction to begin with.
     % Comment this out to save time if you are absolutely sure that all
@@ -127,12 +124,13 @@ parfor i=1:num_inst % Parallelize loop across separate threads, since this could
     %elseif strcmp(computer(), 'GLNXA64') == 1 % Linux version of the decode program
         %status = unix(['./' architecture 'decode-linux ' message_hex ' > /dev/null']); % Linux version of the decode program
     if strcmp(architecture,'mips') == 1
-        status = MyMipsDecoder(message_hex);
+        [status, decoderOutput] = MyMipsDecoder(message_hex);
     elseif strcmp(architecture,'alpha') == 1
-        status = MyAlphaDecoder(message_hex);
+        [status, decoderOutput] = MyAlphaDecoder(message_hex);
     else
         display('ERROR! Supported ISAs are mips and alpha');
         status = -1;
+        decoderOutput = '';
 %        exit(1);
     end 
     %else % Error
@@ -141,7 +139,8 @@ parfor i=1:num_inst % Parallelize loop across separate threads, since this could
     %end
     
     if status ~= 0
-       display(['Instruction #' num2str(i) ' in the input was found to be ILLEGAL, with value ' message_hex]);
+       display(['Instruction #' num2str(i) ' in the input was found to be ILLEGAL, with value ' message_hex '. This probably should not happen.']);
+       decoderOutput
     end
     
     %% Encode the message.
@@ -201,7 +200,7 @@ parfor i=1:num_inst % Parallelize loop across separate threads, since this could
         for x=1:num_candidate_messages
             %% Convert message to hex string representation
             message = candidate_correct_messages(x,:);
-            message_hex = dec2hex(bin2dec(message));
+            message_hex = dec2hex(bin2dec(message),8);
             
             %% Test the candidate message to see if it is a valid instruction and extract disassembly of the message hex
             %if strcmp(computer(), 'PCWIN64') == 1 % Windows version of the decode program
