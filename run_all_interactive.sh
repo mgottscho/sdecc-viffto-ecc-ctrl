@@ -13,8 +13,9 @@ if [[ "$ARGC" != 0 ]]; then # Bad number of arguments.
 fi
 
 ########################## FEEL FREE TO CHANGE THESE OPTIONS ##################################
-ISA=mips    # Set the target ISA; benchmarks must be disassembled for this as well
-SPEC_BENCHMARKS="astar bzip2 gobmk h264ref hmmer lbm libquantum mcf milc namd omnetpp perlbench povray sjeng soplex specrand998 specrand999 sphinx3"		# String of SPEC CPU2006 benchmark names to run, delimited by spaces.
+ISA=alpha    # Set the target ISA; benchmarks must be disassembled for this as well
+#SPEC_BENCHMARKS="astar bzip2 gobmk h264ref hmmer lbm libquantum mcf milc namd omnetpp perlbench povray sjeng soplex specrand998 specrand999 sphinx3"		# String of SPEC CPU2006 benchmark names to run, delimited by spaces.
+SPEC_BENCHMARKS="bzip2 h264ref mcf perlbench povray"		# String of SPEC CPU2006 benchmark names to run, delimited by spaces.
 N=39
 K=32
 NUM_INST=500
