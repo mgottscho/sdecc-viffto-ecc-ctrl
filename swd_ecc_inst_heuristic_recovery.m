@@ -68,6 +68,14 @@ instruction_opcode_hotness = containers.Map(); % Init
 for i=1:total_num_inst
     message_disassembly = trace_inst_disassembly(i,:);
     opcode = strtok(message_disassembly);
+    % Check for macros/pseudoinstructions/aliases in Alpha ISA
+    if strcmp(architecture,'alpha') == 1
+        tmp_opcode = dealias_alpha_mneumonic(opcode);
+        if strcmp(tmp_opcode, opcode) ~= 1
+            display(['Interpreting mneumonic in the input Alpha disassembly: ' opcode ' as ' tmp_opcode ' (dealiased).')]);
+            opcode = tmp_opcode;
+        end
+    end
     if ~instruction_opcode_hotness.isKey(opcode)
         instruction_opcode_hotness(opcode) = 1;
     else
