@@ -143,8 +143,10 @@ parfor i=1:num_inst % Parallelize loop across separate threads, since this could
         [status, decoderOutput] = MyMipsDecoder(message_hex);
     elseif strcmp(architecture,'alpha') == 1
         [status, decoderOutput] = MyAlphaDecoder(message_hex);
+    elseif strcmp(architecture,'riscv') == 1
+        [status, decoderOutput] = MyRiscvDecoder(message_hex);
     else
-        display('ERROR! Supported ISAs are mips and alpha');
+        display('ERROR! Supported ISAs are mips, alpha, and riscv');
         status = -1;
         decoderOutput = '';
 %        exit(1);
@@ -230,8 +232,10 @@ parfor i=1:num_inst % Parallelize loop across separate threads, since this could
                     [status, decoderOutput] = MyMipsDecoder(message_hex);
                 elseif strcmp(architecture,'alpha') == 1
                     [status, decoderOutput] = MyAlphaDecoder(message_hex);
+                elseif strcmp(architecture,'riscv') == 1
+                    [status, decoderOutput] = MyRiscvDecoder(message_hex);
                 else
-                    display('ERROR! Supported ISAs are mips and alpha');
+                    display('ERROR! Supported ISAs are mips, alpha, and riscv');
                     status = -1;
                     decoderOutput = '';
             %        exit(1);
