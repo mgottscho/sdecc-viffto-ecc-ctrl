@@ -1,4 +1,5 @@
-% This script iterates over a series of MIPS1 (R3000) 32-bit instructions that are statically extracted from a compiled program.
+function swd_ecc_inst_heuristic_recovery(architecture, benchmark, n, k, num_inst, input_filename, output_filename, n_threads)
+% This function iterates over a series of instructions that are statically extracted from a compiled program.
 % For each instruction, it first checks if it is a valid instruction. If it is, the
 % script encodes the instruction/message in a specified SECDED encoder.
 % The script then iterates over all possible 2-bit error patterns on the
@@ -7,13 +8,24 @@
 % these 2-bit errors, we flip a single bit one at a time and decode again.
 % We should obtain X received codewords that are indicated as corrected.
 % These X codewords are "candidates" for the original encoded message.
-% The script then uses the MIPS instruction decoder to determine which of
+% The function then uses the instruction decoder to determine which of
 % the X candidate messages are valid instructions.
 %
-% Authors: Mark Gottscho and Clayton Schoeny
-% Email: mgottscho@ucla.edu, cschoeny@gmail.com
-
-function swd_ecc_inst_heuristic_recovery(architecture, benchmark, n, k, num_inst, input_filename, output_filename, n_threads)
+% Input arguments:
+%   architecture --     String: '[mips|alpha|riscv]'
+%   benchmark --        String
+%   n --                String: '[39|72]'
+%   k --                String: '[32|64]'
+%   num_inst --         String: '[1|2|3|...]'
+%   input_filename --   String
+%   output_filename --  String
+%   n_threads --        String: '[1|2|3|...]'
+%
+% Returns:
+%   Nothing.
+%
+% Author: Mark Gottscho
+% Email: mgottscho@ucla.edu
 
 architecture
 benchmark
@@ -58,7 +70,7 @@ end
 
 %% Get our ECC encoder and decoder matrices
 display('Getting ECC encoder and decoder matrices...');
-[G,H] = getHamCodes(n);
+[G,H] = getECCCodes(n);
 
 total_num_inst = size(trace_bin,1);
 
