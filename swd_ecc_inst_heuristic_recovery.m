@@ -1,4 +1,4 @@
-function swd_ecc_inst_heuristic_recovery(architecture, benchmark, n, k, num_inst, input_filename, output_filename, n_threads)
+function swd_ecc_inst_heuristic_recovery(architecture, benchmark, n, k, num_inst, input_filename, output_filename, n_threads, code_type)
 % This function iterates over a series of instructions that are statically extracted from a compiled program.
 % For each instruction, it first checks if it is a valid instruction. If it is, the
 % script encodes the instruction/message in a specified SECDED encoder.
@@ -20,6 +20,7 @@ function swd_ecc_inst_heuristic_recovery(architecture, benchmark, n, k, num_inst
 %   input_filename --   String
 %   output_filename --  String
 %   n_threads --        String: '[1|2|3|...]'
+%   code_type --        String: '[hamming|pi]'
 %
 % Returns:
 %   Nothing.
@@ -35,6 +36,7 @@ num_inst = str2num(num_inst)
 input_filename
 output_filename
 n_threads = str2num(n_threads)
+code_type
 
 r = n-k;
 
@@ -70,7 +72,7 @@ end
 
 %% Get our ECC encoder and decoder matrices
 display('Getting ECC encoder and decoder matrices...');
-[G,H] = getECCCodes(n);
+[G,H] = getSECDEDCodes(n,code_type);
 
 total_num_inst = size(trace_bin,1);
 
@@ -175,7 +177,7 @@ parfor i=1:num_inst % Parallelize loop across separate threads, since this could
     end
     
     %% Encode the message.
-    codeword = hamEnc(message_bin,G);
+    codeword = secded_encoder(message_bin,G);
     
     %% Iterate over all possible 2-bit error patterns.
     for j=1:num_error_patterns
@@ -184,7 +186,7 @@ parfor i=1:num_inst % Parallelize loop across separate threads, since this could
         received_codeword = dec2bin(bitxor(bin2dec(codeword), bin2dec(error)), n);
         
         %% Attempt to decode the corrupted codeword, check that num_error_bits is 2
-        [decoded_message, num_error_bits] = hamDec(received_codeword, H);
+        [decoded_message, num_error_bits] = secded_decoder(received_codeword, H, code_type);
         
         % Sanity check
         if num_error_bits ~= 2
@@ -202,7 +204,7 @@ parfor i=1:num_inst % Parallelize loop across separate threads, since this could
            candidate_codeword = dec2bin(bitxor(bin2dec(received_codeword), bin2dec(error)), n);
            
            %% Attempt to decode
-           [decoded_message, num_error_bits] = hamDec(candidate_codeword, H);
+           [decoded_message, num_error_bits] = secded_decoder(candidate_codeword, H, code_type);
            
            if num_error_bits == 1           
                % We now know that num_error_bits == 1 if we got this far. This
