@@ -120,7 +120,7 @@ end
 results_instruction_opcode_hotness = sortrows(results_instruction_opcode_hotness, 2);
 
 %% Randomly choose instructions from the trace, and do the fun parts on those
-%rng('shuffle'); % Seed RNG based on current time
+rng('shuffle'); % Seed RNG based on current time
 sampled_inst_indices = randperm(total_num_inst, num_inst); % Randomly permute the indices of instructions. We will choose the first num_inst of the permuted list to evaluate
 sampled_trace_hex = trace_hex(sampled_inst_indices,:);
 sampled_trace_bin = trace_bin(sampled_inst_indices,:);

@@ -27,9 +27,9 @@
 
 function [decoded_message, num_error_bits] = secded_decoder(received_codeword, H, code_type)
    %% Set default return values
-   decoded_message = repmat('X',1,k);
+   decoded_message = 'X'; % Don't know k yet as we can't trust inputs
    num_error_bits = Inf;
-    
+   
    %% Get some code parameters
    r = size(H,1);
    n = size(H,2);
@@ -37,13 +37,16 @@ function [decoded_message, num_error_bits] = secded_decoder(received_codeword, H
 
    %% Input validation
    input_valid = 0;
-   if ((n == 39 && k == 32) || (n == 72 && k == 64) || (n == 8 && k == 4))
-       && (strcmp(code_type,'hamming') == 1 || strcmp(code_type,'pi') == 1)
-       && (size(received_codeword) == [1 n])
+   if ((n == 39 && k == 32) || (n == 72 && k == 64) || (n == 8 && k == 4)) && (strcmp(code_type,'hamming') == 1 || strcmp(code_type,'pi') == 1) && (sum(size(received_codeword) == [1,n]) == 2)
            input_valid = 1;
+   end
 
    if input_valid == 0
        return;
+   end
+   
+   %% Set default message
+   decoded_message = repmat('X',1,k);
          
    %% Compute syndrome of received codeword
    s = mod(H*received_codeword',2);
@@ -54,11 +57,11 @@ function [decoded_message, num_error_bits] = secded_decoder(received_codeword, H
       num_error_bits = 0;
            
    %% CASE 1: HSIAO ONLY: Syndrome is even, so there are an even # of errors. Maximum likelihood decoding means we interpret as 2-bit error.
-   else if strcmp(code_type,'hamming') == 1 && mod(sum(s),2) == 0
+   elseif strcmp(code_type,'hamming') == 1 && mod(sum(s),2) == 0
       num_error_bits = 2;
    
    %% CASE 2: Pi code OR Hsiao code when syndrome is odd, so there are an odd # of errors. Usually this is a single bit error, but in some cases SECDED can detect 3-bit errors.
-   else if strcmp(code_type,'pi') == 1 || mod(sum(s),2) == 1         
+   elseif strcmp(code_type,'pi') == 1 || mod(sum(s),2) == 1         
       %% Attempt to find bit position of the error so it can be corrected
       notfound = 1;
       for i=1:n          
