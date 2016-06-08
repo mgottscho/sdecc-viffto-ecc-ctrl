@@ -256,8 +256,8 @@ display('Evaluating filter-and-rank SWD-ECC...');
 results_candidate_messages = NaN(num_inst,num_error_patterns); % Init
 results_valid_messages = NaN(num_inst,num_error_patterns); % Init
 success = NaN(num_inst, num_error_patterns); % Init
-crashed = NaN(num_inst, num_error_patterns); % Init
-corrupted = NaN(num_inst, num_error_patterns); % Init
+could_have_crashed = NaN(num_inst, num_error_patterns); % Init
+success_sans_crashes = NaN(num_inst, num_error_patterns); % Init
 
 parfor i=1:num_inst % Parallelize loop across separate threads, since this could take a long time. Each instruction is a totally independent procedure to perform.
     %% Get the "message," which is the original instruction, i.e., the ground truth from input file. No instruction dealiasing is applied here.
@@ -469,14 +469,14 @@ parfor i=1:num_inst % Parallelize loop across separate threads, since this could
             target_inst_indices = mneumonic_inst_indices;
         end
 
-        should_crash = 0;
+        crash = 0;
         if target_inst_indices(1) == 0 % sanity check
             display('Error! No valid target instruction for recovery found.');
             target_inst_index = -2;
         elseif size(target_inst_indices,1) == 1 % have one recovery target
             target_inst_index = target_inst_indices(1); 
         else % multiple recovery targets: let it crash
-            should_crash = 1;
+            crash = 1;
             target_inst_index = target_inst_indices(1); % Pick first of remaining targets as a guess
         end
         
@@ -487,17 +487,17 @@ parfor i=1:num_inst % Parallelize loop across separate threads, since this could
         %% Compute whether we got the correct answer or not for this instruction/error pattern pairing
         if target_inst_index > 0 && strcmp(candidate_valid_messages(target_inst_index,:), message_bin) == 1 % Successfully corrected error!
             success(i,j) = 1;
-            corrupted(i,j) = 0;
         else % Failed to correct error -- corrupted recovery
             success(i,j) = 0;
-            corrupted(i,j) = 1;
         end
 
-        %% Compute whether crashing out would have helped
-        if should_crash == 1
-            crashed(i,j) = 1;
+        %% Compute whether we would have crashed instead
+        if crash == 1
+            could_have_crashed(i,j) = 1;
+            success_sans_crashes(i,j) = NaN;
         else
-            crashed(i,j) = 0;
+            could_have_crashed(i,j) = 0;
+            success_sans_crashes(i,j) = success(i,j);
         end
     end
 end
