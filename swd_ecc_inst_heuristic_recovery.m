@@ -78,46 +78,170 @@ total_num_inst = size(trace_bin,1);
 
 %% Obtain overall static distribution of instructions in the program
 display('Computing static instruction distribution...');
-instruction_opcode_hotness = containers.Map(); % Init
+instruction_mneumonic_hotness = containers.Map(); % Init
+instruction_overall_reg_hotness = containers.Map(); % Init
+instruction_rd_hotness = containers.Map(); % Init
+instruction_rs1_hotness = containers.Map(); % Init
+instruction_rs2_hotness = containers.Map(); % Init
+
 if strcmp(architecture,'alpha') == 1
     total_inst_dealiased = 0;
 end
 
 for i=1:total_num_inst
     message_disassembly = trace_inst_disassembly(i,:);
-    opcode = strtok(message_disassembly);
+    arg1 = '';
+    arg2 = '';
+    arg3 = '';
+    [mneumonic,message_disassembly] = strtok(message_disassembly);
+    if size(message_disassembly,2) > 0
+        [arg1,message_disassembly] = strtok(message_disassembly,' ,');
+        if size(message_disassembly,2) > 0
+            [arg2,message_disassembly] = strtok(message_disassembly,' ,');
+            if size(message_disassembly,2) > 0
+                [arg3,message_disassembly] = strtok(message_disassembly,' ,');
+            end
+        end
+    end
+
     % Check for macros/pseudoinstructions/aliases in Alpha ISA
     if strcmp(architecture,'alpha') == 1
-        tmp_opcode = dealias_alpha_mneumonic(opcode);
-        if strcmp(tmp_opcode, opcode) ~= 1
-            %display(['Interpreting mneumonic in the input Alpha disassembly: ' opcode ' as ' tmp_opcode ' (dealiased).']);
-            opcode = tmp_opcode;
+        tmp_mneumonic = dealias_alpha_mneumonic(mneumonic);
+        if strcmp(tmp_mneumonic, mneumonic) ~= 1
+            %display(['Interpreting mneumonic in the input Alpha disassembly: ' mneumonic ' as ' tmp_mneumonic ' (dealiased).']);
+            mneumonic = tmp_mneumonic;
             total_inst_dealiased = total_inst_dealiased + 1;
         end
     end
-    if ~instruction_opcode_hotness.isKey(opcode)
-        instruction_opcode_hotness(opcode) = 1;
+
+    if ~instruction_mneumonic_hotness.isKey(mneumonic)
+        instruction_mneumonic_hotness(mneumonic) = 1;
     else
-        instruction_opcode_hotness(opcode) = instruction_opcode_hotness(opcode)+1;
+        instruction_mneumonic_hotness(mneumonic) = instruction_mneumonic_hotness(mneumonic)+1;
+    end
+   
+    if size(arg1,2) > 0
+        if ~instruction_overall_reg_hotness.isKey(arg1)
+            instruction_overall_reg_hotness(arg1) = 1;
+        else
+            instruction_overall_reg_hotness(arg1) = instruction_overall_reg_hotness(arg1)+1;
+        end
+            
+        if ~instruction_rd_hotness.isKey(arg1)
+            instruction_rd_hotness(arg1) = 1;
+        else
+            instruction_rd_hotness(arg1) = instruction_rd_hotness(arg1)+1;
+        end
+    end
+    
+    if size(arg2,2) > 0 && isstrprop(arg2(1),'alpha') == 1 % alpha is alphabetic, not alpha ISA here. FIXME: This can be wrong when we have something like addi a0,a1,a2 where a2 is not a register address, but actually a hex constant!
+        if ~instruction_overall_reg_hotness.isKey(arg2)
+            instruction_overall_reg_hotness(arg2) = 1;
+        else
+            instruction_overall_reg_hotness(arg2) = instruction_overall_reg_hotness(arg2)+1;
+        end
+            
+        if ~instruction_rs1_hotness.isKey(arg1)
+            instruction_rs1_hotness(arg1) = 1;
+        else
+            instruction_rs1_hotness(arg1) = instruction_rs1_hotness(arg1)+1;
+        end
+    end
+    
+    if size(arg3,2) > 0 && isstrprop(arg3(1),'alpha') == 1 % alpha is alphabetic, not alpha ISA here. FIXME: This can be wrong when we have something like addi a0,a1,a2 where a2 is not a register address, but actually a hex constant!
+        if ~instruction_overall_reg_hotness.isKey(arg3)
+            instruction_overall_reg_hotness(arg3) = 1;
+        else
+            instruction_overall_reg_hotness(arg3) = instruction_overall_reg_hotness(arg3)+1;
+        end
+            
+        if ~instruction_rs2_hotness.isKey(arg1)
+            instruction_rs2_hotness(arg1) = 1;
+        else
+            instruction_rs2_hotness(arg1) = instruction_rs2_hotness(arg1)+1;
+        end
     end
 end
+
 if strcmp(architecture,'alpha') == 1
     total_inst_dealiased
 end
 
-unique_inst = instruction_opcode_hotness.keys()';
+unique_inst = instruction_mneumonic_hotness.keys()';
 unique_inst_counts = zeros(size(unique_inst,1),1);
 for i=1:size(unique_inst,1)
-   unique_inst_counts(i) = instruction_opcode_hotness(unique_inst{i}); 
-   results_instruction_opcode_hotness{i,1} = unique_inst{i};
-   results_instruction_opcode_hotness{i,2} = unique_inst_counts(i);
+   unique_inst_counts(i) = instruction_mneumonic_hotness(unique_inst{i}); 
+   results_instruction_mneumonic_hotness{i,1} = unique_inst{i};
+   results_instruction_mneumonic_hotness{i,2} = unique_inst_counts(i);
 end
 
 % Normalize
 for i=1:size(unique_inst,1)
-    results_instruction_opcode_hotness{i,2} = results_instruction_opcode_hotness{i,2} ./ total_num_inst;
+    results_instruction_mneumonic_hotness{i,2} = results_instruction_mneumonic_hotness{i,2} ./ total_num_inst;
 end
-results_instruction_opcode_hotness = sortrows(results_instruction_opcode_hotness, 2);
+results_instruction_mneumonic_hotness = sortrows(results_instruction_mneumonic_hotness, 2);
+
+
+
+unique_overall_reg = instruction_overall_reg_hotness.keys()';
+unique_overall_reg_counts = zeros(size(unique_overall_reg,1),1);
+for i=1:size(unique_overall_reg,1)
+   unique_overall_reg_counts(i) = instruction_overall_reg_hotness(unique_overall_reg{i}); 
+   results_instruction_overall_reg_hotness{i,1} = unique_overall_reg{i};
+   results_instruction_overall_reg_hotness{i,2} = unique_overall_reg_counts(i);
+end
+
+% Normalize
+for i=1:size(unique_overall_reg,1)
+    results_instruction_overall_reg_hotness{i,2} = results_instruction_overall_reg_hotness{i,2} ./ total_num_inst;
+end
+results_instruction_overall_reg_hotness = sortrows(results_instruction_overall_reg_hotness, 2);
+
+
+
+unique_rd = instruction_rd_hotness.keys()';
+unique_rd_counts = zeros(size(unique_rd,1),1);
+for i=1:size(unique_rd,1)
+   unique_rd_counts(i) = instruction_rd_hotness(unique_rd{i}); 
+   results_instruction_rd_hotness{i,1} = unique_rd{i};
+   results_instruction_rd_hotness{i,2} = unique_rd_counts(i);
+end
+
+% Normalize
+for i=1:size(unique_rd,1)
+    results_instruction_rd_hotness{i,2} = results_instruction_rd_hotness{i,2} ./ total_num_inst;
+end
+results_instruction_rd_hotness = sortrows(results_instruction_rd_hotness, 2);
+
+
+unique_rs1 = instruction_rs1_hotness.keys()';
+unique_rs1_counts = zeros(size(unique_rs1,1),1);
+for i=1:size(unique_rs1,1)
+   unique_rs1_counts(i) = instruction_rs1_hotness(unique_rs1{i}); 
+   results_instruction_rs1_hotness{i,1} = unique_rs1{i};
+   results_instruction_rs1_hotness{i,2} = unique_rs1_counts(i);
+end
+
+% Normalize
+for i=1:size(unique_rs1,1)
+    results_instruction_rs1_hotness{i,2} = results_instruction_rs1_hotness{i,2} ./ total_num_inst;
+end
+results_instruction_rs1_hotness = sortrows(results_instruction_rs1_hotness, 2);
+
+
+unique_rs2 = instruction_rs2_hotness.keys()';
+unique_rs2_counts = zeros(size(unique_rs2,1),1);
+for i=1:size(unique_rs2,1)
+   unique_rs2_counts(i) = instruction_rs2_hotness(unique_rs2{i}); 
+   results_instruction_rs2_hotness{i,1} = unique_rs2{i};
+   results_instruction_rs2_hotness{i,2} = unique_rs2_counts(i);
+end
+
+% Normalize
+for i=1:size(unique_rs2,1)
+    results_instruction_rs2_hotness{i,2} = results_instruction_rs2_hotness{i,2} ./ total_num_inst;
+end
+results_instruction_rs2_hotness = sortrows(results_instruction_rs2_hotness, 2);
 
 %% Randomly choose instructions from the trace, and do the fun parts on those
 rng('shuffle'); % Seed RNG based on current time
@@ -227,9 +351,8 @@ parfor i=1:num_inst % Parallelize loop across separate threads, since this could
         num_candidate_messages = size(candidate_correct_messages,1);
         num_valid_messages = 0;
         candidate_valid_messages = repmat('0',1,k); % Init
-        valid_messages_disassembly = cell(1,1);
-        target_inst_index = -1;
-        highest_rel_freq = 0;
+        valid_messages_mneumonic = cell(1,1);
+        valid_messages_rd = cell(1,1);
         for x=1:num_candidate_messages
             %% Convert message to hex string representation
             message = candidate_correct_messages(x,:);
@@ -275,27 +398,82 @@ parfor i=1:num_inst % Parallelize loop across separate threads, since this could
                output_contents = reshape(output_contents, 2, size(output_contents,1)/2)';
 
                % Store disassembly in the list
-               %instruction = tmp_file_contents{3,2};
-               instruction = output_contents{3,2};
-               valid_messages_disassembly{num_valid_messages,1} = instruction;
-               
-               % Decide whether this valid candidate instruction should be
-               % the decode target
-               if instruction_opcode_hotness.isKey(instruction)
-                   rel_freq = instruction_opcode_hotness(instruction);
-               else
-                   rel_freq = 0;
-               end
-
-               if rel_freq >= highest_rel_freq
-                  highest_rel_freq = rel_freq;
-                  target_inst_index = num_valid_messages;
-               end
+               mneumonic = output_contents{4,2};
+               rd = output_contents{6,2};
+               valid_messages_mneumonic{num_valid_messages,1} = mneumonic;
+               valid_messages_rd{num_valid_messages,1} = rd;
             end
         end
         
-        if target_inst_index < 1 % Sanity check
-            display(['Error! target_inst_index = ' num2str(target_inst_index)]);
+        %% Choose decode target
+        highest_rel_freq_mneumonic = 0;
+        target_mneumonic = '';
+        for x=1:num_valid_messages
+            mneumonic = valid_messages_mneumonic{x,1};
+            if instruction_mneumonic_hotness.isKey(mneumonic)
+                rel_freq_mneumonic = instruction_mneumonic_hotness(mneumonic);
+            else % This could happen legally
+                rel_freq_mneumonic = 0;
+            end
+            
+            % Find highest frequency mneumonic
+            if rel_freq_mneumonic > highest_rel_freq_mneumonic
+               highest_rel_freq_mneumonic = rel_freq_mneumonic;
+               target_mneumonic = mneumonic;
+            end
+        end
+
+        % Find indices matching highest frequency mneumonic
+        mneumonic_inst_indices = zeros(1,1);
+        y=1;
+        for x=1:num_valid_messages
+            mneumonic = valid_messages_mneumonic{x,1};
+            if strcmp(mneumonic,target_mneumonic) == 1
+                mneumonic_inst_indices(y,1) = x;
+                y = y+1;
+            end
+        end
+    
+        highest_rel_freq_rd = 0;
+        target_rd = '';
+        for y=1:size(mneumonic_inst_indices,1)
+            rd = valid_messages_rd{mneumonic_inst_indices(y,1),1};
+            
+            if instruction_rd_hotness.isKey(rd)
+                rel_freq_rd = instruction_rd_hotness(rd);
+            else % This can happen when rd is not used in an instr (NA)
+                rel_freq_rd = 0;
+            end
+            
+            % Find highest frequency rd
+            if rel_freq_rd > highest_rel_freq_rd
+               highest_rel_freq_rd = rel_freq_rd;
+               target_rd = rd;
+            end
+        end
+        
+        % Find indices matching both highest frequency mneumonic and highest frequency rd
+        target_inst_indices = zeros(1,1);
+        z=1;
+        for y=1:size(mneumonic_inst_indices,1)
+            rd = valid_messages_rd{mneumonic_inst_indices(y,1),1};
+            if strcmp(rd,target_rd) == 1
+                target_inst_indices(z,1) = mneumonic_inst_indices(y,1);
+                z = z+1;
+            end
+        end
+
+        if target_inst_indices(1) == 0 % This is OK when rd is not used anywhere in the checked candidates
+            target_inst_indices = mneumonic_inst_indices;
+        end
+
+        if target_inst_indices(1) == 0 % sanity check
+            display('Error! No valid target instruction for recovery found.');
+            target_inst_index = -2;
+        elseif size(target_inst_indices,1) == 1 % have one recovery target
+            target_inst_index = target_inst_indices(1); 
+        else % multiple recovery targets: let it crash
+            target_inst_index = -1;
         end
         
         %% Store results of the number of candidate and valid messages for this instruction/error pattern pair
@@ -303,10 +481,15 @@ parfor i=1:num_inst % Parallelize loop across separate threads, since this could
         results_valid_messages(i,j) = num_valid_messages;
 
         %% Compute whether we got the correct answer or not for this instruction/error pattern pairing
-        if strcmp(candidate_valid_messages(target_inst_index,:), message_bin) == 1 % Successfully corrected error!
+        if target_inst_index > 0 && strcmp(candidate_valid_messages(target_inst_index,:), message_bin) == 1 % Successfully corrected error!
             achieved_correct_decoding(i,j) = 1;
-        else % Failed to correct error
+        elseif target_inst_index == -1 % Failed to correct error -- crash
             achieved_correct_decoding(i,j) = 0;
+        elseif target_inst_index == -2 % Strange error
+            display('Error! Got target_inst_index == -2, this should not happen.');
+            achieved_correct_decoding(i,j) = -2;
+        else % Failed to correct error -- corrupted recovery
+            achieved_correct_decoding(i,j) = -1;
         end
     end
 end
