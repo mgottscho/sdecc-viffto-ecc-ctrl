@@ -255,7 +255,9 @@ display('Evaluating filter-and-rank SWD-ECC...');
 
 results_candidate_messages = NaN(num_inst,num_error_patterns); % Init
 results_valid_messages = NaN(num_inst,num_error_patterns); % Init
-achieved_correct_decoding = NaN(num_inst, num_error_patterns); % Init
+success = NaN(num_inst, num_error_patterns); % Init
+crashed = NaN(num_inst, num_error_patterns); % Init
+corrupted = NaN(num_inst, num_error_patterns); % Init
 
 parfor i=1:num_inst % Parallelize loop across separate threads, since this could take a long time. Each instruction is a totally independent procedure to perform.
     %% Get the "message," which is the original instruction, i.e., the ground truth from input file. No instruction dealiasing is applied here.
@@ -467,13 +469,15 @@ parfor i=1:num_inst % Parallelize loop across separate threads, since this could
             target_inst_indices = mneumonic_inst_indices;
         end
 
+        should_crash = 0;
         if target_inst_indices(1) == 0 % sanity check
             display('Error! No valid target instruction for recovery found.');
             target_inst_index = -2;
         elseif size(target_inst_indices,1) == 1 % have one recovery target
             target_inst_index = target_inst_indices(1); 
         else % multiple recovery targets: let it crash
-            target_inst_index = -1;
+            should_crash = 1;
+            target_inst_index = target_inst_indices(1); % Pick first of remaining targets as a guess
         end
         
         %% Store results of the number of candidate and valid messages for this instruction/error pattern pair
@@ -482,14 +486,18 @@ parfor i=1:num_inst % Parallelize loop across separate threads, since this could
 
         %% Compute whether we got the correct answer or not for this instruction/error pattern pairing
         if target_inst_index > 0 && strcmp(candidate_valid_messages(target_inst_index,:), message_bin) == 1 % Successfully corrected error!
-            achieved_correct_decoding(i,j) = 1;
-        elseif target_inst_index == -1 % Failed to correct error -- crash
-            achieved_correct_decoding(i,j) = 0;
-        elseif target_inst_index == -2 % Strange error
-            display('Error! Got target_inst_index == -2, this should not happen.');
-            achieved_correct_decoding(i,j) = -2;
+            success(i,j) = 1;
+            corrupted(i,j) = 0;
         else % Failed to correct error -- corrupted recovery
-            achieved_correct_decoding(i,j) = -1;
+            success(i,j) = 0;
+            corrupted(i,j) = 1;
+        end
+
+        %% Compute whether crashing out would have helped
+        if should_crash == 1
+            crashed(i,j) = 1;
+        else
+            crashed(i,j) = 0;
         end
     end
 end
