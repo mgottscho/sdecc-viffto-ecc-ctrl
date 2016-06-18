@@ -83,7 +83,7 @@ function [decoded_message, num_error_bits] = secded_decoder(received_codeword, H
          
          error = repmat('0',1,n);
          error(bit) = '1';
-         decoded_codeword = dec2bin(bitxor(bin2dec(received_codeword), bin2dec(error)), n);
+         decoded_codeword = my_bitxor(received_codeword, error);
          decoded_message = decoded_codeword(1:k);       
       end
    end

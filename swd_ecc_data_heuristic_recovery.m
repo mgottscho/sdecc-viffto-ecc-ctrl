@@ -35,6 +35,7 @@ benchmark
 n = str2num(n)
 k = str2num(k)
 num_words = str2num(num_words)
+words_per_block = str2num(words_per_block)
 input_filename
 output_filename
 n_threads = str2num(n_threads)
@@ -43,22 +44,29 @@ code_type
 r = n-k;
 
 %% Set up parallel computing
-pctconfig('preservejobs', true);
-mypool = parpool(n_threads);
+%pctconfig('preservejobs', true);
+%mypool = parpool(n_threads);
 
 %% Read instructions as bit-strings from file
-% TODO: FIXME ACCORDING TO MEMORY TRACE FILE FORMAT!!!! 6/17/2016 by MWG
 display('Reading inputs...');
 fid = fopen(input_filename);
-file_contents = textscan(fid, '%s', 'Delimiter', ':');
+file_contents = textscan(fid, '%s', 'Delimiter', ',');
 fclose(fid);
 file_contents = file_contents{1};
-file_contents = reshape(file_contents, 3, size(file_contents,1)/3)';
+file_contents = reshape(file_contents, (8+words_per_block), size(file_contents,1)/(8+words_per_block))';
 %trace_hex = textread(input_filename, '%8c');
-trace_hex = char(file_contents(:,2));
-trace_bin = hex2dec(trace_hex);
-trace_bin = dec2bin(trace_bin,k);
-% END FIXME
+trace_paddr = char(file_contents(:,3));
+trace_blkpos = char(file_contents(:,8));
+trace_cachelines_hex = cell(size(file_contents,1),words_per_block);
+trace_cachelines_bin = cell(size(file_contents,1),words_per_block);
+for i=1:size(file_contents,1)
+    for j=1:words_per_block
+        trace_cachelines_hex{i,j} = char(file_contents(i,8+j));
+        tmp = trace_cachelines_hex{i,j};
+        trace_cachelines_hex{i,j} = tmp(1,3:end);
+        trace_cachelines_bin{i,j} = my_hex2bin(trace_cachelines_hex{i,j});
+    end
+end
 
 %% Construct a matrix containing all possible 2-bit error patterns as bit-strings.
 display('Constructing error-pattern matrix...');
@@ -77,14 +85,14 @@ end
 display('Getting ECC encoder and decoder matrices...');
 [G,H] = getSECDEDCodes(n,code_type);
 
-total_num_cachelines = size(trace_bin,1);
+total_num_cachelines = size(trace_cachelines_bin,1);
 
 %% Randomly choose words from the trace, and do the fun parts on those
 rng('shuffle'); % Seed RNG based on current time
 sampled_cacheline_indices = randperm(total_num_cachelines, num_words); % Randomly permute the indices of cachelines. We will choose the first num_words of the permuted list to evaluate. Then, from each of these cachelines, we randomly pick one word from within it.
-sampled_blockpos_indices = rand(words_per_block, num_words); % Randomly generate the block position within the cacheline
-sampled_trace_hex = trace_hex(sampled_cacheline_indices,:);
-sampled_trace_bin = trace_bin(sampled_cacheline_indices,:);
+sampled_blockpos_indices = randi(words_per_block, 1, num_words); % Randomly generate the block position within the cacheline
+sampled_trace_cachelines_hex = trace_cachelines_hex(sampled_cacheline_indices,:);
+sampled_trace_cachelines_bin = trace_cachelines_bin(sampled_cacheline_indices,:);
 
 display(['Number of randomly-sampled words to test SWD-ECC: ' num2str(num_words)]);
 display('Evaluating SWD-ECC...');
@@ -92,24 +100,25 @@ display('Evaluating SWD-ECC...');
 results_candidate_messages = NaN(num_words,num_error_patterns); % Init
 success = NaN(num_words, num_error_patterns); % Init
 
-parfor i=1:num_inst % Parallelize loop across separate threads, since this could take a long time. Each word is a totally independent procedure to perform.
+for i=1:num_words % Parallelize loop across separate threads, since this could take a long time. Each word is a totally independent procedure to perform.
     %% Get the "message," which is the original word, i.e., the ground truth from input file.
-    message_hex = sampled_trace_hex(i,:);
-    message_bin = sampled_trace_bin(i,:);
+    message_hex = sampled_trace_cachelines_hex{i,sampled_blockpos_indices(i)};
+    message_bin = sampled_trace_cachelines_bin{i,sampled_blockpos_indices(i)};
     
     %% Progress indicator
     % This will not show accurate progress if the loop is parallelized
     % across threads with parfor, since they can execute out-of-order
-    display(['Word # ' num2str(i) ' is index ' num2str(sampled_cacheline_indices(i)) ' cacheline in the program, block position ' num2str(sampled_blockpos_indices(i) '. hex: ' message_hex]);
+    display(['Word # ' num2str(i) ' is index ' num2str(sampled_cacheline_indices(i)) ' cacheline in the program, block position ' num2str(sampled_blockpos_indices(i)) '. hex: ' message_hex]);
     
     %% Encode the message.
+    message_bin;
     codeword = secded_encoder(message_bin,G);
     
     %% Iterate over all possible 2-bit error patterns.
     for j=1:num_error_patterns
         %% Inject 2-bit error.
         error = error_patterns(j,:);
-        received_codeword = dec2bin(bitxor(bin2dec(codeword), bin2dec(error)), n);
+        received_codeword = my_bitxor(codeword, error);
         
         %% Attempt to decode the corrupted codeword, check that num_error_bits is 2
         [decoded_message, num_error_bits] = secded_decoder(received_codeword, H, code_type);
@@ -127,7 +136,7 @@ parfor i=1:num_inst % Parallelize loop across separate threads, since this could
            %% Flip the bit
            error = repmat('0',1,n);
            error(pos) = '1';
-           candidate_codeword = dec2bin(bitxor(bin2dec(received_codeword), bin2dec(error)), n);
+           candidate_codeword = my_bitxor(received_codeword,error);
            
            %% Attempt to decode
            [decoded_message, num_error_bits] = secded_decoder(candidate_codeword, H, code_type);
@@ -147,6 +156,9 @@ parfor i=1:num_inst % Parallelize loop across separate threads, since this could
         else
             display(['Something went wrong! x = ' num2str(x)]);
         end
+        
+        %% Now rank the candidate messages by some scoring metric
+        % TODO
     end        
 end
 

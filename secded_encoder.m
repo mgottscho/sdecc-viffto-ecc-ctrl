@@ -1,7 +1,9 @@
 % SEC-DED Encoder
 %
 % Input arguments:
-%   G --                      Matrix: kxn decimal matrix with 0 or 1 entries that corresponds to a SECDED generator matrix
+%   message --         String: 1xk character array, each entry is '0' or
+%   '1'
+%   G --               Matrix: kxn decimal matrix with 0 or 1 entries that corresponds to a SECDED generator matrix
 %
 % Returns:
 %   codeword --        String: 1xn character array, each entry is '0' or '1' UNLESS encoding fails, in which case it is repeated 'X'
