@@ -419,7 +419,7 @@ parfor i=1:num_inst % Parallelize loop across separate threads, since this could
             end
             
             % Find highest frequency mneumonic
-            if rel_freq_mneumonic > highest_rel_freq_mneumonic
+            if rel_freq_mneumonic >= highest_rel_freq_mneumonic
                highest_rel_freq_mneumonic = rel_freq_mneumonic;
                target_mneumonic = mneumonic;
             end
