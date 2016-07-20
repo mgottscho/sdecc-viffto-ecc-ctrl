@@ -47,7 +47,7 @@ r = n-k;
 %pctconfig('preservejobs', true);
 %mypool = parpool(n_threads);
 
-%% Read instructions as bit-strings from file
+%% Read data under test as bit-strings from file
 display('Reading inputs...');
 fid = fopen(input_filename);
 file_contents = textscan(fid, '%s', 'Delimiter', ',');
@@ -101,9 +101,11 @@ results_candidate_messages = NaN(num_words,num_error_patterns); % Init
 success = NaN(num_words, num_error_patterns); % Init
 
 for i=1:num_words % Parallelize loop across separate threads, since this could take a long time. Each word is a totally independent procedure to perform.
-    %% Get the "message," which is the original word, i.e., the ground truth from input file.
-    message_hex = sampled_trace_cachelines_hex{i,sampled_blockpos_indices(i)};
-    message_bin = sampled_trace_cachelines_bin{i,sampled_blockpos_indices(i)};
+    %% Get the cacheline and "message," which is the original word, i.e., the ground truth from input file.
+    cacheline_hex  = sampled_trace_cachelines_hex{i,:};
+    cacheline_bin  = sampled_trace_cachelines_bin{i,:};
+    message_hex = cacheline_hex{sampled_blockpos_indices(i)};
+    message_bin = cacheline_bin{sampled_blockpos_indices(i)};
     
     %% Progress indicator
     % This will not show accurate progress if the loop is parallelized
@@ -111,7 +113,6 @@ for i=1:num_words % Parallelize loop across separate threads, since this could t
     display(['Word # ' num2str(i) ' is index ' num2str(sampled_cacheline_indices(i)) ' cacheline in the program, block position ' num2str(sampled_blockpos_indices(i)) '. hex: ' message_hex]);
     
     %% Encode the message.
-    message_bin;
     codeword = secded_encoder(message_bin,G);
     
     %% Iterate over all possible 2-bit error patterns.
@@ -157,8 +158,34 @@ for i=1:num_words % Parallelize loop across separate threads, since this could t
             display(['Something went wrong! x = ' num2str(x)]);
         end
         
-        %% Now rank the candidate messages by some scoring metric
-        % TODO
+        %% Now compute scores for each candidate message
+        % For each candidate message, compute the average Hamming distance to each of its neighboring words in the cacheline
+        % For Hamming distance metric, the score can take a range of [0,k], where the score is the average Hamming distance in bits.
+        % FIXME: not yet tested this part
+        candidate_correct_message_scores = NaN(size(candidate_correct_messages,1),1); % Init scores
+        for x=1:size(candidate_correct_messages,1) % For each candidate message
+            score = 0;
+            for blockpos=1:words_per_block % For each message in the cacheline (need to skip the message under test)
+                if blockpos ~= sampled_blockpos_indices(i) % Skip the message under test, its score will be NaN
+                   score = score + my_hamming_dist(candidate_correct_messages(x,:),cacheline_bin{blockpos});
+                end
+            end
+            score = score/(words_per_block-1);
+            candidate_correct_message_scores(x) = score;
+        end
+
+        %% Now we have scores, let's rank and choose the best candidate message.
+        % FIXME: not yet tested this part
+        target_message_index = NaN;
+        target_message_score = Inf;
+        for x=1:size(candidate_correct_message_scores,1) % For each candidate message score
+           if candidate_correct_message_scores(x) < target_message_score
+               target_message_index = x;
+               target_message_score = candidate_correct_message_scores(x);
+           end
+        end
+
+        % TODO: continue working here.
     end        
 end
 
