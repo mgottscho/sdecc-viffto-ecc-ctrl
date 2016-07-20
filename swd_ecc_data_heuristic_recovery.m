@@ -184,8 +184,19 @@ for i=1:num_words % Parallelize loop across separate threads, since this could t
                target_message_score = candidate_correct_message_scores(x);
            end
         end
+        
+        %% Store results of the number of candidate correct messages for this data/error pattern pair
+        results_candidate_messages(i,j) = num_candidate_messages;
 
-        % TODO: continue working here.
+        %% Compute whether we got the correct answer or not for this data/error pattern pairing
+        % FIXME: not yet tested this part
+        if target_message_index == sampled_blockpos_indices(i) % Success!
+            success(i,j) = 1;
+        else % Failed to correct error -- corrupted recovery
+            success(i,j) = 0;
+        end
+
+        %% TODO: Compute whether we would have crashed instead
     end        
 end
 
