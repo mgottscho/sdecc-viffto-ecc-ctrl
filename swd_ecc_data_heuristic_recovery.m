@@ -44,8 +44,8 @@ code_type
 r = n-k;
 
 %% Set up parallel computing
-%pctconfig('preservejobs', true);
-%mypool = parpool(n_threads);
+pctconfig('preservejobs', true);
+mypool = parpool(n_threads);
 
 %% Read data under test as bit-strings from file
 display('Reading inputs...');
@@ -100,10 +100,10 @@ display('Evaluating SWD-ECC...');
 results_candidate_messages = NaN(num_words,num_error_patterns); % Init
 success = NaN(num_words, num_error_patterns); % Init
 
-for i=1:num_words % Parallelize loop across separate threads, since this could take a long time. Each word is a totally independent procedure to perform.
+parfor i=1:num_words % Parallelize loop across separate threads, since this could take a long time. Each word is a totally independent procedure to perform.
     %% Get the cacheline and "message," which is the original word, i.e., the ground truth from input file.
-    cacheline_hex  = sampled_trace_cachelines_hex{i,:};
-    cacheline_bin  = sampled_trace_cachelines_bin{i,:};
+    cacheline_hex  = sampled_trace_cachelines_hex(i,:);
+    cacheline_bin  = sampled_trace_cachelines_bin(i,:);
     message_hex = cacheline_hex{sampled_blockpos_indices(i)};
     message_bin = cacheline_bin{sampled_blockpos_indices(i)};
     
@@ -111,6 +111,7 @@ for i=1:num_words % Parallelize loop across separate threads, since this could t
     % This will not show accurate progress if the loop is parallelized
     % across threads with parfor, since they can execute out-of-order
     display(['Word # ' num2str(i) ' is index ' num2str(sampled_cacheline_indices(i)) ' cacheline in the program, block position ' num2str(sampled_blockpos_indices(i)) '. hex: ' message_hex]);
+    cacheline_hex
     
     %% Encode the message.
     codeword = secded_encoder(message_bin,G);
@@ -161,7 +162,6 @@ for i=1:num_words % Parallelize loop across separate threads, since this could t
         %% Now compute scores for each candidate message
         % For each candidate message, compute the average Hamming distance to each of its neighboring words in the cacheline
         % For Hamming distance metric, the score can take a range of [0,k], where the score is the average Hamming distance in bits.
-        % FIXME: not yet tested this part
         candidate_correct_message_scores = NaN(size(candidate_correct_messages,1),1); % Init scores
         for x=1:size(candidate_correct_messages,1) % For each candidate message
             score = 0;
@@ -174,8 +174,10 @@ for i=1:num_words % Parallelize loop across separate threads, since this could t
             candidate_correct_message_scores(x) = score;
         end
 
+        %candidate_correct_messages
+        %candidate_correct_message_scores
+
         %% Now we have scores, let's rank and choose the best candidate message.
-        % FIXME: not yet tested this part
         target_message_index = NaN;
         target_message_score = Inf;
         for x=1:size(candidate_correct_message_scores,1) % For each candidate message score
@@ -186,18 +188,22 @@ for i=1:num_words % Parallelize loop across separate threads, since this could t
         end
         
         %% Store results of the number of candidate correct messages for this data/error pattern pair
-        results_candidate_messages(i,j) = num_candidate_messages;
+        results_candidate_messages(i,j) = size(candidate_correct_messages,1);
 
         %% Compute whether we got the correct answer or not for this data/error pattern pairing
-        % FIXME: not yet tested this part
         if target_message_index == sampled_blockpos_indices(i) % Success!
             success(i,j) = 1;
         else % Failed to correct error -- corrupted recovery
             success(i,j) = 0;
         end
 
+        %success(i,j)
+
+        %break
+
         %% TODO: Compute whether we would have crashed instead
     end        
+    %break
 end
 
 %% Save all variables
@@ -207,3 +213,5 @@ display('Done!');
 
 %% Shut down parallel computing pool
 delete(mypool);
+
+end
