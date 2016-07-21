@@ -9,7 +9,7 @@ NUM_INST=$6
 INPUT_FILE=$7
 OUTPUT_FILE=$8
 NUM_THREADS=$9
-CODE_TYPE=$10
+CODE_TYPE=${10}
 
 # Library paths are for running on Hoffman2
 LD_PRELOAD=$GCC5/lib64/libstdc++.so.6 LD_LIBRARY_PATH=$MATLAB/bin/glnxa64:$MATLAB/runtime/glnxa64:$LD_LIBRARY_PATH $BINARY_LOCATION/swd_ecc_inst_heuristic_recovery $ISA $BENCHMARK $N $K $NUM_INST $INPUT_FILE $OUTPUT_FILE $NUM_THREADS $CODE_TYPE
