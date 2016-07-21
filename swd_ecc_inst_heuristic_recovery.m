@@ -12,7 +12,7 @@ function swd_ecc_inst_heuristic_recovery(architecture, benchmark, n, k, num_inst
 % the X candidate messages are valid instructions.
 %
 % Input arguments:
-%   architecture --     String: '[mips|alpha|riscv]'
+%   architecture --     String: '[mips|alpha|rv64g]'
 %   benchmark --        String
 %   n --                String: '[39|72]'
 %   k --                String: '[32|64]'
@@ -283,10 +283,10 @@ parfor i=1:num_inst % Parallelize loop across separate threads, since this could
         [status, decoderOutput] = MyMipsDecoder(message_hex);
     elseif strcmp(architecture,'alpha') == 1
         [status, decoderOutput] = MyAlphaDecoder(message_hex);
-    elseif strcmp(architecture,'riscv') == 1
-        [status, decoderOutput] = MyRiscvDecoder(message_hex);
+    elseif strcmp(architecture,'rv64g') == 1
+        [status, decoderOutput] = MyRv64gDecoder(message_hex);
     else
-        display('ERROR! Supported ISAs are mips, alpha, and riscv');
+        display('ERROR! Supported ISAs are mips, alpha, and rv64g');
         status = -1;
         decoderOutput = '';
 %        exit(1);
@@ -371,10 +371,10 @@ parfor i=1:num_inst % Parallelize loop across separate threads, since this could
                     [status, decoderOutput] = MyMipsDecoder(message_hex);
                 elseif strcmp(architecture,'alpha') == 1
                     [status, decoderOutput] = MyAlphaDecoder(message_hex);
-                elseif strcmp(architecture,'riscv') == 1
-                    [status, decoderOutput] = MyRiscvDecoder(message_hex);
+                elseif strcmp(architecture,'rv64g') == 1
+                    [status, decoderOutput] = MyRv64gDecoder(message_hex);
                 else
-                    display('ERROR! Supported ISAs are mips, alpha, and riscv');
+                    display('ERROR! Supported ISAs are mips, alpha, and rv64g');
                     status = -1;
                     decoderOutput = '';
             %        exit(1);
