@@ -20,7 +20,7 @@ function swd_ecc_inst_heuristic_recovery(architecture, benchmark, n, k, num_inst
 %   input_filename --   String
 %   output_filename --  String
 %   n_threads --        String: '[1|2|3|...]'
-%   code_type --        String: '[hamming|pi]'
+%   code_type --        String: '[hsiao|davydov1991]'
 %
 % Returns:
 %   Nothing.

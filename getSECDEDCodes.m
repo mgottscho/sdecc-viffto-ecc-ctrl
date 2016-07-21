@@ -4,7 +4,7 @@ function [G, H] = getSECDEDCodes(n,code_type)
 %
 % Input arguments:
 %   n --                Scalar: [39|72]
-%   code_type --        String: '[hamming|pi]'
+%   code_type --        String: '[hsiao1970|davydov1991]'
 %
 % Returns:
 %   G --                Matrix: k x n over GF(2)
@@ -21,7 +21,7 @@ function [G, H] = getSECDEDCodes(n,code_type)
     end
 
     %% We support Hamming (Hsiao) and Pi codes
-    if strcmp(code_type,'hamming') ~= 1 && strcmp(code_type,'pi') ~= 1
+    if strcmp(code_type,'hsiao1970') ~= 1 && strcmp(code_type,'davydov1991') ~= 1
        G=0;
        H=0;
        return;
@@ -29,7 +29,7 @@ function [G, H] = getSECDEDCodes(n,code_type)
     
     %% n == 8 setup
     if n == 8
-        if strcmp(code_type,'hamming') == 1
+        if strcmp(code_type,'hsiao1970') == 1
             % Hsiao code (Hsiao1970)
             % generator matrix
             G = [1 1 1 0 0 0 0 1
@@ -51,7 +51,7 @@ function [G, H] = getSECDEDCodes(n,code_type)
     
     %% n == 39 setup
     if n == 39
-        if strcmp(code_type,'hamming') == 1
+        if strcmp(code_type,'hsiao1970') == 1
             % Hsiao code (Hsiao1970)
             Gp39 = [
                 1 0 0 0 0 1 1
@@ -153,7 +153,7 @@ function [G, H] = getSECDEDCodes(n,code_type)
     
     %% n == 72 setup
     if n == 72
-        if strcmp(code_type,'hamming') % Hsiao1970
+        if strcmp(code_type,'hsiao1970') % Hsiao1970
              Gp72 = [
              1     1     0     1     0     0     0     0
              1     1     0     1     1     1     0     0
