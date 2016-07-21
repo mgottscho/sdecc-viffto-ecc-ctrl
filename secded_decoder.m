@@ -16,7 +16,7 @@
 % Input arguments:
 %   received_codeword --      String: 1xn character array, each entry is '0' or '1'
 %   H --                      Matrix: (n-k)xn decimal matrix with 0 or 1 entries that corresponds to a SECDED parity-check matrix
-%   code_type --              String: '[hamming|pi]'
+%   code_type --              String: '[hsiao1970|davydov1991]'
 %
 % Returns:
 %   decoded_message --        String: 1xk character array, each entry is '0' or '1' UNLESS decoding fails, in which case it is repeated 'X' and num_error_bits is Inf
@@ -37,7 +37,7 @@ function [decoded_message, num_error_bits] = secded_decoder(received_codeword, H
 
    %% Input validation
    input_valid = 0;
-   if ((n == 39 && k == 32) || (n == 72 && k == 64) || (n == 8 && k == 4)) && (strcmp(code_type,'hamming') == 1 || strcmp(code_type,'pi') == 1) && (sum(size(received_codeword) == [1,n]) == 2)
+   if ((n == 39 && k == 32) || (n == 72 && k == 64) || (n == 8 && k == 4)) && (strcmp(code_type,'hsiao1970') == 1 || strcmp(code_type,'davydov1991') == 1) && (sum(size(received_codeword) == [1,n]) == 2)
            input_valid = 1;
    end
 
@@ -57,11 +57,11 @@ function [decoded_message, num_error_bits] = secded_decoder(received_codeword, H
       num_error_bits = 0;
            
    %% CASE 1: HSIAO ONLY: Syndrome is even, so there are an even # of errors. Maximum likelihood decoding means we interpret as 2-bit error.
-   elseif strcmp(code_type,'hamming') == 1 && mod(sum(s),2) == 0
+   elseif strcmp(code_type,'hsiao1970') == 1 && mod(sum(s),2) == 0
       num_error_bits = 2;
    
    %% CASE 2: Pi code OR Hsiao code when syndrome is odd, so there are an odd # of errors. Usually this is a single bit error, but in some cases SECDED can detect 3-bit errors.
-   elseif strcmp(code_type,'pi') == 1 || mod(sum(s),2) == 1         
+   elseif strcmp(code_type,'davydov1991') == 1 || mod(sum(s),2) == 1         
       %% Attempt to find bit position of the error so it can be corrected
       notfound = 1;
       for i=1:n          
@@ -73,7 +73,7 @@ function [decoded_message, num_error_bits] = secded_decoder(received_codeword, H
       end
 
       if notfound == 1 % Detected but not corrected error
-         if strcmp(code_type,'hamming') == 1 % In Hsiao code, this means detected triple-bit error
+         if strcmp(code_type,'hsiao1970') == 1 % In Hsiao code, this means detected triple-bit error
              num_error_bits = 3;
          else % In Pi code, this could be either 2-bit or 3-bit detected error but we can't tell the difference since it isn't strictly odd-weight code. We default to assuming 2-bit error.
              num_error_bits = 2; 
