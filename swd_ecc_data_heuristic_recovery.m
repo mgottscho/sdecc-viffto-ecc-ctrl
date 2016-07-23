@@ -13,7 +13,7 @@ function swd_ecc_data_heuristic_recovery(architecture, benchmark, n, k, num_word
 % the X candidate messages was the most likely one to recover.
 %
 % Input arguments:
-%   architecture --     String: '[mips|alpha|riscv]'
+%   architecture --     String: '[mips|alpha|rv64g]'
 %   benchmark --        String
 %   n --                String: '[39|72]'
 %   k --                String: '[32|64]'
@@ -53,15 +53,15 @@ fid = fopen(input_filename);
 file_contents = textscan(fid, '%s', 'Delimiter', ',');
 fclose(fid);
 file_contents = file_contents{1};
-file_contents = reshape(file_contents, (8+words_per_block), size(file_contents,1)/(8+words_per_block))';
+file_contents = reshape(file_contents, (9+words_per_block), size(file_contents,1)/(9+words_per_block))';
 %trace_hex = textread(input_filename, '%8c');
-trace_paddr = char(file_contents(:,3));
-trace_blkpos = char(file_contents(:,8));
+trace_paddr = char(file_contents(:,4));
+trace_blkpos = char(file_contents(:,9));
 trace_cachelines_hex = cell(size(file_contents,1),words_per_block);
 trace_cachelines_bin = cell(size(file_contents,1),words_per_block);
 for i=1:size(file_contents,1)
     for j=1:words_per_block
-        trace_cachelines_hex{i,j} = char(file_contents(i,8+j));
+        trace_cachelines_hex{i,j} = char(file_contents(i,9+j));
         tmp = trace_cachelines_hex{i,j};
         trace_cachelines_hex{i,j} = tmp(1,3:end);
         trace_cachelines_bin{i,j} = my_hex2bin(trace_cachelines_hex{i,j});
@@ -160,24 +160,36 @@ parfor i=1:num_words % Parallelize loop across separate threads, since this coul
         end
         
         %% Now compute scores for each candidate message
+        % HAMMING METRIC
         % For each candidate message, compute the average Hamming distance to each of its neighboring words in the cacheline
         % For Hamming distance metric, the score can take a range of [0,k], where the score is the average Hamming distance in bits.
+        %candidate_correct_message_scores = NaN(size(candidate_correct_messages,1),1); % Init scores
+        %for x=1:size(candidate_correct_messages,1) % For each candidate message
+        %    score = 0;
+        %    for blockpos=1:words_per_block % For each message in the cacheline (need to skip the message under test)
+        %        if blockpos ~= sampled_blockpos_indices(i) % Skip the message under test, its score will be NaN
+        %           score = score + my_hamming_dist(candidate_correct_messages(x,:),cacheline_bin{blockpos});
+        %        end
+        %    end
+        %    score = score/(words_per_block-1);
+        %    candidate_correct_message_scores(x) = score;
+        %end
+        
+        % LONGEST-0/1s METRIC
+        % For each candidate message, compute the size of the longest sequence of consecutive 0s or 1s. The score is k - length of sequence, so that lower is better.
+        % The score can take a range of [0,k], where the score is k - length of longest consecutive 0s or 1s in bits
+        % Ignore the values of nearby words in the cache line.
         candidate_correct_message_scores = NaN(size(candidate_correct_messages,1),1); % Init scores
         for x=1:size(candidate_correct_messages,1) % For each candidate message
-            score = 0;
-            for blockpos=1:words_per_block % For each message in the cacheline (need to skip the message under test)
-                if blockpos ~= sampled_blockpos_indices(i) % Skip the message under test, its score will be NaN
-                   score = score + my_hamming_dist(candidate_correct_messages(x,:),cacheline_bin{blockpos});
-                end
+            score = k - count_longest_run(candidate_correct_messages(x,:));
+            if score < 0 || score > k
+                print(['Error! score for longest 0/1s was ' num2str(score)]);
             end
-            score = score/(words_per_block-1);
             candidate_correct_message_scores(x) = score;
         end
 
-        %candidate_correct_messages
-        %candidate_correct_message_scores
-
-        %% Now we have scores, let's rank and choose the best candidate message.
+        %% Now we have scores, let's rank and choose the best candidate message. LOWER SCORES ARE BETTER.
+        % TODO: how to decide when to crash? need to quantify level of variation or distinguishability between candidates..
         target_message_index = NaN;
         target_message_score = Inf;
         for x=1:size(candidate_correct_message_scores,1) % For each candidate message score
@@ -193,15 +205,20 @@ parfor i=1:num_words % Parallelize loop across separate threads, since this coul
         %% Compute whether we got the correct answer or not for this data/error pattern pairing
         if target_message_index == sampled_blockpos_indices(i) % Success!
             success(i,j) = 1;
+            crash = 0; % FIXME
         else % Failed to correct error -- corrupted recovery
             success(i,j) = 0;
+            crash = 0; % FIXME
         end
 
-        %success(i,j)
-
-        %break
-
-        %% TODO: Compute whether we would have crashed instead
+        %% Compute whether we would have crashed instead
+        if crash == 1
+            could_have_crashed(i,j) = 1;
+            success_with_crash_option(i,j) = ~success(i,j); % If success is 1, then we robbed ourselves of a chance to recover. Otherwise, if success is 0, we saved ourselves from corruption and potential failure!
+        else
+            could_have_crashed(i,j) = 0;
+            success_with_crash_option(i,j) = success(i,j); % If we decide not to crash, success rate is same.
+        end
     end        
     %break
 end
