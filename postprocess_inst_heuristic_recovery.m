@@ -29,16 +29,19 @@ benchmark_names = {
 
 num_benchmarks = size(benchmark_names,1);
 benchmark_successes = NaN(num_inst,num_error_patterns,num_benchmarks);
-
+benchmark_could_have_crashed = NaN(num_inst,num_error_patterns,num_benchmarks);
+benchmark_success_sans_crashes = NaN(num_inst,num_error_patterns,num_benchmarks);
 load(inst_fields_file);
 
 for bench=1:num_benchmarks
     benchmark = benchmark_names{bench};
-    load([input_directory filesep benchmark filesep architecture '-' benchmark '-inst-heuristic-recovery.mat'], 'results_valid_messages', 'success');
+    load([input_directory filesep benchmark filesep architecture '-' benchmark '-inst-heuristic-recovery.mat'], 'results_valid_messages', 'success', 'could_have_crashed', 'success_sans_crashes');
     benchmark_successes(:,:,bench) = success;
-    heuristic_recovery_plot;
-    print(gcf, '-depsc2', [output_directory filesep benchmark filesep architecture '-' benchmark '-inst-heuristic-recovery.eps']);
-    close(gcf);
+    benchmark_could_have_crashed(:,:,bench) = could_have_crashed;
+    benchmark_success_sans_crashes(:,:,bench) = success_sans_crashes;
+    %heuristic_recovery_plot;
+    %print(gcf, '-depsc2', [output_directory filesep benchmark filesep architecture '-' benchmark '-inst-heuristic-recovery.eps']);
+    %close(gcf);
 end
 
 figure;
@@ -63,3 +66,21 @@ set(gca,'YTickLabel', benchmark_names, 'FontSize', 12, 'FontName', 'Arial');
 xlim([0 1]);
 xlabel('Average Rate of Heuristic Recovery', 'FontSize', 12, 'FontName', 'Arial');
 title(['Overall Average Rate of Heuristic Recovery for ' code_type ' (39,32) SECDED on ' architecture ': ' policy ' Policy'],  'FontSize', 12, 'FontName', 'Arial');
+
+avg_benchmark_could_have_crashed = reshape(mean(mean(benchmark_could_have_crashed,1),2), [size(benchmark_could_have_crashed,3),1]);
+figure;
+barh(avg_benchmark_could_have_crashed, 'k');
+ylabel('Benchmark', 'FontSize', 12, 'FontName', 'Arial');
+set(gca,'YTickLabel', benchmark_names, 'FontSize', 12, 'FontName', 'Arial');
+xlim([0 1]);
+xlabel('Average Rate of Crash Opt-Out', 'FontSize', 12, 'FontName', 'Arial');
+title(['Overall Average Rate of Crash Opt-Out for ' code_type ' (39,32) SECDED on ' architecture ': ' policy ' Policy'],  'FontSize', 12, 'FontName', 'Arial');
+
+avg_benchmark_success_sans_crashes = reshape(mean(mean(benchmark_success_sans_crashes,1),2), [size(benchmark_success_sans_crashes,3),1]);
+figure;
+barh(avg_benchmark_success_sans_crashes, 'k');
+ylabel('Benchmark', 'FontSize', 12, 'FontName', 'Arial');
+set(gca,'YTickLabel', benchmark_names, 'FontSize', 12, 'FontName', 'Arial');
+xlim([0 1]);
+xlabel('Average Rate of Success Sans Crashes', 'FontSize', 12, 'FontName', 'Arial');
+title(['Overall Average Rate of Success Sans Crashes for ' code_type ' (39,32) SECDED on ' architecture ': ' policy ' Policy'],  'FontSize', 12, 'FontName', 'Arial');
