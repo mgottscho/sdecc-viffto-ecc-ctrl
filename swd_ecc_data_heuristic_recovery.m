@@ -22,7 +22,7 @@ function swd_ecc_data_heuristic_recovery(architecture, benchmark, n, k, num_word
 %   input_filename --   String
 %   output_filename --  String
 %   n_threads --        String: '[1|2|3|...]'
-%   code_type --        String: '[hamming|pi]'
+%   code_type --        String: '[hsiao1970|davydov1991]'
 %
 % Returns:
 %   Nothing.
@@ -167,7 +167,7 @@ parfor i=1:num_words % Parallelize loop across separate threads, since this coul
         %for x=1:size(candidate_correct_messages,1) % For each candidate message
         %    score = 0;
         %    for blockpos=1:words_per_block % For each message in the cacheline (need to skip the message under test)
-        %        if blockpos ~= sampled_blockpos_indices(i) % Skip the message under test, its score will be NaN
+        %        if blockpos ~= sampled_blockpos_indices(i) % Skip the message under test
         %           score = score + my_hamming_dist(candidate_correct_messages(x,:),cacheline_bin{blockpos});
         %        end
         %    end
@@ -187,6 +187,27 @@ parfor i=1:num_words % Parallelize loop across separate threads, since this coul
             end
             candidate_correct_message_scores(x) = score;
         end
+
+        % DELTA METRIC
+        % NOT YET TESTED
+        % For each candidate message, compute the deltas from it to all the other words in the cacheline, using the candidate message as the base.
+        % The score is the sum of squares of the deltas. FIXME: probable overflow issue?
+        % The score can take a range of [0,MAX_UNSIGNED_INT]. Lower scores are better.
+        %for x=1:size(candidate_correct_messages,1) % For each candidate message
+        %    score = Inf;
+        %    base = my_bin2dec(candidate_correct_messages(x,:)); % Set base. This will be decimal integer value.
+        %    deltas = NaN(words_per_block-1,1); % Init deltas. These will be decimal integer values.
+        %    for blockpos=1:words_per_block % For each message in the cacheline (need to skip the message under test)
+        %        if blockpos ~= sampled_blockpos_indices(i) % Skip the message under test
+        %            deltas(blockpos) = base - my_bin2dec(cacheline_bin{blockpos}); % will be signed decimal integer
+        %        end
+        %    end
+        %    score = sum(deltas.^2); % Sum of squares of deltas
+        %    if score < 0 || score > uint64(-1) % this should be impossible
+        %        display(['Error! Score was ' num2str(score)]);
+        %    end
+        %    candidate_correct_message_scores(x) = score;
+        %end
 
         %% Now we have scores, let's rank and choose the best candidate message. LOWER SCORES ARE BETTER.
         % TODO: how to decide when to crash? need to quantify level of variation or distinguishability between candidates..
