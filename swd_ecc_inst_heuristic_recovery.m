@@ -257,7 +257,7 @@ results_candidate_messages = NaN(num_inst,num_error_patterns); % Init
 results_valid_messages = NaN(num_inst,num_error_patterns); % Init
 success = NaN(num_inst, num_error_patterns); % Init
 could_have_crashed = NaN(num_inst, num_error_patterns); % Init
-success_sans_crashes = NaN(num_inst, num_error_patterns); % Init
+success_with_crash_option = NaN(num_inst, num_error_patterns); % Init
 
 parfor i=1:num_inst % Parallelize loop across separate threads, since this could take a long time. Each instruction is a totally independent procedure to perform.
     %% Get the "message," which is the original instruction, i.e., the ground truth from input file. No instruction dealiasing is applied here.
@@ -436,38 +436,41 @@ parfor i=1:num_inst % Parallelize loop across separate threads, since this could
             end
         end
     
-        highest_rel_freq_rd = 0;
-        target_rd = '';
-        for y=1:size(mneumonic_inst_indices,1)
-            rd = valid_messages_rd{mneumonic_inst_indices(y,1),1};
-            
-            if instruction_rd_hotness.isKey(rd)
-                rel_freq_rd = instruction_rd_hotness(rd);
-            else % This can happen when rd is not used in an instr (NA)
-                rel_freq_rd = 0;
-            end
-            
-            % Find highest frequency rd
-            if rel_freq_rd > highest_rel_freq_rd
-               highest_rel_freq_rd = rel_freq_rd;
-               target_rd = rd;
-            end
-        end
-        
-        % Find indices matching both highest frequency mneumonic and highest frequency rd
-        target_inst_indices = zeros(1,1);
-        z=1;
-        for y=1:size(mneumonic_inst_indices,1)
-            rd = valid_messages_rd{mneumonic_inst_indices(y,1),1};
-            if strcmp(rd,target_rd) == 1
-                target_inst_indices(z,1) = mneumonic_inst_indices(y,1);
-                z = z+1;
-            end
-        end
+        %highest_rel_freq_rd = 0;
+        %target_rd = '';
+        %for y=1:size(mneumonic_inst_indices,1)
+        %    rd = valid_messages_rd{mneumonic_inst_indices(y,1),1};
+        %    
+        %    if instruction_rd_hotness.isKey(rd)
+        %        rel_freq_rd = instruction_rd_hotness(rd);
+        %    else % This can happen when rd is not used in an instr (NA)
+        %        rel_freq_rd = 0;
+        %    end
+        %    
+        %    % Find highest frequency rd
+        %    if rel_freq_rd > highest_rel_freq_rd
+        %       highest_rel_freq_rd = rel_freq_rd;
+        %       target_rd = rd;
+        %    end
+        %end
+        %
+        %% Find indices matching both highest frequency mneumonic and highest frequency rd
+        %target_inst_indices = zeros(1,1);
+        %z=1;
+        %for y=1:size(mneumonic_inst_indices,1)
+        %    rd = valid_messages_rd{mneumonic_inst_indices(y,1),1};
+        %    if strcmp(rd,target_rd) == 1
+        %        target_inst_indices(z,1) = mneumonic_inst_indices(y,1);
+        %        z = z+1;
+        %    end
+        %end
 
-        if target_inst_indices(1) == 0 % This is OK when rd is not used anywhere in the checked candidates
-            target_inst_indices = mneumonic_inst_indices;
-        end
+        % TEMP: original filter-and-rank approach
+        target_inst_indices = mneumonic_inst_indices;
+
+        %if target_inst_indices(1) == 0 % This is OK when rd is not used anywhere in the checked candidates
+        %    target_inst_indices = mneumonic_inst_indices;
+        %end
 
         crash = 0;
         if target_inst_indices(1) == 0 % sanity check
@@ -494,10 +497,10 @@ parfor i=1:num_inst % Parallelize loop across separate threads, since this could
         %% Compute whether we would have crashed instead
         if crash == 1
             could_have_crashed(i,j) = 1;
-            success_sans_crashes(i,j) = NaN;
+            success_with_crash_option(i,j) = ~success(i,j); % If success is 1, then we robbed ourselves of a chance to recover. Otherwise, if success is 0, we saved ourselves from corruption and potential failure!
         else
             could_have_crashed(i,j) = 0;
-            success_sans_crashes(i,j) = success(i,j);
+            success_with_crash_option(i,j) = success(i,j); % If we decide not to crash, success rate is same.
         end
     end
 end

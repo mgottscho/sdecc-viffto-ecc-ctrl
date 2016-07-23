@@ -30,15 +30,15 @@ benchmark_names = {
 num_benchmarks = size(benchmark_names,1);
 benchmark_successes = NaN(num_inst,num_error_patterns,num_benchmarks);
 benchmark_could_have_crashed = NaN(num_inst,num_error_patterns,num_benchmarks);
-benchmark_success_sans_crashes = NaN(num_inst,num_error_patterns,num_benchmarks);
+benchmark_success_with_crash_option = NaN(num_inst,num_error_patterns,num_benchmarks);
 load(inst_fields_file);
 
 for bench=1:num_benchmarks
     benchmark = benchmark_names{bench};
-    load([input_directory filesep benchmark filesep architecture '-' benchmark '-inst-heuristic-recovery.mat'], 'results_valid_messages', 'success', 'could_have_crashed', 'success_sans_crashes');
+    load([input_directory filesep benchmark filesep architecture '-' benchmark '-inst-heuristic-recovery.mat'], 'results_valid_messages', 'success', 'could_have_crashed', 'success_with_crash_option');
     benchmark_successes(:,:,bench) = success;
     benchmark_could_have_crashed(:,:,bench) = could_have_crashed;
-    benchmark_success_sans_crashes(:,:,bench) = success_sans_crashes;
+    benchmark_success_with_crash_option(:,:,bench) = success_with_crash_option;
     %heuristic_recovery_plot;
     %print(gcf, '-depsc2', [output_directory filesep benchmark filesep architecture '-' benchmark '-inst-heuristic-recovery.eps']);
     %close(gcf);
@@ -76,9 +76,9 @@ xlim([0 1]);
 xlabel('Average Rate of Crash Opt-Out', 'FontSize', 12, 'FontName', 'Arial');
 title(['Overall Average Rate of Crash Opt-Out for ' code_type ' (39,32) SECDED on ' architecture ': ' policy ' Policy'],  'FontSize', 12, 'FontName', 'Arial');
 
-avg_benchmark_success_sans_crashes = reshape(mean(mean(benchmark_success_sans_crashes,1),2), [size(benchmark_success_sans_crashes,3),1]);
+avg_benchmark_success_with_crash_option = reshape(mean(mean(benchmark_success_with_crash_option,1),2), [size(benchmark_success_with_crash_option,3),1]);
 figure;
-barh(avg_benchmark_success_sans_crashes, 'k');
+barh(avg_benchmark_success_with_crash_option, 'k');
 ylabel('Benchmark', 'FontSize', 12, 'FontName', 'Arial');
 set(gca,'YTickLabel', benchmark_names, 'FontSize', 12, 'FontName', 'Arial');
 xlim([0 1]);

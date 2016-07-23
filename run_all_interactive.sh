@@ -19,7 +19,7 @@ SPEC_BENCHMARKS="gobmk lbm libquantum milc namd omnetpp sjeng soplex specrand998
 N=39
 K=32
 NUM_INST=1000
-NUM_THREADS=10
+NUM_THREADS=$(cat /proc/cpuinfo | grep ^processor | wc -l ) 
 CODE_TYPE=davydov1991
 
 INPUT_DIRECTORY=~/project-puneet/swd_ecc_input/$ISA
