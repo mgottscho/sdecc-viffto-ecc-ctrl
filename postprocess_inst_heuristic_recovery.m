@@ -1,14 +1,14 @@
 %% This script automates the post-processing and plotting of instruction heuristic recovery rates for each benchmark, and overall trend
 % Author: Mark Gottscho <mgottscho@ucla.edu>
 
-input_directory = '/Users/Mark/Dropbox/ECCGroup/data/instruction-mixes/rv64g/post-processed/davydov-code/random-sampling/2016-7-18 to 2016-7-21 rv64g 1000inst';
+input_directory = '/Users/Mark/Dropbox/ECCGroup/data/instruction-mixes/rv64g/post-processed/davydov-code/random-sampling/2016-7-22 to 2016-7-23 rv64g 1000inst filter-rank';
 output_directory = input_directory;
 inst_fields_file = '/Users/Mark/Dropbox/ECCGroup/data/instruction-mixes/rv64g/post-processed/rv64g_inst_field_bitmasks.mat';
 num_inst = 1000;
 num_error_patterns = 741;
 architecture = 'rv64g';
 code_type = 'davydov1991';
-policy = 'Filter-Rank-Filter-Rank';
+policy = 'Filter-Rank';
 benchmark_names = {
     'bzip2',
     'gobmk',
@@ -39,9 +39,9 @@ for bench=1:num_benchmarks
     benchmark_successes(:,:,bench) = success;
     benchmark_could_have_crashed(:,:,bench) = could_have_crashed;
     benchmark_success_with_crash_option(:,:,bench) = success_with_crash_option;
-    %heuristic_recovery_plot;
-    %print(gcf, '-depsc2', [output_directory filesep benchmark filesep architecture '-' benchmark '-inst-heuristic-recovery.eps']);
-    %close(gcf);
+    heuristic_recovery_plot;
+    print(gcf, '-depsc2', [output_directory filesep benchmark filesep architecture '-' benchmark '-inst-heuristic-recovery.eps']);
+    close(gcf);
 end
 
 figure;
@@ -56,7 +56,7 @@ set(gca, 'FontSize', 12, 'FontName', 'Arial');
 ylabel('Average Rate of Heuristic Recovery', 'FontSize', 12, 'FontName', 'Arial');
 set(gca, 'FontSize', 12, 'FontName', 'Arial');
 title(['Average Rate of Heuristic Recovery for ' code_type ' (39,32) SECDED on ' architecture ': ' policy ' Policy'],  'FontSize', 12, 'FontName', 'Arial');
-
+print(gcf, '-depsc2', [output_directory filesep 'overall_recovery.eps']);
 
 avg_benchmark_successes = reshape(mean(mean(benchmark_successes,1),2), [size(benchmark_successes,3),1]);
 figure;
@@ -66,6 +66,7 @@ set(gca,'YTickLabel', benchmark_names, 'FontSize', 12, 'FontName', 'Arial');
 xlim([0 1]);
 xlabel('Average Rate of Heuristic Recovery', 'FontSize', 12, 'FontName', 'Arial');
 title(['Overall Average Rate of Heuristic Recovery for ' code_type ' (39,32) SECDED on ' architecture ': ' policy ' Policy'],  'FontSize', 12, 'FontName', 'Arial');
+print(gcf, '-depsc2', [output_directory filesep 'overall_recovery_avg.eps']);
 
 avg_benchmark_could_have_crashed = reshape(mean(mean(benchmark_could_have_crashed,1),2), [size(benchmark_could_have_crashed,3),1]);
 figure;
@@ -75,6 +76,7 @@ set(gca,'YTickLabel', benchmark_names, 'FontSize', 12, 'FontName', 'Arial');
 xlim([0 1]);
 xlabel('Average Rate of Crash Opt-Out', 'FontSize', 12, 'FontName', 'Arial');
 title(['Overall Average Rate of Crash Opt-Out for ' code_type ' (39,32) SECDED on ' architecture ': ' policy ' Policy'],  'FontSize', 12, 'FontName', 'Arial');
+print(gcf, '-depsc2', [output_directory filesep 'overall_could_have_crashed_avg.eps']);
 
 avg_benchmark_success_with_crash_option = reshape(mean(mean(benchmark_success_with_crash_option,1),2), [size(benchmark_success_with_crash_option,3),1]);
 figure;
@@ -84,3 +86,4 @@ set(gca,'YTickLabel', benchmark_names, 'FontSize', 12, 'FontName', 'Arial');
 xlim([0 1]);
 xlabel('Average Rate of Success Sans Crashes', 'FontSize', 12, 'FontName', 'Arial');
 title(['Overall Average Rate of Success Sans Crashes for ' code_type ' (39,32) SECDED on ' architecture ': ' policy ' Policy'],  'FontSize', 12, 'FontName', 'Arial');
+print(gcf, '-depsc2', [output_directory filesep 'overall_recovery_with_crash_option_avg.eps']);

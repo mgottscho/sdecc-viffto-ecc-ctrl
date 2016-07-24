@@ -21,6 +21,7 @@ K=32
 NUM_INST=1000
 NUM_THREADS=$(cat /proc/cpuinfo | grep ^processor | wc -l ) 
 CODE_TYPE=davydov1991
+POLICY=filter-rank
 
 INPUT_DIRECTORY=~/project-puneet/swd_ecc_input/$ISA
 OUTPUT_DIRECTORY=~/project-puneet/swd_ecc_output/$ISA
@@ -37,7 +38,7 @@ for SPEC_BENCHMARK in $SPEC_BENCHMARKS; do
 	echo "$SPEC_BENCHMARK..."
     INPUT_FILE="$INPUT_DIRECTORY/${ISA}-${SPEC_BENCHMARK}-disassembly-text-section-inst.txt"
     OUTPUT_FILE="$OUTPUT_DIRECTORY/${ISA}-${SPEC_BENCHMARK}-inst-heuristic-recovery.mat"
-	./run_swd_ecc_inst.sh $PWD $ISA $SPEC_BENCHMARK $N $K $NUM_INST $INPUT_FILE $OUTPUT_FILE $NUM_THREADS $CODE_TYPE
+	./run_swd_ecc_inst.sh $PWD $ISA $SPEC_BENCHMARK $N $K $NUM_INST $INPUT_FILE $OUTPUT_FILE $NUM_THREADS $CODE_TYPE $POLICY
 done
 
 echo "Done."

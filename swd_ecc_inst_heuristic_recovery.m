@@ -1,4 +1,4 @@
-function swd_ecc_inst_heuristic_recovery(architecture, benchmark, n, k, num_inst, input_filename, output_filename, n_threads, code_type)
+function swd_ecc_inst_heuristic_recovery(architecture, benchmark, n, k, num_inst, input_filename, output_filename, n_threads, code_type, policy)
 % This function iterates over a series of instructions that are statically extracted from a compiled program.
 % For each instruction, it first checks if it is a valid instruction. If it is, the
 % script encodes the instruction/message in a specified SECDED encoder.
@@ -21,6 +21,7 @@ function swd_ecc_inst_heuristic_recovery(architecture, benchmark, n, k, num_inst
 %   output_filename --  String
 %   n_threads --        String: '[1|2|3|...]'
 %   code_type --        String: '[hsiao|davydov1991]'
+%   policy --           String: '[filter-rank|filter-rank-filter-rank]'
 %
 % Returns:
 %   Nothing.
@@ -37,6 +38,7 @@ input_filename
 output_filename
 n_threads = str2num(n_threads)
 code_type
+policy
 
 r = n-k;
 
@@ -436,41 +438,45 @@ parfor i=1:num_inst % Parallelize loop across separate threads, since this could
             end
         end
     
-        %highest_rel_freq_rd = 0;
-        %target_rd = '';
-        %for y=1:size(mneumonic_inst_indices,1)
-        %    rd = valid_messages_rd{mneumonic_inst_indices(y,1),1};
-        %    
-        %    if instruction_rd_hotness.isKey(rd)
-        %        rel_freq_rd = instruction_rd_hotness(rd);
-        %    else % This can happen when rd is not used in an instr (NA)
-        %        rel_freq_rd = 0;
-        %    end
-        %    
-        %    % Find highest frequency rd
-        %    if rel_freq_rd > highest_rel_freq_rd
-        %       highest_rel_freq_rd = rel_freq_rd;
-        %       target_rd = rd;
-        %    end
-        %end
-        %
-        %% Find indices matching both highest frequency mneumonic and highest frequency rd
-        %target_inst_indices = zeros(1,1);
-        %z=1;
-        %for y=1:size(mneumonic_inst_indices,1)
-        %    rd = valid_messages_rd{mneumonic_inst_indices(y,1),1};
-        %    if strcmp(rd,target_rd) == 1
-        %        target_inst_indices(z,1) = mneumonic_inst_indices(y,1);
-        %        z = z+1;
-        %    end
-        %end
+        if strcmp(policy,'filter-rank-filter-rank') == 1 % match
+            highest_rel_freq_rd = 0;
+            target_rd = '';
+            for y=1:size(mneumonic_inst_indices,1)
+               rd = valid_messages_rd{mneumonic_inst_indices(y,1),1};
 
-        % TEMP: original filter-and-rank approach
-        target_inst_indices = mneumonic_inst_indices;
+               if instruction_rd_hotness.isKey(rd)
+                   rel_freq_rd = instruction_rd_hotness(rd);
+               else % This can happen when rd is not used in an instr (NA)
+                   rel_freq_rd = 0;
+               end
 
-        %if target_inst_indices(1) == 0 % This is OK when rd is not used anywhere in the checked candidates
-        %    target_inst_indices = mneumonic_inst_indices;
-        %end
+               % Find highest frequency rd
+               if rel_freq_rd > highest_rel_freq_rd
+                  highest_rel_freq_rd = rel_freq_rd;
+                  target_rd = rd;
+               end
+            end
+
+            % Find indices matching both highest frequency mneumonic and highest frequency rd
+            target_inst_indices = zeros(1,1);
+            z=1;
+            for y=1:size(mneumonic_inst_indices,1)
+               rd = valid_messages_rd{mneumonic_inst_indices(y,1),1};
+               if strcmp(rd,target_rd) == 1
+                   target_inst_indices(z,1) = mneumonic_inst_indices(y,1);
+                   z = z+1;
+               end
+            end
+            
+            if target_inst_indices(1) == 0 % This is OK when rd is not used anywhere in the checked candidates
+                target_inst_indices = mneumonic_inst_indices;
+            end
+        elseif strcmp(policy, 'filter-rank') == 1 % match
+            target_inst_indices = mneumonic_inst_indices;
+        else % Error
+            print(['Invalid recovery policy: ' policy]);
+        end
+
 
         crash = 0;
         if target_inst_indices(1) == 0 % sanity check
