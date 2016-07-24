@@ -472,7 +472,7 @@ parfor i=1:num_inst % Parallelize loop across separate threads, since this could
                 target_inst_indices = mneumonic_inst_indices;
             end
         elseif strcmp(policy, 'filter-rank') == 1 % match
-            target_inst_indices = mneumonic_inst_indices;
+            target_inst_indices = flipud(mneumonic_inst_indices); % flipud() because in original filter-rank code, we picked the last valid message that matches the most frequent mneumonic/opcode, not the first.
         else % Error
             print(['Invalid recovery policy: ' policy]);
         end

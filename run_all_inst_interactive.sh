@@ -20,7 +20,7 @@ N=39
 K=32
 NUM_INST=1000
 NUM_THREADS=$(cat /proc/cpuinfo | grep ^processor | wc -l ) 
-CODE_TYPE=davydov1991
+CODE_TYPE=hsiao1970
 POLICY=filter-rank
 
 INPUT_DIRECTORY=~/project-puneet/swd_ecc_input/$ISA
