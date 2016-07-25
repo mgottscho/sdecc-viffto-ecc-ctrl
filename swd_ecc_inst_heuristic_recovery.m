@@ -1,4 +1,4 @@
-function swd_ecc_inst_heuristic_recovery(architecture, benchmark, n, k, num_inst, input_filename, output_filename, n_threads, code_type, policy)
+function swd_ecc_inst_heuristic_recovery(architecture, benchmark, n, k, num_inst, input_filename, output_filename, n_threads, code_type, policy, tiebreak_policy)
 % This function iterates over a series of instructions that are statically extracted from a compiled program.
 % For each instruction, it first checks if it is a valid instruction. If it is, the
 % script encodes the instruction/message in a specified SECDED encoder.
@@ -22,6 +22,7 @@ function swd_ecc_inst_heuristic_recovery(architecture, benchmark, n, k, num_inst
 %   n_threads --        String: '[1|2|3|...]'
 %   code_type --        String: '[hsiao|davydov1991]'
 %   policy --           String: '[filter-rank|filter-rank-filter-rank]'
+%   tiebreak_policy --   String: '[pick_first|pick_last|pick_random]'
 %
 % Returns:
 %   Nothing.
@@ -39,6 +40,7 @@ output_filename
 n_threads = str2num(n_threads)
 code_type
 policy
+tiebreak_policy
 
 r = n-k;
 
@@ -472,21 +474,34 @@ parfor i=1:num_inst % Parallelize loop across separate threads, since this could
                 target_inst_indices = mneumonic_inst_indices;
             end
         elseif strcmp(policy, 'filter-rank') == 1 % match
-            target_inst_indices = mneumonic_inst_indices;
+            target_inst_indices = mneumonic_inst_indices; 
         else % Error
             print(['Invalid recovery policy: ' policy]);
         end
 
-
+        % REVELATION 7/24/2016: deterministically choosing the target instruction index has a HUGE effect on recovery rate!!!!!!! We thought this should never happen.
+        % For instance, in original SELSE/DSN work, we always chose the *last* of valid messages as the target. This corresponds to a candidate with trial flips towards the LSB in a codeword.
+        % In the more recent work, we always chose the *first* of valid messages as the target. This corresponds to a candidate with trial flips towards the MSB in a codeword.
+        % The latter strategy performs MUCH better: 60% vs 45% for bzip2 on filter-rank policy, typically. WHY?? We thought they should be equivalent to a random choice...
+        % FIXME and UNDERSTAND
         crash = 0;
         if target_inst_indices(1) == 0 % sanity check
             display('Error! No valid target instruction for recovery found.');
             target_inst_index = -2;
         elseif size(target_inst_indices,1) == 1 % have one recovery target
             target_inst_index = target_inst_indices(1); 
-        else % multiple recovery targets: let it crash
+        else % multiple recovery targets: allowed crash.
             crash = 1;
-            target_inst_index = target_inst_indices(1); % Pick first of remaining targets as a guess
+            if strcmp(tiebreak_policy, 'pick_first') == 1
+                target_inst_index = target_inst_indices(1);
+            elseif strcmp(tiebreak_policy, 'pick_last') == 1
+                target_inst_index = target_inst_indices(size(target_inst_indices,1));
+            elseif strcmp(tiebreak_policy, 'pick_random') == 1
+                target_inst_index = target_inst_indices(randi(size(target_inst_indices,1),1)); % Pick random of remaining targets as a guess. NOTE: see REVELATION above. The ordering apparently matters!
+            else
+                target_inst_index = -1;
+                display(['Error! tiebreak_policy was ' tiebreak_policy]);
+            end
         end
         
         %% Store results of the number of candidate and valid messages for this instruction/error pattern pair
