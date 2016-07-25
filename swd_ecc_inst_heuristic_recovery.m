@@ -22,7 +22,7 @@ function swd_ecc_inst_heuristic_recovery(architecture, benchmark, n, k, num_inst
 %   n_threads --        String: '[1|2|3|...]'
 %   code_type --        String: '[hsiao|davydov1991]'
 %   policy --           String: '[filter-rank|filter-rank-filter-rank]'
-%   tiebreak_policy --   String: '[pick_first|pick_last|random]'
+%   tiebreak_policy --   String: '[pick_first|pick_last|pick_random]'
 %
 % Returns:
 %   Nothing.
@@ -496,7 +496,7 @@ parfor i=1:num_inst % Parallelize loop across separate threads, since this could
                 target_inst_index = target_inst_indices(1);
             elseif strcmp(tiebreak_policy, 'pick_last') == 1
                 target_inst_index = target_inst_indices(size(target_inst_indices,1));
-            elseif strcmp(tiebreak_policy, 'random') == 1
+            elseif strcmp(tiebreak_policy, 'pick_random') == 1
                 target_inst_index = target_inst_indices(randi(size(target_inst_indices,1),1)); % Pick random of remaining targets as a guess. NOTE: see REVELATION above. The ordering apparently matters!
             else
                 target_inst_index = -1;
