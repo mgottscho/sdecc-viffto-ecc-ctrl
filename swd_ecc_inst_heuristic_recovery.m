@@ -255,7 +255,7 @@ sampled_trace_bin = trace_bin(sampled_inst_indices,:);
 sampled_trace_inst_disassembly = trace_inst_disassembly(sampled_inst_indices,:);
 
 display(['Number of randomly-sampled instructions to test SWD-ECC: ' num2str(num_inst)]);
-display('Evaluating filter-and-rank SWD-ECC...');
+display('Evaluating SWD-ECC...');
 
 results_candidate_messages = NaN(num_inst,num_error_patterns); % Init
 results_valid_messages = NaN(num_inst,num_error_patterns); % Init
