@@ -472,21 +472,25 @@ parfor i=1:num_inst % Parallelize loop across separate threads, since this could
                 target_inst_indices = mneumonic_inst_indices;
             end
         elseif strcmp(policy, 'filter-rank') == 1 % match
-            target_inst_indices = flipud(mneumonic_inst_indices); % flipud() because in original filter-rank code, we picked the last valid message that matches the most frequent mneumonic/opcode, not the first.
+            target_inst_indices = mneumonic_inst_indices; 
         else % Error
             print(['Invalid recovery policy: ' policy]);
         end
 
-
+        % REVELATION 7/24/2016: deterministically choosing the target instruction index has a HUGE effect on recovery rate!!!!!!! We thought this should never happen.
+        % For instance, in original SELSE/DSN work, we always chose the *last* of valid messages as the target. This corresponds to a candidate with trial flips towards the LSB in a codeword.
+        % In the more recent work, we always chose the *first* of valid messages as the target. This corresponds to a candidate with trial flips towards the MSB in a codeword.
+        % The latter strategy performs MUCH better: 60% vs 45% for bzip2 on filter-rank policy, typically. WHY?? We thought they should be equivalent to a random choice...
+        % FIXME and UNDERSTAND
         crash = 0;
         if target_inst_indices(1) == 0 % sanity check
             display('Error! No valid target instruction for recovery found.');
             target_inst_index = -2;
         elseif size(target_inst_indices,1) == 1 % have one recovery target
             target_inst_index = target_inst_indices(1); 
-        else % multiple recovery targets: let it crash
+        else % multiple recovery targets: allowed crash.
             crash = 1;
-            target_inst_index = target_inst_indices(1); % Pick first of remaining targets as a guess
+            target_inst_index = target_inst_indices(randi(size(target_inst_indices,1),1)); % Pick random of remaining targets as a guess. NOTE: see REVELATION above. The ordering apparently matters!
         end
         
         %% Store results of the number of candidate and valid messages for this instruction/error pattern pair
