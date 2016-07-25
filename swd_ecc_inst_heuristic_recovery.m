@@ -1,4 +1,4 @@
-function swd_ecc_inst_heuristic_recovery(architecture, benchmark, n, k, num_inst, input_filename, output_filename, n_threads, code_type, policy)
+function swd_ecc_inst_heuristic_recovery(architecture, benchmark, n, k, num_inst, input_filename, output_filename, n_threads, code_type, policy, tiebreak_policy)
 % This function iterates over a series of instructions that are statically extracted from a compiled program.
 % For each instruction, it first checks if it is a valid instruction. If it is, the
 % script encodes the instruction/message in a specified SECDED encoder.
@@ -22,6 +22,7 @@ function swd_ecc_inst_heuristic_recovery(architecture, benchmark, n, k, num_inst
 %   n_threads --        String: '[1|2|3|...]'
 %   code_type --        String: '[hsiao|davydov1991]'
 %   policy --           String: '[filter-rank|filter-rank-filter-rank]'
+%   tiebreak_policy --   String: '[pick_first|pick_last|random]'
 %
 % Returns:
 %   Nothing.
@@ -39,6 +40,7 @@ output_filename
 n_threads = str2num(n_threads)
 code_type
 policy
+tiebreak_policy
 
 r = n-k;
 
@@ -490,7 +492,16 @@ parfor i=1:num_inst % Parallelize loop across separate threads, since this could
             target_inst_index = target_inst_indices(1); 
         else % multiple recovery targets: allowed crash.
             crash = 1;
-            target_inst_index = target_inst_indices(randi(size(target_inst_indices,1),1)); % Pick random of remaining targets as a guess. NOTE: see REVELATION above. The ordering apparently matters!
+            if strcmp(tiebreak_policy, 'pick_first') == 1
+                target_inst_index = target_inst_indices(1);
+            elseif strcmp(tiebreak_policy, 'pick_last') == 1
+                target_inst_index = target_inst_indices(size(target_inst_indices,1));
+            elseif strcmp(tiebreak_policy, 'random') == 1
+                target_inst_index = target_inst_indices(randi(size(target_inst_indices,1),1)); % Pick random of remaining targets as a guess. NOTE: see REVELATION above. The ordering apparently matters!
+            else
+                target_inst_index = -1;
+                display(['Error! tiebreak_policy was ' tiebreak_policy]);
+            end
         end
         
         %% Store results of the number of candidate and valid messages for this instruction/error pattern pair
