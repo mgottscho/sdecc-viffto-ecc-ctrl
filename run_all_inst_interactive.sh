@@ -20,7 +20,7 @@ N=39
 K=32
 NUM_INST=1000
 NUM_THREADS=$(cat /proc/cpuinfo | grep ^processor | wc -l ) 
-CODE_TYPE=hsiao1970
+CODE_TYPE=davydov1991
 POLICY=filter-rank-filter-rank
 TIEBREAK_POLICY=pick_first
 
