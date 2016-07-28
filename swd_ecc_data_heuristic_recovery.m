@@ -115,7 +115,6 @@ parfor i=1:num_words % Parallelize loop across separate threads, since this coul
     % This will not show accurate progress if the loop is parallelized
     % across threads with parfor, since they can execute out-of-order
     display(['Word # ' num2str(i) ' is index ' num2str(sampled_cacheline_indices(i)) ' cacheline in the program, block position ' num2str(sampled_blockpos_indices(i)) '. hex: ' message_hex]);
-    cacheline_hex
     
     %% Encode the message.
     codeword = secded_encoder(message_bin,G);
@@ -163,12 +162,12 @@ parfor i=1:num_words % Parallelize loop across separate threads, since this coul
             display(['Something went wrong! x = ' num2str(x)]);
         end
         
+        candidate_correct_message_scores = NaN(size(candidate_correct_messages,1),1); % Init scores
         if strcmp(policy, 'hamming') == 1
             %% Now compute scores for each candidate message
             % HAMMING METRIC
             % For each candidate message, compute the average Hamming distance to each of its neighboring words in the cacheline
             % For Hamming distance metric, the score can take a range of [0,k], where the score is the average Hamming distance in bits.
-            candidate_correct_message_scores = NaN(size(candidate_correct_messages,1),1); % Init scores
             for x=1:size(candidate_correct_messages,1) % For each candidate message
                 score = 0;
                 for blockpos=1:words_per_block % For each message in the cacheline (need to skip the message under test)
@@ -184,7 +183,6 @@ parfor i=1:num_words % Parallelize loop across separate threads, since this coul
             % For each candidate message, compute the size of the longest sequence of consecutive 0s or 1s. The score is k - length of sequence, so that lower is better.
             % The score can take a range of [0,k], where the score is k - length of longest consecutive 0s or 1s in bits
             % Ignore the values of nearby words in the cache line.
-            candidate_correct_message_scores = NaN(size(candidate_correct_messages,1),1); % Init scores
             for x=1:size(candidate_correct_messages,1) % For each candidate message
                 score = k - count_longest_run(candidate_correct_messages(x,:));
                 if score < 0 || score > k
@@ -228,7 +226,7 @@ parfor i=1:num_words % Parallelize loop across separate threads, since this coul
 
         for x=1:size(candidate_correct_message_scores,1) % For each candidate message score
            if candidate_correct_message_scores(x) == min_score
-               min_score_indices = candidate_correct_message_scores(x);
+               min_score_indices = x;
            end
         end
         
@@ -237,13 +235,20 @@ parfor i=1:num_words % Parallelize loop across separate threads, since this coul
         if strcmp(tiebreak_policy, 'pick_first') == 1
             target_message_index = min_score_indices(1);
         elseif strcmp(tiebreak_policy, 'pick_last') == 1
-            target_message_index = min_score_indices(size(target_message_index,1));
+            target_message_index = min_score_indices(size(min_score_indices,1));
         elseif strcmp(tiebreak_policy, 'pick_random') == 1
-            target_message_index = min_score_indices(randi(size(target_message_index,1),1));
+            target_message_index = min_score_indices(randi(size(min_score_indices,1),1));
         else
             target_message_index = -1;
             display(['Error! tiebreak_policy was ' tiebreak_policy]);
         end
+
+        %cacheline_hex
+        %candidate_correct_message_scores
+        %min_score
+        %min_score_indices
+        %sampled_blockpos_indices(i)
+        %target_message_index
 
         
         %% Store results of the number of candidate correct messages for this data/error pattern pair
