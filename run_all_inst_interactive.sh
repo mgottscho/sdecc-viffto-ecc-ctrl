@@ -22,10 +22,10 @@ NUM_INST=1000
 NUM_THREADS=$(cat /proc/cpuinfo | grep ^processor | wc -l ) 
 CODE_TYPE=hsiao1970
 POLICY=filter-rank
-TIEBREAK_POLICY=pick_first
+TIEBREAK_POLICY=pick_last
 
 INPUT_DIRECTORY=~/project-puneet/swd_ecc_input/$ISA
-OUTPUT_DIRECTORY=~/project-puneet/swd_ecc_output/$ISA
+OUTPUT_DIRECTORY=~/project-puneet/swd_ecc_output/$ISA/inst-recovery/$CODE_TYPE/$POLICY/$TIEBREAK_POLICY
 ###############################################################################################
 
 # Prepare directories
