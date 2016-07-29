@@ -477,6 +477,7 @@ parfor i=1:num_inst % Parallelize loop across separate threads, since this could
             target_inst_indices = mneumonic_inst_indices; 
         else % Error
             print(['Invalid recovery policy: ' policy]);
+            target_inst_indices = -1;
         end
 
         % REVELATION 7/24/2016: deterministically choosing the target instruction index has a HUGE effect on recovery rate!!!!!!! We thought this should never happen.
