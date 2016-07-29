@@ -2,7 +2,7 @@
 % Author: Mark Gottscho <mgottscho@ucla.edu>
 % In the end, you want insts and instcounts as output
 
-input_directory = '/Users/Mark/Dropbox/ECCGroup/data/instruction-mixes/rv64g/post-processed/hsiao-code/random-sampling/2016-7-25 rv64g 1000inst filter-rank pick_first';
+input_directory = 'D:\Dropbox\ECCGroup\data\instruction-mixes\rv64g\post-processed\hsiao-code\random-sampling\2016-7-25 rv64g 1000inst filter-rank pick_first';
 dir_contents = dir(input_directory);
 loopvar2=1;
 for loopvar1=1:size(dir_contents,1)

@@ -5,5 +5,5 @@
 insts = instructions.keys()';
 for i=1:size(insts,1)
     inst = instructions(insts{i});
-    instcounts(i) = inst(benchmark)';
+    instcounts(i,1) = inst(benchmark)';
 end
