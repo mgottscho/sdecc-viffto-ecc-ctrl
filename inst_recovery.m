@@ -43,10 +43,30 @@ suggest_to_crash = 0; % Init
 display('Getting ECC encoder and decoder matrices...');
 [G,H] = getSECDEDCodes(n,code_type);
 
-%% Read mnemonic and rd distributions from files now -- TODO
+%% Read mnemonic and rd distributions from files now
 display('Importing static instruction distribution...');
+
+% mnemonic frequency
+fid = fopen(mnemonic_hotness_filename);
+instruction_mnemonic_hotness_file = textscan(fid, '%s', 'Delimiter', ',');
+fclose(fid);
+instruction_mnemonic_hotness_file = instruction_mnemonic_hotness_file{1};
+instruction_mnemonic_hotness_file = reshape(instruction_mnemonic_hotness_file, 2, size(instruction_mnemonic_hotness_file,1)/2)';
 instruction_mnemonic_hotness = containers.Map(); % Init
+for r=2:size(instruction_mnemonic_hotness_file,1)
+    instruction_mnemonic_hotness(instruction_mnemonic_hotness_file{r,1}) = str2double(instruction_mnemonic_hotness_file{r,2});
+end
+
+% rd frequency
+fid = fopen(rd_hotness_filename);
+instruction_rd_hotness_file = textscan(fid, '%s', 'Delimiter', ',');
+fclose(fid);
+instruction_rd_hotness_file = instruction_rd_hotness_file{1};
+instruction_rd_hotness_file = reshape(instruction_rd_hotness_file, 2, size(instruction_rd_hotness_file,1)/2)';
 instruction_rd_hotness = containers.Map(); % Init
+for r=2:size(instruction_rd_hotness_file,1)
+    instruction_rd_hotness(instruction_rd_hotness_file{r,1}) = str2double(instruction_rd_hotness_file{r,2});
+end
 
 %% Encode the original message, then corrupt the codeword with the provided error pattern
 display('Getting the original codeword and generating the received (corrupted) string...');
