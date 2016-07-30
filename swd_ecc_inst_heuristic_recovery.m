@@ -92,6 +92,9 @@ if strcmp(architecture,'alpha') == 1
     total_inst_dealiased = 0;
 end
 
+% FIXME 7/29/2016: We are NOT correctly parsing the register addresses/hotnesses
+% here! Sometimes rd is a jump address, etc. Also, we are accidentally
+% including whitespace as keys
 for i=1:total_num_inst
     message_disassembly = trace_inst_disassembly(i,:);
     arg1 = '';

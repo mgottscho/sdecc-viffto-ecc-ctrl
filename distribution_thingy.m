@@ -15,8 +15,11 @@ for loopvar1=1:size(dir_contents,1)
 end
 
 instructions = containers.Map();
+dest_regs = containers.Map();
 for loopvar1=1:size(mybenchmarks,1)
     load([input_directory filesep mybenchmarks{loopvar1} filesep 'rv64g-' mybenchmarks{loopvar1} '-inst-heuristic-recovery.mat']);
+    
+    %mnemonic
     for loopvar2=1:size(unique_inst)
         inst = unique_inst{loopvar2};
         if ~instructions.isKey(inst)
@@ -29,6 +32,21 @@ for loopvar1=1:size(mybenchmarks,1)
         end
         instmap_perbenchmark(benchmark) = unique_inst_counts(loopvar2);
         instructions(inst) = instmap_perbenchmark;
+    end
+    
+    %rd
+    for loopvar2=1:size(unique_rd)
+        rd = unique_rd{loopvar2};
+        if ~dest_regs.isKey(rd)
+            rdmap_perbenchmark = containers.Map();
+            for loopvar3=1:size(mybenchmarks,1)
+                rdmap_perbenchmark(mybenchmarks{loopvar3}) = 0;
+            end
+        else
+            rdmap_perbenchmark = dest_regs(rd);
+        end
+        rdmap_perbenchmark(benchmark) = unique_rd_counts(loopvar2);
+        dest_regs(rd) = rdmap_perbenchmark;
     end
 
     display(['Finished ' benchmark]);
