@@ -36,7 +36,7 @@ for i=1:size(benchmarks,1)
     codecs_per_benchmark = overall_instruction_codec_count(bm);
     codecs_per_benchmark = codecs_per_benchmark.keys();
     for j=1:size(codecs_per_benchmark,2)
-        codec = codecs_per_benchmark(j);
+        codec = codecs_per_benchmark{j};
         if ~codec_count.isKey(codec)
             codec_count(codec) = 0;
         end
