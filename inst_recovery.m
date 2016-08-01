@@ -1,4 +1,4 @@
-function [original_codeword, received_string, recovered_message, suggest_to_crash] = inst_recovery(architecture, n, k, original_message, error_pattern, code_type, policy, tiebreak_policy, mnemonic_hotness_filename, rd_hotness_filename)
+function [original_codeword, received_string, recovered_message, suggest_to_crash, recovered_successfully] = inst_recovery(architecture, n, k, original_message, error_pattern, code_type, policy, tiebreak_policy, mnemonic_hotness_filename, rd_hotness_filename)
 % This function attempts to heuristically recover from a DUE affecting a single received string.
 % The message is assumed to be an instruction of the given architecture.
 % To compute candidate codewords, we flip a single bit one at a time and decode using specified SECDED decoder..
@@ -22,6 +22,7 @@ function [original_codeword, received_string, recovered_message, suggest_to_cras
 %   received_string -- n-bit string that is corrupted by the bit flips specified by error_pattern
 %   recovered_message -- k-bit message that corresponds to our target for heuristic recovery
 %   suggest_to_crash -- 0 if we are confident in recovery, 1 if we recommend crashing out instead
+%   recovered_successfully -- 1 if we matched original_message, 0 otherwise
 %
 % Author: Mark Gottscho
 % Email: mgottscho@ucla.edu
@@ -147,15 +148,18 @@ for x=1:num_candidate_messages
        candidate_valid_messages(num_valid_messages,:) = message;
        
        % Read disassembly of instruction from string spit back by the instruction decoder
-       output_contents = textscan(decoderOutput, '%s', 'Delimiter', ':');
-       output_contents = output_contents{1};
-       output_contents = reshape(output_contents, 2, size(output_contents,1)/2)';
+       candidate_message_disassembly = textscan(decoderOutput, '%s', 'Delimiter', ':');
+       candidate_message_disassembly = candidate_message_disassembly{1};
+       candidate_message_disassembly = reshape(candidate_message_disassembly, 2, size(candidate_message_disassembly,1)/2)';
 
        % Store disassembly in the list
-       mnemonic = output_contents{4,2};
-       rd = output_contents{6,2};
+       mnemonic = candidate_message_disassembly{4,2};
+       rd = candidate_message_disassembly{6,2};
        valid_messages_mnemonic{num_valid_messages,1} = mnemonic;
        valid_messages_rd{num_valid_messages,1} = rd;
+
+       display(['Candidate valid message: ' message]);
+       candidate_message_disassembly
     end
 end
 
@@ -178,6 +182,9 @@ for x=1:num_valid_messages
     end
 end
 
+target_mnemonic
+highest_rel_freq_mnemonic
+
 % Find indices matching highest frequency mneumonic
 mnemonic_inst_indices = zeros(1,1);
 y=1;
@@ -189,7 +196,7 @@ for x=1:num_valid_messages
     end
 end
 
-target_inst_indices = mnemonic_inst_indices; % By default, targets are finished here unless we do filter-rank-filter-rank policy.
+target_inst_indices = mnemonic_inst_indices % By default, targets are finished here unless we do filter-rank-filter-rank policy.
 
 if strcmp(policy,'filter-rank-filter-rank') == 1 % match
     %% RECOVERY STEP 3 (OPTIONAL): FILTER. Select only the valid messages with the most common mnemonic.
@@ -213,8 +220,11 @@ if strcmp(policy,'filter-rank-filter-rank') == 1 % match
        end
     end
 
+    target_rd
+    highest_rel_freq_rd
+
     %% RECOVERY STEP 4 (OPTIONAL): RANK. Rank the set of valid messages with the most common mnemonic followed by the most common destination register address.
-    display('RECOVERY STEP 3 (OPTIONAL): FILTER. Rank by the most common destination register address...');
+    display('RECOVERY STEP 4 (OPTIONAL): RANK. Rank by the most common destination register address...');
     z=1;
     for y=1:size(mnemonic_inst_indices,1)
        rd = valid_messages_rd{mnemonic_inst_indices(y,1),1};
@@ -256,6 +266,7 @@ else % multiple recovery targets: allowed crash.
 end
 
 %% Final result
-recovered_message = candidate_valid_messages{target_inst_index};
+recovered_message = candidate_valid_messages(target_inst_index,:)
+suggest_to_crash
+recovered_successfully = (strcmp(recovered_message, original_message) == 1)
 
-display(['Done, recovered message is ' recovered_message]);
