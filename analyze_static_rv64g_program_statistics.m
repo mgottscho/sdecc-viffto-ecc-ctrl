@@ -35,15 +35,15 @@ trace_bin = dec2bin(hex2dec(trace_hex),k);
 
 %% Obtain overall static distribution of instructions in the program
 display('Computing static instruction distribution...');
-instruction_mnemonic_hotness = containers.Map(); % Init
-instruction_codec_hotness = containers.Map(); % Init
-instruction_overall_reg_hotness = containers.Map(); % Init
-instruction_rd_hotness = containers.Map(); % Init
-instruction_rs1_hotness = containers.Map(); % Init
-instruction_rs2_hotness = containers.Map(); % Init
-instruction_rs3_hotness = containers.Map(); % Init
-instruction_imm_hotness = containers.Map(); % Init
-instruction_arg_hotness = containers.Map(); % Init
+instruction_mnemonic_count = containers.Map(); % Init
+instruction_codec_count = containers.Map(); % Init
+instruction_overall_reg_count = containers.Map(); % Init
+instruction_rd_count = containers.Map(); % Init
+instruction_rs1_count = containers.Map(); % Init
+instruction_rs2_count = containers.Map(); % Init
+instruction_rs3_count = containers.Map(); % Init
+instruction_imm_count = containers.Map(); % Init
+instruction_arg_count = containers.Map(); % Init
 
 %if strcmp(architecture,'alpha') == 1
 %    total_inst_dealiased = 0;
@@ -52,25 +52,12 @@ instruction_arg_hotness = containers.Map(); % Init
 for i=1:total_num_inst
     %% Decode the instruction
     message_hex = trace_hex(i,:);
-    [status, decoderOutput] = MyRv64gDecoder(message_hex); % NOTE: this will only work if the decoder MEX file is properly compiled for your platform!
+    [legal, mnemonic, codec, rd, rs1, rs2, rs3, imm, arg] = parse_rv64g_decoder_output(message_hex);
     
-    if status == 1 % Illegal instruction
+    if legal == 0 % Illegal instruction
        display(['Found illegal instruction: ' message_hex '. Ignoring.']);
        continue;
     end
-
-    % Parse disassembly of instruction from string spit back by the instruction decoder
-    disassembly = textscan(decoderOutput, '%s', 'Delimiter', ':');
-    disassembly = disassembly{1};
-    disassembly = reshape(disassembly, 2, size(disassembly,1)/2)';
-    mnemonic = disassembly{4,2};
-    codec = disassembly{5,2};
-    rd = disassembly{6,2};
-    rs1 = disassembly{7,2};
-    rs2 = disassembly{8,2};
-    rs3 = disassembly{9,2};
-    imm = disassembly{10,2};
-    arg = disassembly{11,2};
     
     % Check for macros/pseudoinstructions/aliases in Alpha ISA
 %     if strcmp(architecture,'alpha') == 1
@@ -82,101 +69,129 @@ for i=1:total_num_inst
 %         end
 %     end
 
-    %% mnemonic hotness
-    if ~instruction_mnemonic_hotness.isKey(mnemonic)
-        instruction_mnemonic_hotness(mnemonic) = 1;
+    %% mnemonic count
+    if ~instruction_mnemonic_count.isKey(mnemonic)
+        instruction_mnemonic_count(mnemonic) = 1;
     else
-        instruction_mnemonic_hotness(mnemonic) = instruction_mnemonic_hotness(mnemonic)+1;
+        instruction_mnemonic_count(mnemonic) = instruction_mnemonic_count(mnemonic)+1;
     end
     
-    %% codec hotness
+    %% codec count
     if strcmp(rd,'unknown') ~= 1
-        if ~instruction_codec_hotness.isKey(codec)
-            instruction_codec_hotness(codec) = 1;
+        if ~instruction_codec_count.isKey(codec)
+            instruction_codec_count(codec) = 1;
         else
-            instruction_codec_hotness(codec) = instruction_codec_hotness(codec)+1;
+            instruction_codec_count(codec) = instruction_codec_count(codec)+1;
         end
     end
     
-    %% rd hotness
+    %% rd count
     if strcmp(rd,'NA') ~= 1
-        if ~instruction_rd_hotness.isKey(rd)
-            instruction_rd_hotness(rd) = 1;
+        if ~instruction_rd_count.isKey(rd)
+            instruction_rd_count(rd) = 1;
         else
-            instruction_rd_hotness(rd) = instruction_rd_hotness(rd)+1;
+            instruction_rd_count(rd) = instruction_rd_count(rd)+1;
+        end
+        
+        % Also count rd in overall reg count
+        if ~instruction_overall_reg_count.isKey(rd)
+            instruction_overall_reg_count(rd) = 1;
+        else
+            instruction_overall_reg_count(rd) = instruction_overall_reg_count(rd)+1;
         end
     end
     
-    %% rs1 hotness
+    %% rs1 count
     if strcmp(rs1,'NA') ~= 1
-        if ~instruction_rs1_hotness.isKey(rs1)
-            instruction_rs1_hotness(rs1) = 1;
+        if ~instruction_rs1_count.isKey(rs1)
+            instruction_rs1_count(rs1) = 1;
         else
-            instruction_rs1_hotness(rs1) = instruction_rs1_hotness(rs1)+1;
+            instruction_rs1_count(rs1) = instruction_rs1_count(rs1)+1;
+        end
+        
+        % Also count rs1 in overall reg count
+        if ~instruction_overall_reg_count.isKey(rs1)
+            instruction_overall_reg_count(rs1) = 1;
+        else
+            instruction_overall_reg_count(rs1) = instruction_overall_reg_count(rs1)+1;
         end
     end
     
-    %% rs2 hotness
+    %% rs2 count
     if strcmp(rs2,'NA') ~= 1
-        if ~instruction_rs2_hotness.isKey(rs2)
-            instruction_rs2_hotness(rs2) = 1;
+        if ~instruction_rs2_count.isKey(rs2)
+            instruction_rs2_count(rs2) = 1;
         else
-            instruction_rs2_hotness(rs2) = instruction_rs2_hotness(rs2)+1;
+            instruction_rs2_count(rs2) = instruction_rs2_count(rs2)+1;
+        end
+        
+        % Also count rs2 in overall reg count
+        if ~instruction_overall_reg_count.isKey(rs2)
+            instruction_overall_reg_count(rs2) = 1;
+        else
+            instruction_overall_reg_count(rs2) = instruction_overall_reg_count(rs2)+1;
         end
     end
     
-    %% rs3 hotness
+    %% rs3 count
     if strcmp(rs3,'NA') ~= 1
-        if ~instruction_rs3_hotness.isKey(rs3)
-            instruction_rs3_hotness(rs3) = 1;
+        if ~instruction_rs3_count.isKey(rs3)
+            instruction_rs3_count(rs3) = 1;
         else
-            instruction_rs3_hotness(rs3) = instruction_rs3_hotness(rs3)+1;
+            instruction_rs3_count(rs3) = instruction_rs3_count(rs3)+1;
+        end
+        
+        % Also count rs3 in overall reg count
+        if ~instruction_overall_reg_count.isKey(rs3)
+            instruction_overall_reg_count(rs3) = 1;
+        else
+            instruction_overall_reg_count(rs3) = instruction_overall_reg_count(rs3)+1;
         end
     end
     
-    %% imm hotness
+    %% imm count
     if strcmp(imm,'NA') ~= 1
-        if ~instruction_imm_hotness.isKey(imm)
-            instruction_imm_hotness(imm) = 1;
+        if ~instruction_imm_count.isKey(imm)
+            instruction_imm_count(imm) = 1;
         else
-            instruction_imm_hotness(imm) = instruction_imm_hotness(imm)+1;
+            instruction_imm_count(imm) = instruction_imm_count(imm)+1;
         end
     end
     
-    %% arg hotness
+    %% arg count
     if strcmp(arg,'NA') ~= 1
-        if ~instruction_arg_hotness.isKey(arg)
-            instruction_arg_hotness(arg) = 1;
+        if ~instruction_arg_count.isKey(arg)
+            instruction_arg_count(arg) = 1;
         else
-            instruction_arg_hotness(arg) = instruction_arg_hotness(arg)+1;
+            instruction_arg_count(arg) = instruction_arg_count(arg)+1;
         end
     end
     
 %     if size(arg2,2) > 0 && isstrprop(arg2(1),'alpha') == 1 % alpha is alphabetic, not alpha ISA here. FIXME: This can be wrong when we have something like addi a0,a1,a2 where a2 is not a register address, but actually a hex constant!
-%         if ~instruction_overall_reg_hotness.isKey(arg2)
-%             instruction_overall_reg_hotness(arg2) = 1;
+%         if ~instruction_overall_reg_count.isKey(arg2)
+%             instruction_overall_reg_count(arg2) = 1;
 %         else
-%             instruction_overall_reg_hotness(arg2) = instruction_overall_reg_hotness(arg2)+1;
+%             instruction_overall_reg_count(arg2) = instruction_overall_reg_count(arg2)+1;
 %         end
 %             
-%         if ~instruction_rs1_hotness.isKey(arg1)
-%             instruction_rs1_hotness(arg1) = 1;
+%         if ~instruction_rs1_count.isKey(arg1)
+%             instruction_rs1_count(arg1) = 1;
 %         else
-%             instruction_rs1_hotness(arg1) = instruction_rs1_hotness(arg1)+1;
+%             instruction_rs1_count(arg1) = instruction_rs1_count(arg1)+1;
 %         end
 %     end
     
 %     if size(arg3,2) > 0 && isstrprop(arg3(1),'alpha') == 1 % alpha is alphabetic, not alpha ISA here. FIXME: This can be wrong when we have something like addi a0,a1,a2 where a2 is not a register address, but actually a hex constant!
-%         if ~instruction_overall_reg_hotness.isKey(arg3)
-%             instruction_overall_reg_hotness(arg3) = 1;
+%         if ~instruction_overall_reg_count.isKey(arg3)
+%             instruction_overall_reg_count(arg3) = 1;
 %         else
-%             instruction_overall_reg_hotness(arg3) = instruction_overall_reg_hotness(arg3)+1;
+%             instruction_overall_reg_count(arg3) = instruction_overall_reg_count(arg3)+1;
 %         end
 %             
-%         if ~instruction_rs2_hotness.isKey(arg1)
-%             instruction_rs2_hotness(arg1) = 1;
+%         if ~instruction_rs2_count.isKey(arg1)
+%             instruction_rs2_count(arg1) = 1;
 %         else
-%             instruction_rs2_hotness(arg1) = instruction_rs2_hotness(arg1)+1;
+%             instruction_rs2_count(arg1) = instruction_rs2_count(arg1)+1;
 %         end
 %     end
 end
@@ -185,83 +200,49 @@ end
 %     total_inst_dealiased
 % end
 
-% unique_inst = instruction_mnemonic_hotness.keys()';
-% unique_inst_counts = zeros(size(unique_inst,1),1);
-% for i=1:size(unique_inst,1)
-%    unique_inst_counts(i) = instruction_mnemonic_hotness(unique_inst{i}); 
-%    results_instruction_mnemonic_hotness{i,1} = unique_inst{i};
-%    results_instruction_mnemonic_hotness{i,2} = unique_inst_counts(i);
-% end
-% 
-% % Normalize
-% for i=1:size(unique_inst,1)
-%     results_instruction_mnemonic_hotness{i,2} = results_instruction_mnemonic_hotness{i,2} ./ total_num_inst;
-% end
-% results_instruction_mnemonic_hotness = sortrows(results_instruction_mnemonic_hotness, 2);
-% 
-% 
-% 
-% unique_overall_reg = instruction_overall_reg_hotness.keys()';
-% unique_overall_reg_counts = zeros(size(unique_overall_reg,1),1);
-% for i=1:size(unique_overall_reg,1)
-%    unique_overall_reg_counts(i) = instruction_overall_reg_hotness(unique_overall_reg{i}); 
-%    results_instruction_overall_reg_hotness{i,1} = unique_overall_reg{i};
-%    results_instruction_overall_reg_hotness{i,2} = unique_overall_reg_counts(i);
-% end
-% 
-% % Normalize
-% for i=1:size(unique_overall_reg,1)
-%     results_instruction_overall_reg_hotness{i,2} = results_instruction_overall_reg_hotness{i,2} ./ total_num_inst;
-% end
-% results_instruction_overall_reg_hotness = sortrows(results_instruction_overall_reg_hotness, 2);
-% 
-% 
-% 
-% unique_rd = instruction_rd_hotness.keys()';
-% unique_rd_counts = zeros(size(unique_rd,1),1);
-% for i=1:size(unique_rd,1)
-%    unique_rd_counts(i) = instruction_rd_hotness(unique_rd{i}); 
-%    results_instruction_rd_hotness{i,1} = unique_rd{i};
-%    results_instruction_rd_hotness{i,2} = unique_rd_counts(i);
-% end
-% 
-% % Normalize
-% for i=1:size(unique_rd,1)
-%     results_instruction_rd_hotness{i,2} = results_instruction_rd_hotness{i,2} ./ total_num_inst;
-% end
-% results_instruction_rd_hotness = sortrows(results_instruction_rd_hotness, 2);
-% 
-% 
-% unique_rs1 = instruction_rs1_hotness.keys()';
-% unique_rs1_counts = zeros(size(unique_rs1,1),1);
-% for i=1:size(unique_rs1,1)
-%    unique_rs1_counts(i) = instruction_rs1_hotness(unique_rs1{i}); 
-%    results_instruction_rs1_hotness{i,1} = unique_rs1{i};
-%    results_instruction_rs1_hotness{i,2} = unique_rs1_counts(i);
-% end
-% 
-% % Normalize
-% for i=1:size(unique_rs1,1)
-%     results_instruction_rs1_hotness{i,2} = results_instruction_rs1_hotness{i,2} ./ total_num_inst;
-% end
-% results_instruction_rs1_hotness = sortrows(results_instruction_rs1_hotness, 2);
-% 
-% 
-% unique_rs2 = instruction_rs2_hotness.keys()';
-% unique_rs2_counts = zeros(size(unique_rs2,1),1);
-% for i=1:size(unique_rs2,1)
-%    unique_rs2_counts(i) = instruction_rs2_hotness(unique_rs2{i}); 
-%    results_instruction_rs2_hotness{i,1} = unique_rs2{i};
-%    results_instruction_rs2_hotness{i,2} = unique_rs2_counts(i);
-% end
-% 
-% % Normalize
-% for i=1:size(unique_rs2,1)
-%     results_instruction_rs2_hotness{i,2} = results_instruction_rs2_hotness{i,2} ./ total_num_inst;
-% end
-% results_instruction_rs2_hotness = sortrows(results_instruction_rs2_hotness, 2);
+%% Joint occurrences of mnemonic and rd
+joint_mnemonic_rd_count = containers.Map();
+all_mnemonics = instruction_mnemonic_count.keys()';
+all_rds = instruction_rd_count.keys()';
+
+% Init 2D nested map
+for i=1:size(all_mnemonics,1)
+   mnemonic = all_mnemonics(i,1);
+   inner_map = containers.Map();
+   joint_mnemonic_rd_count(mnemonic) = inner_map;
+   for j=1:all_rds
+      rd = all_rds(j,1);
+      inner_map(rd) = 0;
+   end
+end
+
+for i=1:total_num_inst
+    message_hex = trace_hex(i,:);
+    [legal, mnemonic, codec, rd, rs1, rs2, rs3, imm, arg] = parse_rv64g_decoder_output(message_hex);
+    inner_map = joint_mnemonic_rd_count(mnemonic);
+    inner_map(rd) = inner_map(rd)+1;
+end
+
 
 %% Save all variables
 display('Saving outputs...');
-save(output_filename);
+save(output_filename, ...
+    'benchmark', ...
+    'architecture', ...
+    'input_filename', ...
+    'output_filename', ...
+    'total_num_inst', ...
+    'trace_hex', ...
+    'trace_bin', ...
+    'instruction_mnemonic_count', ...
+    'instruction_codec_count', ...
+    'instruction_rd_count', ...
+    'instruction_rs1_count', ...
+    'instruction_rs2_count', ...
+    'instruction_rs3_count', ...
+    'instruction_imm_count', ...
+    'instruction_arg_count', ...
+    'instruction_overall_reg_count', ...
+    'joint_mnemonic_rd_count');
+
 display('Done!');
