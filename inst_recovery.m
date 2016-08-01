@@ -141,12 +141,7 @@ for x=1:num_candidate_messages
     message_hex = dec2hex(bin2dec(message),8);
     
     % Test the candidate message to see if it is a valid instruction and extract disassembly of the message hex
-    if strcmp(architecture,'rv64g') == 1
-        [status, decoderOutput] = MyRv64gDecoder(message_hex);
-    else
-        display('FATAL! Supported ISA is rv64g.'); % Need to bring mips/alpha decoders up to date if we want to use them here
-        return;
-    end 
+    [status, decoderOutput] = MyRv64gDecoder(message_hex);
     
     if status == 0 % It is valid! Track it. Otherwise, ignore.
        num_valid_messages = num_valid_messages+1;
