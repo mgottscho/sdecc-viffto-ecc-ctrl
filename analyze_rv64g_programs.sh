@@ -33,7 +33,7 @@ for SPEC_BENCHMARK in $SPEC_BENCHMARKS; do
 	echo "$SPEC_BENCHMARK..."
     INPUT_FILE="$INPUT_DIRECTORY/${ISA}-${SPEC_BENCHMARK}-text-section-inst.txt"
     OUTPUT_FILE="$OUTPUT_DIRECTORY/${ISA}-${SPEC_BENCHMARK}-program-statistics.mat"
-	./run_program_analysis.sh $PWD $SPEC_BENCHMARK $K $INPUT_FILE $OUTPUT_FILE
+	./run_program_analysis.sh $PWD $SPEC_BENCHMARK $K $INPUT_FILE $OUTPUT_FILE &
 done
 
 echo "Done."
