@@ -12,3 +12,4 @@ run_mips_static_inst_heuristic.sh
 run_swd_ecc_inst_heuristic_recovery.sh
 run_swd_ecc_data_heuristic_recovery.sh
 run_inst_recovery.sh
+run_analyze_static_rv64g_program_statistics.sh

@@ -207,11 +207,11 @@ all_rds = instruction_rd_count.keys()';
 
 % Init 2D nested map
 for i=1:size(all_mnemonics,1)
-   mnemonic = all_mnemonics(i,1);
+   mnemonic = all_mnemonics{i,1};
    inner_map = containers.Map();
    joint_mnemonic_rd_count(mnemonic) = inner_map;
-   for j=1:all_rds
-      rd = all_rds(j,1);
+   for j=1:size(all_rds,1)
+      rd = all_rds{j,1};
       inner_map(rd) = 0;
    end
 end
@@ -220,7 +220,9 @@ for i=1:total_num_inst
     message_hex = trace_hex(i,:);
     [legal, mnemonic, codec, rd, rs1, rs2, rs3, imm, arg] = parse_rv64g_decoder_output(message_hex);
     inner_map = joint_mnemonic_rd_count(mnemonic);
-    inner_map(rd) = inner_map(rd)+1;
+    if inner_map.isKey(rd) % Account for NA cases
+        inner_map(rd) = inner_map(rd)+1;
+    end
 end
 
 
