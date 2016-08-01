@@ -13,6 +13,7 @@ function [dec] = my_bin2dec(bin)
 % Email: mgottscho@ucla.edu
 
 dec = NaN; 
+
 %% Check input validity to ensure each character is either '0' or '1' and no other value
 if (sum(bin == '1')+sum(bin == '0')) ~= size(bin,2)
     return;

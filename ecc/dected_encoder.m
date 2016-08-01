@@ -1,9 +1,9 @@
-function [codeword] = secded_encoder(message,G)
-% SEC-DED Encoder
+function [codeword] = dected_encoder(message,G)
+% DEC-TED Encoder
 %
 % Input arguments:
 %   message --         String: 1xk character array, each entry is '0' or '1'
-%   G --               Matrix: kxn decimal matrix with 0 or 1 entries that corresponds to a SECDED generator matrix
+%   G --               Matrix: kxn decimal matrix with 0 or 1 entries that corresponds to a DECTED generator matrix
 %
 % Returns:
 %   codeword --        String: 1xn character array, each entry is '0' or '1' UNLESS encoding fails, in which case it is repeated 'X'
