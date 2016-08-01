@@ -4,9 +4,10 @@ function [original_codeword, received_string, recovered_message, suggest_to_cras
 % To compute candidate codewords, we flip a single bit one at a time and decode using specified SECDED decoder..
 % We should obtain a set of unique candidate codewords.
 % Based on the policy, we then try to recover the most likely corresponding instruction-message.
+% TODO: support codes other than SECDED, e.g. DECTED requires more than one trial flip
 %
 % Input arguments:
-%   architecture --     String: '[mips|alpha|rv64g]'
+%   architecture --     String: '[rv64g]'
 %   n --                String: '[39|72]'
 %   k --                String: '[32|64]'
 %   original_message -- Binary String of length k bits/chars
@@ -39,6 +40,10 @@ mnemonic_hotness_filename
 rd_hotness_filename
 
 suggest_to_crash = 0; % Init
+
+if ~isdeployed
+    addpath ecc common rv64g % Add sub-folders to MATLAB search paths for calling other functions we wrote
+end
 
 %% Get our ECC encoder and decoder matrices
 display('Getting ECC encoder and decoder matrices...');

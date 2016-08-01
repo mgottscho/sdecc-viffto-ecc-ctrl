@@ -20,7 +20,12 @@ end
 k = size(bin1,2);
 
 %% Check input validity to ensure each character is either '0' or '1' and no other value
-if (sum(bin == '1')+sum(bin == '0')) ~= size(bin,2)
+if (sum(bin1== '1')+sum(bin1== '0')) ~= size(bin1,2)
+    out = repmat('X',1,k);
+    return;
+end
+
+if (sum(bin2== '1')+sum(bin2== '0')) ~= size(bin2,2)
     out = repmat('X',1,k);
     return;
 end

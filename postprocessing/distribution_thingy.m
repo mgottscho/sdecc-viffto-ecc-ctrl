@@ -1,6 +1,7 @@
 % instruction hotness converter thingy
 % Author: Mark Gottscho <mgottscho@ucla.edu>
 % In the end, you want insts and instcounts as output
+% TODO: clean this mess up
 
 input_directory = 'D:\Dropbox\ECCGroup\data\instruction-mixes\rv64g\post-processed\hsiao-code\random-sampling\2016-7-25 rv64g 1000inst filter-rank pick_first';
 dir_contents = dir(input_directory);

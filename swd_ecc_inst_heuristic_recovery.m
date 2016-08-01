@@ -44,6 +44,10 @@ tiebreak_policy
 
 r = n-k;
 
+if ~isdeployed
+    addpath ecc common rv64g % Add sub-folders to MATLAB search paths for calling other functions we wrote
+end
+
 %% Set up parallel computing
 pctconfig('preservejobs', true);
 mypool = parpool(n_threads);

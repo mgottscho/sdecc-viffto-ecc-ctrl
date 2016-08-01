@@ -1,3 +1,4 @@
+function [output_mneumonic] = dealias_alpha_mneumonic(input_mneumonic)
 % This function de-aliases an Alpha ISA disassembler mneumonic. For instance,
 % the ISA includes common pseudoinstructions and macros, as well as identically-encoded
 % instructions that are aliases of each other. This function attempts to de-alias these cases.
@@ -8,8 +9,6 @@
 %
 % Author: Mark Gottscho
 % Email: mgottscho@ucla.edu
-
-function [output_mneumonic] = dealias_alpha_mneumonic(input_mneumonic)
 
 switch input_mneumonic
     % Handle pseudoinstructions

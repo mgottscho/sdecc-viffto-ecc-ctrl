@@ -1,6 +1,7 @@
 %% This script automates the post-processing and plotting of instruction heuristic recovery rates for each benchmark, and overall trend
 % Author: Mark Gottscho <mgottscho@ucla.edu>
 
+%%%%%%%% CHANGE ME AS NEEDED %%%%%%%%%%%%
 input_directory = '/Users/Mark/Dropbox/ECCGroup/data/instruction-mixes/rv64g/post-processed/hsiao-code/random-sampling/2016-7-25 rv64g 1000inst filter-rank pick_first';
 output_directory = input_directory;
 inst_fields_file = '/Users/Mark/Dropbox/ECCGroup/data/instruction-mixes/rv64g/post-processed/rv64g_inst_field_bitmasks.mat';
@@ -9,6 +10,7 @@ num_error_patterns = 741;
 architecture = 'rv64g';
 code_type = 'hsiao1970';
 policy = 'Filter-Rank';
+% TODO: add tiebreaker policy?
 benchmark_names = {
     'bzip2',
     'gobmk',
@@ -26,6 +28,7 @@ benchmark_names = {
     'specrand998',
     'specrand999'
 };
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 num_benchmarks = size(benchmark_names,1);
 benchmark_successes = NaN(num_inst,num_error_patterns,num_benchmarks);

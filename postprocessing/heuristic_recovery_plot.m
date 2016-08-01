@@ -1,3 +1,10 @@
+% This script plots the rate of heuristic recovery for a given benchmark/code/instruction sample.
+% Each point in the resulting plot is the arithmetic mean rate of recovery for each error pattern, averaged over all instructions that were sampled.
+% The colors represent the bit(s) that were in error. If a point has errors in multiple subfields, the last of them in the legend takes color predence.
+%
+% Author: Mark Gottscho
+% Email: mgottscho@ucla.edu
+
 x = mean(results_valid_messages);
 y = mean(success);
 
