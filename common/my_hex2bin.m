@@ -1,6 +1,19 @@
 function [bin] = my_hex2bin(hex)
+% Convert a string of hexadecimal characters into a string of binary characters.
+%
+% Arguments:
+%   hex --   String of k/4 characters, where each is in set {'0','1',...,'9','a','b','c','d','e','f'}
+%
+% Returns:
+%   bin --   String of k characters, where each is either '0' or '1'. Upon error, bin is set to 'XXXX...XXX' of length k.
+%
+% Author: Mark Gottscho
+% Email: mgottscho@ucla.edu
 
-for i=1:size(hex,2)
+k_by4 = size(hex,2);
+k = k_by4*4;
+
+for i=1:k_by4
     index_start = ((i-1)*4)+1;
     index_end = ((i-1)*4)+4;
     switch hex(i)
@@ -36,8 +49,9 @@ for i=1:size(hex,2)
             bin(index_start:index_end) = '1110';
         case 'f'
             bin(index_start:index_end) = '1111';
-        otherwise
-            bin(index_start:index_end) = 'ZZZZ'; % Error
+        otherwise % Error
+            bin = repmat('X',1,k);
+            return;
     end
 end
 
