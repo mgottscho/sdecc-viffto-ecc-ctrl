@@ -3,7 +3,7 @@
 % Author: Mark Gottscho <mgottscho@ucla.edu>
 
 %%%%%%% FEEL FREE TO CHANGE THIS %%%%%%%%%
-input_directory = 'D:\Dropbox\ECCGroup\data\instruction-mixes\rv64g\post-processed\hsiao-code\random-sampling\2016-7-25 rv64g 1000inst filter-rank pick_first';
+input_directory = 'D:\Dropbox\ECCGroup\data\instruction-mixes\rv64g\post-processed\program-statistics';
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 %% Read in names of benchmarks to process as subdirectories

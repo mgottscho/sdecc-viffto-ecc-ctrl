@@ -26,14 +26,14 @@ for i=1:size(benchmarks,1)
     mnemonics_per_benchmark = overall_instruction_mnemonic_count(bm);
     mnemonics_per_benchmark = mnemonics_per_benchmark.keys();
     for j=1:size(mnemonics_per_benchmark,2)
-        mnemonic = mnemonics_per_benchmark(j);
+        mnemonic = mnemonics_per_benchmark{j};
         if ~mnemonic_count.isKey(mnemonic)
             mnemonic_count(mnemonic) = 0;
         end
     end
     
     % codecs
-    codecs_per_benchmark = overall_instruction_mnemonic_count(bm);
+    codecs_per_benchmark = overall_instruction_codec_count(bm);
     codecs_per_benchmark = codecs_per_benchmark.keys();
     for j=1:size(codecs_per_benchmark,2)
         codec = codecs_per_benchmark(j);
@@ -43,80 +43,80 @@ for i=1:size(benchmarks,1)
     end
     
     % rds
-    rds_per_benchmark = overall_instruction_mnemonic_count(bm);
+    rds_per_benchmark = overall_instruction_rd_count(bm);
     rds_per_benchmark = rds_per_benchmark.keys();
     for j=1:size(rds_per_benchmark,2)
-        rd = rds_per_benchmark(j);
+        rd = rds_per_benchmark{j};
         if ~rd_count.isKey(rd)
             rd_count(rd) = 0;
         end
     end
     
     % rs1s
-    rs1s_per_benchmark = overall_instruction_mnemonic_count(bm);
+    rs1s_per_benchmark = overall_instruction_rs1_count(bm);
     rs1s_per_benchmark = rs1s_per_benchmark.keys();
     for j=1:size(rs1s_per_benchmark,2)
-        rs1 = rs1s_per_benchmark(j);
+        rs1 = rs1s_per_benchmark{j};
         if ~rs1_count.isKey(rs1)
             rs1_count(rs1) = 0;
         end
     end
     
     % rs2s
-    rs2s_per_benchmark = overall_instruction_mnemonic_count(bm);
+    rs2s_per_benchmark = overall_instruction_rs2_count(bm);
     rs2s_per_benchmark = rs2s_per_benchmark.keys();
     for j=1:size(rs2s_per_benchmark,2)
-        rs2 = rs2s_per_benchmark(j);
+        rs2 = rs2s_per_benchmark{j};
         if ~rs2_count.isKey(rs2)
             rs2_count(rs2) = 0;
         end
     end
     
     % rs3s
-    rs3s_per_benchmark = overall_instruction_mnemonic_count(bm);
+    rs3s_per_benchmark = overall_instruction_rs3_count(bm);
     rs3s_per_benchmark = rs3s_per_benchmark.keys();
     for j=1:size(rs3s_per_benchmark,2)
-        rs3 = rs3s_per_benchmark(j);
+        rs3 = rs3s_per_benchmark{j};
         if ~rs3_count.isKey(rs3)
             rs3_count(rs3) = 0;
         end
     end
     
     % imms
-    imms_per_benchmark = overall_instruction_mnemonic_count(bm);
+    imms_per_benchmark = overall_instruction_imm_count(bm);
     imms_per_benchmark = imms_per_benchmark.keys();
     for j=1:size(imms_per_benchmark,2)
-        imm = imms_per_benchmark(j);
+        imm = imms_per_benchmark{j};
         if ~imm_count.isKey(imm)
             imm_count(imm) = 0;
         end
     end
     
     % args
-    args_per_benchmark = overall_instruction_mnemonic_count(bm);
+    args_per_benchmark = overall_instruction_arg_count(bm);
     args_per_benchmark = args_per_benchmark.keys();
     for j=1:size(args_per_benchmark,2)
-        arg = args_per_benchmark(j);
+        arg = args_per_benchmark{j};
         if ~arg_count.isKey(arg)
             arg_count(arg) = 0;
         end
     end
     
     % overall_regs
-    overall_regs_per_benchmark = overall_instruction_mnemonic_count(bm);
+    overall_regs_per_benchmark = overall_instruction_overall_reg_count(bm);
     overall_regs_per_benchmark = overall_regs_per_benchmark.keys();
     for j=1:size(overall_regs_per_benchmark,2)
-        overall_reg = overall_regs_per_benchmark(j);
+        overall_reg = overall_regs_per_benchmark{j};
         if ~overall_reg_count.isKey(overall_reg)
             overall_reg_count(overall_reg) = 0;
         end
     end
     
     % joint_mnemonic_rds
-    joint_mnemonic_rds_per_benchmark = overall_instruction_mnemonic_count(bm);
+    joint_mnemonic_rds_per_benchmark = overall_joint_mnemonic_rd_count(bm);
     joint_mnemonic_rds_per_benchmark = joint_mnemonic_rds_per_benchmark.keys();
     for j=1:size(joint_mnemonic_rds_per_benchmark,2)
-        joint_mnemonic_rd = joint_mnemonic_rds_per_benchmark(j);
+        joint_mnemonic_rd = joint_mnemonic_rds_per_benchmark{j};
         if ~joint_mnemonic_rd_count.isKey(joint_mnemonic_rd)
             joint_mnemonic_rd_count(joint_mnemonic_rd) = 0;
         end
@@ -124,7 +124,63 @@ for i=1:size(benchmarks,1)
 end
 
 %% Export all these maps for the benchmark to arrays suitable for Excel or plotting here in Matlab
+
+% mnemonic
 tmp = mnemonic_count;
-mnemonic_count = cell(size(tmp.keys()',2));
+mnemonic_count = cell(size(tmp.keys(),2),2);
 mnemonic_count(:,1) = tmp.keys()';
 mnemonic_count(:,2) = tmp.values()';
+
+% codec
+tmp = codec_count;
+codec_count = cell(size(tmp.keys(),2),2);
+codec_count(:,1) = tmp.keys()';
+codec_count(:,2) = tmp.values()';
+
+% rd
+tmp = rd_count;
+rd_count = cell(size(tmp.keys(),2),2);
+rd_count(:,1) = tmp.keys()';
+rd_count(:,2) = tmp.values()';
+
+% rs1
+tmp = rs1_count;
+rs1_count = cell(size(tmp.keys(),2),2);
+rs1_count(:,1) = tmp.keys()';
+rs1_count(:,2) = tmp.values()';
+
+% rs2
+tmp = rs2_count;
+rs2_count = cell(size(tmp.keys(),2),2);
+rs2_count(:,1) = tmp.keys()';
+rs2_count(:,2) = tmp.values()';
+
+% rs3
+tmp = rs3_count;
+rs3_count = cell(size(tmp.keys(),2),2);
+rs3_count(:,1) = tmp.keys()';
+rs3_count(:,2) = tmp.values()';
+
+% imm
+tmp = imm_count;
+imm_count = cell(size(tmp.keys(),2),2);
+imm_count(:,1) = tmp.keys()';
+imm_count(:,2) = tmp.values()';
+
+% arg
+tmp = arg_count;
+arg_count = cell(size(tmp.keys(),2),2);
+arg_count(:,1) = tmp.keys()';
+arg_count(:,2) = tmp.values()';
+
+% overall_reg
+tmp = overall_reg_count;
+overall_reg_count = cell(size(tmp.keys(),2),2);
+overall_reg_count(:,1) = tmp.keys()';
+overall_reg_count(:,2) = tmp.values()';
+
+% joint_mnemonic_rd
+tmp = joint_mnemonic_rd_count;
+joint_mnemonic_rd_count = cell(size(tmp.keys(),2),2);
+joint_mnemonic_rd_count(:,1) = tmp.keys()';
+joint_mnemonic_rd_count(:,2) = tmp.values()';
