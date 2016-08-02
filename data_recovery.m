@@ -1,20 +1,21 @@
-function [original_codeword, received_string, num_candidate_messages, recovered_message, suggest_to_crash, recovered_successfully] = data_recovery(architecture, n, k, original_message, error_pattern, code_type, policy, tiebreak_policy, cacheline, message_blockpos, verbose)
+function [original_codeword, received_string, num_candidate_messages, recovered_message, suggest_to_crash, recovered_successfully] = data_recovery(architecture, n, k, original_message, error_pattern, code_type, policy, tiebreak_policy, cacheline_bin, message_blockpos, verbose)
 % TODO: better error handling and input handling
 
-%architecture
-n = str2num(n)
-k = str2num(k)
+%architecturen
+n = str2num(n);
+k = str2num(k);
 %original_message
 %error_pattern
 %code_type
 %policy
 %tiebreak_policy
-%cacheline
-verbose = str2num(verbose)
+%cacheline_bin
+verbose = str2num(verbose);
 
-words_per_block = size(cacheline,2);
+words_per_block = size(cacheline_bin,2);
 
 % Init some return values
+num_candidate_messages = 0;
 recovered_message = repmat('X',1,k);
 suggest_to_crash = 0;
 recovered_successfully = 0;
@@ -35,7 +36,7 @@ if verbose == 1
 end
 
 original_codeword = secded_encoder(original_message,G);
-received_string = dec2bin(bitxor(bin2dec(original_codeword), bin2dec(error_pattern)), n);
+received_string = my_bitxor(original_codeword, error_pattern);
 
 if verbose == 1
     original_codeword
@@ -76,7 +77,7 @@ end
 
 recovered_message = repmat('X',1,k); % Re-init
 [candidate_correct_messages, retval] = compute_candidate_correct_messages(received_string,H,code_type);
-if retval ~= 1
+if retval ~= 0
     display('FATAL! Something went wrong computing candidate-correct messages!');
     return;
 end

@@ -17,6 +17,10 @@ r = size(H,1);
 n = size(H,2);
 k = n-r;
 
+%if ~isdeployed
+%    addpath(['..' filesep 'common']); % Add sub-folders to MATLAB search paths for calling other functions we wrote
+%end
+
 x = 1;
 candidate_correct_messages = repmat('X',n,k); % Pre-allocate for worst-case capacity. X is placeholder. If something goes wrong, we expect this variable to not change and be returned as-is.
 retval = 1;
@@ -24,7 +28,7 @@ for pos=1:n
    %% Flip the bit
    error = repmat('0',1,n);
    error(pos) = '1';
-   candidate_codeword = dec2bin(bitxor(bin2dec(received_string), bin2dec(error)), n);
+   candidate_codeword = my_bitxor(received_string, error);
    
    %% Attempt to decode
    [decoded_message, num_error_bits] = secded_decoder(candidate_codeword, H, code_type);

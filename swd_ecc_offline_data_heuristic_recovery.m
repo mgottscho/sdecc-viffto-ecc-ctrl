@@ -52,8 +52,8 @@ if ~isdeployed
 end
 
 %% Set up parallel computing
-pctconfig('preservejobs', true);
-mypool = parpool(n_threads);
+%pctconfig('preservejobs', true);
+%mypool = parpool(n_threads);
 
 %% Read data under test as bit-strings from file
 display('Reading inputs...');
@@ -67,6 +67,7 @@ trace_paddr = char(file_contents(:,4));
 trace_blkpos = char(file_contents(:,9));
 trace_cachelines_hex = cell(size(file_contents,1),words_per_block);
 trace_cachelines_bin = cell(size(file_contents,1),words_per_block);
+total_num_cachelines = size(trace_cachelines_bin,1);
 for i=1:size(file_contents,1)
     for j=1:words_per_block
         trace_cachelines_hex{i,j} = char(file_contents(i,9+j));
@@ -89,11 +90,7 @@ for i=1:n-1
     end
 end
 
-%% Get our ECC encoder and decoder matrices
-%display('Getting ECC encoder and decoder matrices...');
-%[G,H] = getSECDEDCodes(n,code_type);
 
-%total_num_cachelines = size(trace_cachelines_bin,1);
 
 %% Randomly choose words from the trace, and do the fun parts on those
 rng('shuffle'); % Seed RNG based on current time
@@ -111,7 +108,7 @@ could_have_crashed = NaN(num_words, num_error_patterns); % Init
 success_with_crash_option = NaN(num_words, num_error_patterns); % Init
 verbose_recovery = '0';
 
-parfor i=1:num_words % Parallelize loop across separate threads, since this could take a long time. Each word is a totally independent procedure to perform.
+for i=1:num_words % Parallelize loop across separate threads, since this could take a long time. Each word is a totally independent procedure to perform.
     %% Get the cacheline and "message," which is the original word, i.e., the ground truth from input file.
     cacheline_hex  = sampled_trace_cachelines_hex(i,:);
     cacheline_bin  = sampled_trace_cachelines_bin(i,:);
@@ -148,6 +145,6 @@ save(output_filename);
 display('Done!');
 
 %% Shut down parallel computing pool
-delete(mypool);
+%delete(mypool);
 
 end

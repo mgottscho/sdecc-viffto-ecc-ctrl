@@ -91,7 +91,7 @@ if verbose == 1
 end
 
 original_codeword = secded_encoder(original_message,G);
-received_string = dec2bin(bitxor(bin2dec(original_codeword), bin2dec(error_pattern)), n);
+received_string = my_bitxor(original_codeword, error_pattern);
 
 if verbose == 1
     original_codeword

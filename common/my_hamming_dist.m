@@ -18,7 +18,12 @@ if size(bin1) ~= size(bin2)
 end
 
 %% Check input validity to ensure each character is either '0' or '1' and no other value
-if (sum(bin == '1')+sum(bin == '0')) ~= size(bin,2)
+if (sum(bin1 == '1')+sum(bin1 == '0')) ~= size(bin1,2)
+    dist = -1;
+    return;
+end
+
+if (sum(bin2 == '1')+sum(bin2 == '0')) ~= size(bin2,2)
     dist = -1;
     return;
 end
