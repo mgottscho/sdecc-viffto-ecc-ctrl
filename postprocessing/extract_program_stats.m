@@ -202,12 +202,12 @@ end
 % plot normalized
 %total = sum(sum(cell2mat(joint_mnemonic_rd_count_matrix(2:end,2:end))));
 figure;
-surf(cell2mat(joint_mnemonic_rd_count_matrix(2:end,2:end)) ./ total_num_inst);
+surf(cell2mat(joint_mnemonic_rd_count_matrix(2:end,2:end)));
 xlabel('Destination Register');
 set(gca,'XTick',[1:2:size(rds,2)]','XTickLabel',rds(1,1:2:end)');
 ylabel('Mnemonic');
 set(gca,'YTick',[1:5:size(mnemonics,1)]','YTickLabel',mnemonics(1:5:end)');
-zlabel('Relative Frequency');
+zlabel('Count');
 title(['Joint Relative Frequency of Mnemonic-Destination Register Pairs: ' architecture ', ' benchmark]);
 savefig(gcf, [output_directory filesep benchmark filesep architecture '-' benchmark '-joint-mnemonic-rd-freq.fig']);
 close(gcf);
