@@ -179,8 +179,48 @@ overall_reg_count = cell(size(tmp.keys(),2),2);
 overall_reg_count(:,1) = tmp.keys()';
 overall_reg_count(:,2) = tmp.values()';
 
-% joint_mnemonic_rd
-tmp = joint_mnemonic_rd_count;
-joint_mnemonic_rd_count = cell(size(tmp.keys(),2),2);
-joint_mnemonic_rd_count(:,1) = tmp.keys()';
-joint_mnemonic_rd_count(:,2) = tmp.values()';
+%% joint_mnemonic_rd
+rowmap = joint_mnemonic_rd_count;
+mnemonics = rowmap.keys()';
+tmp = rowmap.values();
+rds = tmp{1}.keys();
+joint_mnemonic_rd_count_matrix = cell(size(mnemonics,1)+1,size(rds,2)+1);
+joint_mnemonic_rd_count_matrix(2:end,1) = mnemonics;
+joint_mnemonic_rd_count_matrix(1,2:end) = rds;
+for i=2:size(joint_mnemonic_rd_count_matrix,1)
+    colmap = rowmap(mnemonics{i-1});
+    for j=2:size(joint_mnemonic_rd_count_matrix,2)
+        if colmap == 0
+            joint_mnemonic_rd_count_matrix{i,j} = 0; 
+        else
+            entry = colmap(rds{j-1});
+            joint_mnemonic_rd_count_matrix{i,j} = entry;
+        end
+    end
+end
+
+% plot normalized
+%total = sum(sum(cell2mat(joint_mnemonic_rd_count_matrix(2:end,2:end))));
+figure;
+surf(cell2mat(joint_mnemonic_rd_count_matrix(2:end,2:end)) ./ total_num_inst);
+xlabel('Destination Register');
+set(gca,'XTick',[1:2:size(rds,2)]','XTickLabel',rds(1,1:2:end)');
+ylabel('Mnemonic');
+set(gca,'YTick',[1:5:size(mnemonics,1)]','YTickLabel',mnemonics(1:5:end)');
+zlabel('Relative Frequency');
+title(['Joint Relative Frequency of Mnemonic-Destination Register Pairs: ' architecture ', ' benchmark]);
+savefig(gcf, [output_directory filesep benchmark filesep architecture '-' benchmark '-joint-mnemonic-rd-freq.fig']);
+close(gcf);
+
+%% Save progress
+save([output_directory filesep benchmark filesep architecture '-' benchmark '-program-statistics-tabular.mat'],...
+    'mnemonic_count',...
+    'codec_count',...
+    'rd_count',...
+    'rs1_count',...
+    'rs2_count',...
+    'rs3_count',...
+    'imm_count',...
+    'arg_count',...
+    'overall_reg_count',...
+    'joint_mnemonic_rd_count_matrix');
