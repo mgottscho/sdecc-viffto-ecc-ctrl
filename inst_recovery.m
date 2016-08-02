@@ -1,4 +1,4 @@
-function [original_codeword, received_string, num_candidate_messages, num_valid_messages, recovered_message, suggest_to_crash, recovered_successfully] = inst_recovery(architecture, n, k, original_message, error_pattern, code_type, policy, tiebreak_policy, mnemonic_hotness_filename, rd_hotness_filename)
+function [original_codeword, received_string, num_candidate_messages, num_valid_messages, recovered_message, suggest_to_crash, recovered_successfully] = inst_recovery(architecture, n, k, original_message, error_pattern, code_type, policy, tiebreak_policy, mnemonic_hotness_filename, rd_hotness_filename, verbose)
 % This function attempts to heuristically recover from a DUE affecting a single received string.
 % The message is assumed to be an instruction of the given architecture.
 % To compute candidate codewords, we flip a single bit one at a time and decode using specified SECDED decoder..
@@ -17,6 +17,7 @@ function [original_codeword, received_string, num_candidate_messages, num_valid_
 %   tiebreak_policy --   String: '[pick_first|pick_last|pick_random]'
 %   mnemonic_hotness_filename -- String: full path to CSV file containing the relative frequency of each instruction to use for ranking
 %   rd_hotness_filename -- String: full path to CSV file containing the relative frequency of each destination register address to use for ranking
+%   verbose -- 1 if you want console printouts of progress.
 %
 % Returns:
 %   original_codeword -- n-bit encoded version of original_message
@@ -40,6 +41,7 @@ k = str2num(k);
 %tiebreak_policy
 %mnemonic_hotness_filename
 %rd_hotness_filename
+verbose = str2num(verbose);
 
 % init some return values
 recovered_message = repmat('X',1,k);
@@ -51,11 +53,15 @@ if ~isdeployed
 end
 
 %% Get our ECC encoder and decoder matrices
-display('Getting ECC encoder and decoder matrices...');
+if verbose == 1
+    display('Getting ECC encoder and decoder matrices...');
+end
 [G,H] = getSECDEDCodes(n,code_type);
 
 %% Read mnemonic and rd distributions from files now
-display('Importing static instruction distribution...');
+if verbose == 1
+    display('Importing static instruction distribution...');
+end
 
 % mnemonic frequency
 fid = fopen(mnemonic_hotness_filename);
@@ -80,29 +86,50 @@ for r=2:size(instruction_rd_hotness_file,1)
 end
 
 %% Encode the original message, then corrupt the codeword with the provided error pattern
-display('Getting the original codeword and generating the received (corrupted) string...');
-original_codeword = secded_encoder(original_message,G)
-received_string = dec2bin(bitxor(bin2dec(original_codeword), bin2dec(error_pattern)), n)
+if verbose == 1
+    display('Getting the original codeword and generating the received (corrupted) string...');
+end
+
+original_codeword = secded_encoder(original_message,G);
+received_string = dec2bin(bitxor(bin2dec(original_codeword), bin2dec(error_pattern)), n);
+
+if verbose == 1
+    original_codeword
+    received_string
+end
 
 %% Attempt to recover the original message. This could actually succeed depending on the code used and how many bits are in the error pattern.
-display('Attempting to decode the received string...');
+if verbose == 1
+    display('Attempting to decode the received string...');
+end
+
 [recovered_message, num_error_bits] = secded_decoder(received_string, H, code_type);
-display(['ECC decoder determined that there are ' num2str(num_error_bits) ' bits in error. The input error pattern had ' num2str(sum(error_pattern=='1')) ' bits flipped.']);
+
+if verbose == 1
+    display(['ECC decoder determined that there are ' num2str(num_error_bits) ' bits in error. The input error pattern had ' num2str(sum(error_pattern=='1')) ' bits flipped.']);
+end
 
 %% If the ECC decoder had no error or correctable error, we are done
 if num_error_bits == 0 || num_error_bits == 1 
-    display('No error or correctable error. We are done, no need for heuristic recovery.');
-    if sum(error_pattern=='1') ~= num_error_bits
+    if verbose == 1
+        display('No error or correctable error. We are done, no need for heuristic recovery.');
+    end
+    if sum(error_pattern=='1') ~= num_error_bits && verbose == 1
         display('NOTE: This is a MIS-CORRECTION by the ECC decoder itself.');
     end
     return;
 end
 
 %% If we got to this point, we have to recover from a DUE. 
-display('Attempting heuristic recovery...');
+if verbose == 1
+    display('Attempting heuristic recovery...');
+end
 
 %% Flip 1 bit at a time on the corrupted codeword, and attempt decoding on each. We should find several bit positions that decode successfully with just a single-bit error.
-display('Computing candidate codewords...');
+if verbose == 1
+    display('Computing candidate codewords...');
+end
+
 recovered_message = repmat('X',1,k); % Re-init
 x = 1;
 candidate_correct_messages = repmat('X',n,k); % Pre-allocate for worst-case capacity. X is placeholder
@@ -134,7 +161,9 @@ end
 
 
 %% RECOVERY STEP 1: FILTER. Check each of the candidate codewords to see which are valid instructions
-display('RECOVERY STEP 1: FILTER. Filtering candidate codewords for instruction legality...');
+if verbose == 1
+    display('RECOVERY STEP 1: FILTER. Filtering candidate codewords for instruction legality...');
+end
 num_candidate_messages = size(candidate_correct_messages,1);
 num_valid_messages = 0;
 candidate_valid_messages = repmat('0',1,k); % Init
@@ -163,13 +192,17 @@ for x=1:num_candidate_messages
        valid_messages_mnemonic{num_valid_messages,1} = mnemonic;
        valid_messages_rd{num_valid_messages,1} = rd;
 
-       display(['Candidate valid message: ' message]);
-       candidate_message_disassembly
+       if verbose == 1
+           display(['Candidate valid message: ' message]);
+           candidate_message_disassembly
+       end
     end
 end
 
 %% RECOVERY STEP 2: RANK. Sort valid messages in order of their relative frequency as determined by the input file that we read.
-display('RECOVERY STEP 2: RANK. Sort valid messages in order of their relative frequency of mnemonic as determined by input tables...');
+if verbose == 1
+    display('RECOVERY STEP 2: RANK. Sort valid messages in order of their relative frequency of mnemonic as determined by input tables...');
+end
 highest_rel_freq_mnemonic = 0;
 target_mnemonic = '';
 for x=1:num_valid_messages
@@ -187,8 +220,10 @@ for x=1:num_valid_messages
     end
 end
 
-target_mnemonic
-highest_rel_freq_mnemonic
+if verbose == 1
+    target_mnemonic
+    highest_rel_freq_mnemonic
+end
 
 % Find indices matching highest frequency mneumonic
 mnemonic_inst_indices = zeros(1,1);
@@ -201,11 +236,13 @@ for x=1:num_valid_messages
     end
 end
 
-target_inst_indices = mnemonic_inst_indices % By default, targets are finished here unless we do filter-rank-filter-rank policy.
+target_inst_indices = mnemonic_inst_indices; % By default, targets are finished here unless we do filter-rank-filter-rank policy.
 
 if strcmp(policy,'filter-rank-filter-rank') == 1 % match
     %% RECOVERY STEP 3 (OPTIONAL): FILTER. Select only the valid messages with the most common mnemonic.
-    display('RECOVERY STEP 3 (OPTIONAL): FILTER. Select only the valid messages with the most common mnemonic...');
+    if verbose == 1
+        display('RECOVERY STEP 3 (OPTIONAL): FILTER. Select only the valid messages with the most common mnemonic...');
+    end
     target_inst_indices = zeros(1,1);
     highest_rel_freq_rd = 0;
     target_rd = '';
@@ -225,11 +262,15 @@ if strcmp(policy,'filter-rank-filter-rank') == 1 % match
        end
     end
 
-    target_rd
-    highest_rel_freq_rd
+    if verbose == 1
+        target_rd
+        highest_rel_freq_rd
+    end
 
     %% RECOVERY STEP 4 (OPTIONAL): RANK. Rank the set of valid messages with the most common mnemonic followed by the most common destination register address.
-    display('RECOVERY STEP 4 (OPTIONAL): RANK. Rank by the most common destination register address...');
+    if verbose == 1
+        display('RECOVERY STEP 4 (OPTIONAL): RANK. Rank by the most common destination register address...');
+    end
     z=1;
     for y=1:size(mnemonic_inst_indices,1)
        rd = valid_messages_rd{mnemonic_inst_indices(y,1),1};
@@ -242,6 +283,10 @@ if strcmp(policy,'filter-rank-filter-rank') == 1 % match
     if target_inst_indices(1) == 0 % This is OK when rd is not used anywhere in the checked candidates
         target_inst_indices = mnemonic_inst_indices;
     end
+end
+
+if verbose == 1
+    target_inst_indices
 end
 
 % REVELATION 7/24/2016: deterministically choosing the target instruction index has a HUGE effect on recovery rate!!!!!!! We thought this should never happen.

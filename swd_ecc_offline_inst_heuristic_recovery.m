@@ -36,8 +36,8 @@ function swd_ecc_offline_inst_heuristic_recovery(architecture, benchmark, n, k, 
 
 architecture
 benchmark
-n
-k
+n = str2num(n)
+k = str2num(k)
 num_inst = str2num(num_inst)
 input_filename
 output_filename
@@ -87,7 +87,7 @@ sampled_trace_hex = trace_hex(sampled_inst_indices,:);
 sampled_trace_bin = trace_bin(sampled_inst_indices,:);
 sampled_trace_inst_disassembly = cell(num_inst,1);
 for i=1:num_inst
-    [legal, mnemonic, codec, rd, rs1, rs2, rs3, imm, arg] = parse_rv64g_decoder_output(sampled_trace_hex(sampled_inst_indices(i),:));
+    [legal, mnemonic, codec, rd, rs1, rs2, rs3, imm, arg] = parse_rv64g_decoder_output(sampled_trace_hex(i,:));
     map = containers.Map();
     map('legal') = legal; 
     map('mnemonic') = mnemonic; 
@@ -109,6 +109,7 @@ results_valid_messages = NaN(num_inst,num_error_patterns); % Init
 success = NaN(num_inst, num_error_patterns); % Init
 could_have_crashed = NaN(num_inst, num_error_patterns); % Init
 success_with_crash_option = NaN(num_inst, num_error_patterns); % Init
+verbose_recovery = '0';
 
 parfor i=1:num_inst % Parallelize loop across separate threads, since this could take a long time. Each instruction is a totally independent procedure to perform.
     %% Get the "message," which is the original instruction, i.e., the ground truth from input file.
@@ -116,25 +117,15 @@ parfor i=1:num_inst % Parallelize loop across separate threads, since this could
     message_bin = sampled_trace_bin(i,:);
     [legal, mnemonic, codec, rd, rs1, rs2, rs3, imm, arg] = parse_rv64g_decoder_output(message_hex);
     
-    % Progress indicator.
-    % This will not show accurate progress if the loop is parallelized
-    % across threads with parfor, since they can execute out-of-order
-    display(['Inst # ' num2str(i) ' is index ' num2str(sampled_inst_indices(i)) ' in the program. hex: ' message_hex '. legal = ' legal ', mnemonic = ' mnemonic ', codec = ' codec ',rd = ' rd ', rs1 = ' rs1 ', rs2 = ' rs2 ', rs3 = ' rs3 ', imm = ' imm ', arg = ' arg]);
-    
     %% Check that the message is actually a valid instruction to begin with.
     if legal == 0 
        display(['WARNING: Found illegal input instruction: ' message_hex '. This should not happen!']);
     end
 
-    %% Do the heavy lifting: heuristic recovery on each error pattern.
-
-    %% Encode the message.
-    codeword = secded_encoder(message_bin,G);
-    
     %% Iterate over all possible 2-bit error patterns.
     for j=1:num_error_patterns
         error = error_patterns(j,:);
-        [original_codeword, received_string, num_candidate_messages, num_valid_messages, recovered_message, suggest_to_crash, recovered_successfully] = inst_recovery('rv64g', num2str(n), num2str(k), message_bin, error, code_type, policy, tiebreak_policy, mnemonic_hotness_filename, rd_hotness_filename);
+        [original_codeword, received_string, num_candidate_messages, num_valid_messages, recovered_message, suggest_to_crash, recovered_successfully] = inst_recovery('rv64g', num2str(n), num2str(k), message_bin, error, code_type, policy, tiebreak_policy, mnemonic_hotness_filename, rd_hotness_filename, verbose_recovery);
 
         %% Store results for this instruction/error pattern pair
         results_candidate_messages(i,j) = num_candidate_messages;
@@ -147,6 +138,12 @@ parfor i=1:num_inst % Parallelize loop across separate threads, since this could
             success_with_crash_option(i,j) = success(i,j); % If we decide not to crash, success rate is same.
         end
     end
+    
+    % Progress indicator.
+    % This will not show accurate progress if the loop is parallelized
+    % across threads with parfor, since they can execute out-of-order
+    display(['Completed inst # ' num2str(i) ' is index ' num2str(sampled_inst_indices(i)) ' in the program. hex: ' message_hex '. legal = ' num2str(legal) ', mnemonic = ' mnemonic ', codec = ' codec ',rd = ' rd ', rs1 = ' rs1 ', rs2 = ' rs2 ', rs3 = ' rs3 ', imm = ' imm ', arg = ' arg]);
+    %'. avg_success = ' num2str(sum(success(i,:))) ', avg_could_have_crashed = ' num2str(sum(could_have_crashed(i,:))) ', avg_success_with_crash_option = ' num2str(sum(success_with_crash_option(i,:)))]);
 end
 
 %% Save all variables

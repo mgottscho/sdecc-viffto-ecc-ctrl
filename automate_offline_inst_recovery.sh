@@ -27,8 +27,8 @@ TIEBREAK_POLICY=pick_last
 INPUT_DIRECTORY=~/project-puneet/swd_ecc_input/$ISA
 OUTPUT_DIRECTORY=~/project-puneet/swd_ecc_output/$ISA/inst-recovery/offline/$CODE_TYPE/$POLICY/$TIEBREAK_POLICY
 
-MNEMONIC_HOTNESS_FILE=$INPUT_DIRECTORY/$ISA-mnemonic-hotness-export.csv
-RD_HOTNESS_FILE=$INPUT_DIRECTORY/$ISA-rd-hotness-export.csv
+MNEMONIC_HOTNESS_FILENAME=$INPUT_DIRECTORY/$ISA-mnemonic-hotness-export.csv
+RD_HOTNESS_FILENAME=$INPUT_DIRECTORY/$ISA-rd-hotness-export.csv
 ###############################################################################################
 
 # Prepare directories
@@ -39,9 +39,9 @@ echo "Running..."
 echo ""
 for SPEC_BENCHMARK in $SPEC_BENCHMARKS; do
 	echo "$SPEC_BENCHMARK..."
-    INPUT_FILE="$INPUT_DIRECTORY/${ISA}-${SPEC_BENCHMARK}-disassembly-text-section-inst.txt"
+    INPUT_FILE="$INPUT_DIRECTORY/${ISA}-${SPEC_BENCHMARK}-text-section-inst.txt"
     OUTPUT_FILE="$OUTPUT_DIRECTORY/${ISA}-${SPEC_BENCHMARK}-inst-heuristic-recovery.mat"
-	./swd_ecc_offline_inst_heuristic_recovery_wrapper.sh $PWD $ISA $SPEC_BENCHMARK $N $K $NUM_INST $INPUT_FILE $OUTPUT_FILE $NUM_THREADS $CODE_TYPE $POLICY $TIEBREAK_POLICY $MNEMONIC_HOTNESS_FILE $RD_HOTNESS_FILE
+	./swd_ecc_offline_inst_heuristic_recovery_wrapper.sh $PWD $ISA $SPEC_BENCHMARK $N $K $NUM_INST $INPUT_FILE $OUTPUT_FILE $NUM_THREADS $CODE_TYPE $POLICY $TIEBREAK_POLICY $MNEMONIC_HOTNESS_FILENAME $RD_HOTNESS_FILENAME
 done
 
 echo "Done."
