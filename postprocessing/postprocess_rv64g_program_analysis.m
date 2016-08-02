@@ -1,10 +1,12 @@
-% Extract results in a useful form from program statistics data structures.
-%
+%% This script automates the post-processing and plotting of static program analysis for each benchmark
 % Author: Mark Gottscho <mgottscho@ucla.edu>
 
-%%%%%%% FEEL FREE TO CHANGE THIS %%%%%%%%%
-input_directory = 'D:\Dropbox\ECCGroup\data\instruction-mixes\rv64g\post-processed\program-statistics';
+%%%%%%%% CHANGE ME AS NEEDED %%%%%%%%%%%%
+input_directory = '/Users/Mark/Dropbox/ECCGroup/data/instruction-mixes/rv64g/post-processed/program-statistics';
+output_directory = input_directory;
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+num_benchmarks = size(benchmark_names,1);
 
 %% Read in names of benchmarks to process as subdirectories
 dir_contents = dir(input_directory);
@@ -51,4 +53,34 @@ for i=1:size(benchmarks,1)
     display(['Finished ' benchmark]);
 end
 
-display('Now try running extract_program_stats.m for a given benchmark.');
+%% Save progress
+save([output_directory filesep 'overall_program_results.mat'],...
+    'overall_instruction_mnemonic_count',...
+    'overall_instruction_codec_count',...
+    'overall_instruction_rd_count',...
+    'overall_instruction_rs1_count',...
+    'overall_instruction_rs2_count',...
+    'overall_instruction_rs3_count',...
+    'overall_instruction_imm_count',...
+    'overall_instruction_arg_count',...
+    'overall_instruction_overall_reg_count',...
+    'overall_joint_mnemonic_rd_count');
+
+%% Extract results for each benchmark, save, and plot them
+for i=1:size(benchmarks,1)
+    benchmark = benchmarks{i};
+    extract_program_stats;
+    
+end
+
+
+
+
+
+
+
+
+
+
+
+
