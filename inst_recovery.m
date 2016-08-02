@@ -131,34 +131,11 @@ if verbose == 1
 end
 
 recovered_message = repmat('X',1,k); % Re-init
-x = 1;
-candidate_correct_messages = repmat('X',n,k); % Pre-allocate for worst-case capacity. X is placeholder
-for pos=1:n
-   %% Flip the bit
-   error = repmat('0',1,n);
-   error(pos) = '1';
-   candidate_codeword = dec2bin(bitxor(bin2dec(received_string), bin2dec(error)), n);
-   
-   %% Attempt to decode
-   [decoded_message, num_error_bits] = secded_decoder(candidate_codeword, H, code_type);
-   
-   if num_error_bits == 1           
-       % We now know that num_error_bits == 1 if we got this far. This
-       % is a candidate codeword.
-       candidate_correct_messages(x,:) = decoded_message;
-       x = x+1;
-   end
-end
-
-% Uniquify the candidate messages
-if x > 1
-    candidate_correct_messages = candidate_correct_messages(1:x-1, :);
-    candidate_correct_messages = unique(candidate_correct_messages,'rows');
-else
+[candidate_correct_messages, retval] = compute_candidate_correct_messages(received_string,H,code_type);
+if retval ~= 1
     display('FATAL! Something went wrong computing candidate-correct messages!');
     return;
 end
-
 
 %% RECOVERY STEP 1: FILTER. Check each of the candidate codewords to see which are valid instructions
 if verbose == 1
