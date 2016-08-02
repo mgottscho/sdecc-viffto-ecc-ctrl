@@ -1,4 +1,4 @@
-function [original_codeword, received_string, recovered_message, suggest_to_crash, recovered_successfully] = inst_recovery(architecture, n, k, original_message, error_pattern, code_type, policy, tiebreak_policy, mnemonic_hotness_filename, rd_hotness_filename)
+function [original_codeword, received_string, num_candidate_messages, num_valid_messages, recovered_message, suggest_to_crash, recovered_successfully] = inst_recovery(architecture, n, k, original_message, error_pattern, code_type, policy, tiebreak_policy, mnemonic_hotness_filename, rd_hotness_filename)
 % This function attempts to heuristically recover from a DUE affecting a single received string.
 % The message is assumed to be an instruction of the given architecture.
 % To compute candidate codewords, we flip a single bit one at a time and decode using specified SECDED decoder..
@@ -21,6 +21,8 @@ function [original_codeword, received_string, recovered_message, suggest_to_cras
 % Returns:
 %   original_codeword -- n-bit encoded version of original_message
 %   received_string -- n-bit string that is corrupted by the bit flips specified by error_pattern
+%   num_candidate_messages -- Scalar
+%   num_valid_messages -- Scalar
 %   recovered_message -- k-bit message that corresponds to our target for heuristic recovery
 %   suggest_to_crash -- 0 if we are confident in recovery, 1 if we recommend crashing out instead
 %   recovered_successfully -- 1 if we matched original_message, 0 otherwise
@@ -28,18 +30,21 @@ function [original_codeword, received_string, recovered_message, suggest_to_cras
 % Author: Mark Gottscho
 % Email: mgottscho@ucla.edu
 
-architecture
-n = str2num(n)
-k = str2num(k)
-original_message
-error_pattern
-code_type
-policy
-tiebreak_policy
-mnemonic_hotness_filename
-rd_hotness_filename
+%architecture
+n = str2num(n);
+k = str2num(k);
+%original_message
+%error_pattern
+%code_type
+%policy
+%tiebreak_policy
+%mnemonic_hotness_filename
+%rd_hotness_filename
 
-suggest_to_crash = 0; % Init
+% init some return values
+recovered_message = repmat('X',1,k);
+suggest_to_crash = 0;
+recovered_successfully = 0;
 
 if ~isdeployed
     addpath ecc common rv64g % Add sub-folders to MATLAB search paths for calling other functions we wrote
@@ -249,6 +254,7 @@ end
 if target_inst_indices(1) == 0 % sanity check
     display('FATAL! No valid target instruction for recovery found.');
     target_inst_index = -2;
+    return;
 elseif size(target_inst_indices,1) == 1 % have one recovery target
     target_inst_index = target_inst_indices(1); 
 else % multiple recovery targets: allowed crash.
@@ -261,12 +267,13 @@ else % multiple recovery targets: allowed crash.
         target_inst_index = target_inst_indices(randi(size(target_inst_indices,1),1)); % Pick random of remaining targets as a guess. NOTE: see REVELATION above. The ordering apparently matters!
     else
         target_inst_index = -1;
-        display(['Error! tiebreak_policy was ' tiebreak_policy]);
+        display(['FATAL! tiebreak_policy was ' tiebreak_policy]);
+        return;
     end
 end
 
 %% Final result
-recovered_message = candidate_valid_messages(target_inst_index,:)
-suggest_to_crash
-recovered_successfully = (strcmp(recovered_message, original_message) == 1)
+recovered_message = candidate_valid_messages(target_inst_index,:);
+%suggest_to_crash
+recovered_successfully = (strcmp(recovered_message, original_message) == 1);
 
