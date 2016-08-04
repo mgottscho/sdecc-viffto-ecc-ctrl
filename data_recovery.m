@@ -118,17 +118,20 @@ elseif strcmp(policy, 'delta') == 1
     % The score can take a range of [0,MAX_UNSIGNED_INT]. Lower scores are better.
     for x=1:size(candidate_correct_messages,1) % For each candidate message
         score = Inf;
-        base = my_bin2dec(candidate_correct_messages(x,:)); % Set base. This will be decimal integer value.
-        deltas = NaN(words_per_block-1,1); % Init deltas. These will be decimal integer values.
+        base = my_bin2dec(candidate_correct_messages(x,:)); % Set base. This will be decimal uint64 value.
+        deltas = NaN(words_per_block-1,1); % Init deltas. These will be decimal uint64 values
         for blockpos=1:words_per_block % For each message in the cacheline (need to skip the message under test)
             if blockpos ~= message_blockpos % Skip the message under test
-                deltas(blockpos) = base - my_bin2dec(cacheline_bin{blockpos}); % will be signed decimal integer
+                word = my_bin2dec(cacheline_bin{blockpos});
+                % Due to behavior of uint64 in MATLAB, underflow and overflow do not occur - they simply "saturate" at 0 and max of uint64 values. So we take the abs of deltas only to avoid losing information.
+                if base > word
+                    deltas(blockpos) = base - word;
+                else
+                    deltas(blockpos) = word - base;
+                end
             end
         end
-        score = sum(deltas.^2); % Sum of squares of deltas
-        if score < 0 || score > uint64(-1) % this should be impossible
-            display(['Error! Score was ' num2str(score)]);
-        end
+        score = sum(deltas.^2); % Sum of squares of abs-deltas
         candidate_correct_message_scores(x) = score;
     end
 %elseif strcmp(policy, 'dbxw') == 1 % TODO: implement me!

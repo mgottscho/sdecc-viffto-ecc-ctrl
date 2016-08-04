@@ -52,8 +52,8 @@ if ~isdeployed
 end
 
 %% Set up parallel computing
-%pctconfig('preservejobs', true);
-%mypool = parpool(n_threads);
+pctconfig('preservejobs', true);
+mypool = parpool(n_threads);
 
 %% Read data under test as bit-strings from file
 display('Reading inputs...');
@@ -108,7 +108,7 @@ could_have_crashed = NaN(num_words, num_error_patterns); % Init
 success_with_crash_option = NaN(num_words, num_error_patterns); % Init
 verbose_recovery = '0';
 
-for i=1:num_words % Parallelize loop across separate threads, since this could take a long time. Each word is a totally independent procedure to perform.
+parfor i=1:num_words % Parallelize loop across separate threads, since this could take a long time. Each word is a totally independent procedure to perform.
     %% Get the cacheline and "message," which is the original word, i.e., the ground truth from input file.
     cacheline_hex  = sampled_trace_cachelines_hex(i,:);
     cacheline_bin  = sampled_trace_cachelines_bin(i,:);
@@ -145,6 +145,6 @@ save(output_filename);
 display('Done!');
 
 %% Shut down parallel computing pool
-%delete(mypool);
+delete(mypool);
 
 end

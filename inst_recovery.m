@@ -132,7 +132,7 @@ end
 
 recovered_message = repmat('X',1,k); % Re-init
 [candidate_correct_messages, retval] = compute_candidate_correct_messages(received_string,H,code_type);
-if retval ~= 1
+if retval ~= 0
     display('FATAL! Something went wrong computing candidate-correct messages!');
     return;
 end
