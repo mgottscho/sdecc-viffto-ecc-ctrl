@@ -31,17 +31,22 @@ function [original_codeword, received_string, num_candidate_messages, num_valid_
 % Author: Mark Gottscho
 % Email: mgottscho@ucla.edu
 
-%architecture
 n = str2num(n);
 k = str2num(k);
-%original_message
-%error_pattern
-%code_type
-%policy
-%tiebreak_policy
-%mnemonic_hotness_filename
-%rd_hotness_filename
 verbose = str2num(verbose);
+
+if verbose == 1
+    architecture
+    n
+    k
+    original_message
+    error_pattern
+    code_type
+    policy
+    tiebreak_policy
+    mnemonic_hotness_filename
+    rd_hotness_filename
+end
 
 % init some return values
 recovered_message = repmat('X',1,k);
@@ -94,7 +99,9 @@ original_codeword = secded_encoder(original_message,G);
 received_string = my_bitxor(original_codeword, error_pattern);
 
 if verbose == 1
+    original_message
     original_codeword
+    error_pattern
     received_string
 end
 
@@ -137,6 +144,10 @@ if retval ~= 0
     return;
 end
 
+if verbose == 1
+    candidate_correct_messages
+end
+
 %% RECOVERY STEP 1: FILTER. Check each of the candidate codewords to see which are valid instructions
 if verbose == 1
     display('RECOVERY STEP 1: FILTER. Filtering candidate codewords for instruction legality...');
@@ -153,15 +164,14 @@ for x=1:num_candidate_messages
     
     % Test the candidate message to see if it is a valid instruction and extract disassembly of the message hex
     [status, decoderOutput] = MyRv64gDecoder(message_hex);
+    % Read disassembly of instruction from string spit back by the instruction decoder
+    candidate_message_disassembly = textscan(decoderOutput, '%s', 'Delimiter', ':');
+    candidate_message_disassembly = candidate_message_disassembly{1};
+    candidate_message_disassembly = reshape(candidate_message_disassembly, 2, size(candidate_message_disassembly,1)/2)';
     
     if status == 0 % It is valid! Track it. Otherwise, ignore.
        num_valid_messages = num_valid_messages+1;
        candidate_valid_messages(num_valid_messages,:) = message;
-       
-       % Read disassembly of instruction from string spit back by the instruction decoder
-       candidate_message_disassembly = textscan(decoderOutput, '%s', 'Delimiter', ':');
-       candidate_message_disassembly = candidate_message_disassembly{1};
-       candidate_message_disassembly = reshape(candidate_message_disassembly, 2, size(candidate_message_disassembly,1)/2)';
 
        % Store disassembly in the list
        mnemonic = candidate_message_disassembly{4,2};
@@ -170,9 +180,14 @@ for x=1:num_candidate_messages
        valid_messages_rd{num_valid_messages,1} = rd;
 
        if verbose == 1
-           display(['Candidate valid message: ' message]);
-           candidate_message_disassembly
+           display(['Index ' num2str(x) ' candidate valid message: ' message]);
        end
+    elseif verbose == 1
+       display(['Candidate-correct BUT NOT VALID message: ' message]);
+    end
+
+    if verbose == 1
+        candidate_message_disassembly
     end
 end
 
@@ -279,6 +294,9 @@ if target_inst_indices(1) == 0 % sanity check
     return;
 elseif size(target_inst_indices,1) == 1 % have one recovery target
     target_inst_index = target_inst_indices(1); 
+    if verbose == 1
+        display(['We have one recovery target: ' num2str(target_inst_index)]);
+    end
 else % multiple recovery targets: allowed crash.
     suggest_to_crash = 1;
     if strcmp(tiebreak_policy, 'pick_first') == 1
@@ -292,10 +310,19 @@ else % multiple recovery targets: allowed crash.
         display(['FATAL! tiebreak_policy was ' tiebreak_policy]);
         return;
     end
+    if verbose == 1
+        display(['We had ' num2str(size(target_inst_indices,1)) ' recovery targets, chose: ' num2str(target_inst_index)]);
+    end
 end
 
 %% Final result
 recovered_message = candidate_valid_messages(target_inst_index,:);
 %suggest_to_crash
 recovered_successfully = (strcmp(recovered_message, original_message) == 1);
+
+if verbose == 1
+    recovered_message
+    recovered_successfully
+    suggest_to_crash
+end
 
