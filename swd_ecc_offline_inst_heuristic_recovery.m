@@ -56,35 +56,77 @@ end
 pctconfig('preservejobs', true);
 mypool = parpool(n_threads);
 
-%% Read instructions as hex-strings from file
-display('Reading inputs...');
-fid = fopen(input_filename);
-file_contents = textscan(fid, '%s');
-fclose(fid);
-file_contents = file_contents{1};
-total_num_inst = size(file_contents,1);
-trace_hex = char(file_contents(:,1));
-trace_bin = dec2bin(hex2dec(trace_hex),k);
-total_num_inst = size(trace_hex,1);
+%% Read instructions as hex-strings from file.
 
-%% Construct a matrix containing all possible 2-bit error patterns as bit-strings.
-display('Constructing error-pattern matrix...');
-num_error_patterns = nchoosek(n,2);
-error_patterns = repmat('0',num_error_patterns,n);
-num_error = 1;
-for i=1:n-1
-    for j=i+1:n
-        error_patterns(num_error, i) = '1';
-        error_patterns(num_error, j) = '1';
-        num_error = num_error + 1;
-    end
+% Because the file may have a LOT of data, we don't want to read it into a buffer, as it may fail and use too much memory.
+% Instead, we get the number of instructions by using the 'wc' command, with the assumption that each line in the file will
+% contain an instruction.
+% Then, we will generate the instruction sampling indices and only read those lines from the file.
+display('Reading inputs...');
+[wc_return_code, wc_output] = system(['wc -l ' input_filename]);
+if wc_return_code ~= 0
+    display(['FATAL! Could not get line count (# inst) from ' input_filename '.']);
+    return;
+end
+total_num_inst = str2num(strtok(wc_output));
+display(['Number of randomly-sampled instructions to test SWD-ECC: ' num2str(num_inst) '. Total instructions in trace: ' num2str(total_num_inst) '.']);
+
+%% Randomly choose instructions from the trace, and load them
+rng('shuffle'); % Seed RNG based on current time
+sampled_inst_indices = sortrows(randperm(total_num_inst, num_inst)'); % Increasing order of indices. This does not affect experiment correctness.
+
+fid = fopen(input_filename);
+if fid == -1
+    display(['FATAL! Could not open file ' input_filename '.']);
+    return
 end
 
-%% Randomly choose instructions from the trace, and do the fun parts on those
-rng('shuffle'); % Seed RNG based on current time
-sampled_inst_indices = randperm(total_num_inst, num_inst); 
-sampled_trace_hex = trace_hex(sampled_inst_indices,:);
-sampled_trace_bin = trace_bin(sampled_inst_indices,:);
+% Loop over each line in the file and read it.
+% Only save data from the line if it matches one of our sampled indices.
+sampled_trace_raw = cell{num_inst,1};
+j = 1;
+for i=1:total_num_inst
+    line = fgets(fid);
+    if line == -1 || j > size(sampled_inst_indices,1)
+        break;
+    end
+    if i == sampled_inst_indices(j)
+        sampled_trace_raw{j,1} = line;
+        j = j+1;
+    end
+end
+fclose(fid);
+
+%% Parse the raw trace depending on its format.
+% If it is hexadecimal instructions in big-endian format, one instruction per line of the form
+% 00000000
+% deadbeef
+% 01234567
+% 0000abcd
+% ...
+% then we do this.
+sampled_trace_hex = char(sampled_trace_raw)
+
+% If it is in CSV format, as output by our memdatatrace version of RISCV Spike simulator of the form
+% STEP,OPERATION,MEM_ACCESS_SEQ_NUM,VADDR,PADDR,USER_PERM,SUPER_PERM,ACCESS_SIZE,PAYLOAD,CACHE_BLOCKPOS,CACHE_BLOCK0,CACHE_BLOCK1,...,
+% like so:
+% 1805000,I$ RD fr MEM,1898719,VADDR 0x0000000000001718,PADDR 0x0000000000001718,u---,sRWX,4B,PAYLOAD 0x63900706,BLKPOS 3,0x33d424011374f41f,0x1314340033848700,0x0335040093771500,0x63900706638e0908,0xeff09ff21355c500,0x1315a50013651500,0x2330a4001355a500,0x1b0979ff9317c500,
+% 1825000,D$ WR to MEM,32234,VADDR 0x000000003fc07dc8,PADDR 0x000000003fc07dc8,u---,sRW-,8B,PAYLOAD 0x0300000000000000,BLKPOS 1,0x0000000000000000,0x0300000000000000,0x0119010000000000,0x00f0ffffffffffff,0x0010901100000000,0x00c00c0000000000,0x00d0a60b00000000,0x141d000000000000,
+% ...
+% then we do this.
+%parsed_sampled_trace_raw = cell{num_inst,1};
+%for i=1:num_inst
+%    remain = sampled_trace_raw{i,1};
+%    for j=1:9 % 9 iterations because payload is 9th entry in a row of the above format
+%        [token,remain] = strtok(remain,',');
+%    end
+%    [token, remain] = strtok(token,'x'); % Find the part of "PAYLOAD 0xDEADBEEF" after the "0x" part.
+%    sampled_trace_hex{i,1} = remain;
+%end
+%sampled_trace_hex = char(parsed_sampled_trace_raw)
+
+%% Disassemble each instruction that we sampled.
+sampled_trace_bin = dec2bin(hex2dec(sampled_trace_hex),k);
 sampled_trace_inst_disassembly = cell(num_inst,1);
 for i=1:num_inst
     [legal, mnemonic, codec, rd, rs1, rs2, rs3, imm, arg] = parse_rv64g_decoder_output(sampled_trace_hex(i,:));
@@ -101,7 +143,19 @@ for i=1:num_inst
     sampled_trace_inst_disassembly{i} = map;
 end
 
-display(['Number of randomly-sampled instructions to test SWD-ECC: ' num2str(num_inst)]);
+%% Construct a matrix containing all possible 2-bit error patterns as bit-strings.
+display('Constructing error-pattern matrix...');
+num_error_patterns = nchoosek(n,2);
+error_patterns = repmat('0',num_error_patterns,n);
+num_error = 1;
+for i=1:n-1
+    for j=i+1:n
+        error_patterns(num_error, i) = '1';
+        error_patterns(num_error, j) = '1';
+        num_error = num_error + 1;
+    end
+end
+
 display('Evaluating SWD-ECC...');
 
 results_candidate_messages = NaN(num_inst,num_error_patterns); % Init
