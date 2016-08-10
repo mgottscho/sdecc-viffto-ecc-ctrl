@@ -57,7 +57,6 @@ end
 % Because the file may have a LOT of data, we don't want to read it into a buffer, as it may fail and use too much memory.
 % Instead, we get the number of instructions by using the 'wc' command, with the assumption that each line in the file will
 % contain an instruction.
-% Then, we will generate the instruction sampling indices and only read those lines from the file.
 display('Reading inputs...');
 [wc_return_code, wc_output] = system(['wc -l ' input_filename]);
 if wc_return_code ~= 0
@@ -74,7 +73,7 @@ sampled_inst_indices = sortrows(randperm(total_num_inst, num_inst)'); % Increasi
 fid = fopen(input_filename);
 if fid == -1
     display(['FATAL! Could not open file ' input_filename '.']);
-    return
+    return;
 end
 
 % Loop over each line in the file and read it.
