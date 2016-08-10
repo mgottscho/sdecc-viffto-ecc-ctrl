@@ -321,8 +321,9 @@ recovered_message = candidate_valid_messages(target_inst_index,:);
 recovered_successfully = (strcmp(recovered_message, original_message) == 1);
 
 if verbose == 1
-    recovered_message
     recovered_successfully
     suggest_to_crash
 end
+
+recovered_message
 
