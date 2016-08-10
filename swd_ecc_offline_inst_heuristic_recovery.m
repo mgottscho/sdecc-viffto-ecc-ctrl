@@ -52,10 +52,6 @@ if ~isdeployed
     addpath ecc common rv64g % Add sub-folders to MATLAB search paths for calling other functions we wrote
 end
 
-%% Set up parallel computing
-pctconfig('preservejobs', true);
-mypool = parpool(n_threads);
-
 %% Read instructions as hex-strings from file.
 
 % Because the file may have a LOT of data, we don't want to read it into a buffer, as it may fail and use too much memory.
@@ -83,11 +79,11 @@ end
 
 % Loop over each line in the file and read it.
 % Only save data from the line if it matches one of our sampled indices.
-sampled_trace_raw = cell{num_inst,1};
+sampled_trace_raw = cell(num_inst,1);
 j = 1;
 for i=1:total_num_inst
     line = fgets(fid);
-    if line == -1 || j > size(sampled_inst_indices,1)
+    if strcmp(line,'') == 1 || j > size(sampled_inst_indices,1)
         break;
     end
     if i == sampled_inst_indices(j)
@@ -105,25 +101,29 @@ fclose(fid);
 % 0000abcd
 % ...
 % then we do this.
-sampled_trace_hex = char(sampled_trace_raw)
+%sampled_trace_hex = char(sampled_trace_raw);
 
 % If it is in CSV format, as output by our memdatatrace version of RISCV Spike simulator of the form
 % STEP,OPERATION,MEM_ACCESS_SEQ_NUM,VADDR,PADDR,USER_PERM,SUPER_PERM,ACCESS_SIZE,PAYLOAD,CACHE_BLOCKPOS,CACHE_BLOCK0,CACHE_BLOCK1,...,
 % like so:
 % 1805000,I$ RD fr MEM,1898719,VADDR 0x0000000000001718,PADDR 0x0000000000001718,u---,sRWX,4B,PAYLOAD 0x63900706,BLKPOS 3,0x33d424011374f41f,0x1314340033848700,0x0335040093771500,0x63900706638e0908,0xeff09ff21355c500,0x1315a50013651500,0x2330a4001355a500,0x1b0979ff9317c500,
-% 1825000,D$ WR to MEM,32234,VADDR 0x000000003fc07dc8,PADDR 0x000000003fc07dc8,u---,sRW-,8B,PAYLOAD 0x0300000000000000,BLKPOS 1,0x0000000000000000,0x0300000000000000,0x0119010000000000,0x00f0ffffffffffff,0x0010901100000000,0x00c00c0000000000,0x00d0a60b00000000,0x141d000000000000,
 % ...
 % then we do this.
-%parsed_sampled_trace_raw = cell{num_inst,1};
-%for i=1:num_inst
-%    remain = sampled_trace_raw{i,1};
-%    for j=1:9 % 9 iterations because payload is 9th entry in a row of the above format
-%        [token,remain] = strtok(remain,',');
-%    end
-%    [token, remain] = strtok(token,'x'); % Find the part of "PAYLOAD 0xDEADBEEF" after the "0x" part.
-%    sampled_trace_hex{i,1} = remain;
-%end
-%sampled_trace_hex = char(parsed_sampled_trace_raw)
+% NOTE: memdatatrace payloads and cache blocks are in NATIVE byte order for
+% the simulated architecture. For RV64G this is LITTLE-ENDIAN!
+% NOTE: we only expect instruction cache lines to be in this file!
+% NOTE: addresses and decimal values in these traces are in BIG-ENDIAN
+% format.
+parsed_sampled_trace_raw = cell(num_inst,1);
+for i=1:num_inst
+   remain = sampled_trace_raw{i,1};
+   for j=1:9 % 9 iterations because payload is 9th entry in a row of the above format
+       [token,remain] = strtok(remain,',');
+   end
+   [token, remain] = strtok(token,'x'); % Find the part of "PAYLOAD 0xDEADBEEF" after the "0x" part.
+   parsed_sampled_trace_raw{i,1} = reverse_byte_order(remain(2:end)); % Put the instruction in big-endian format.
+end
+sampled_trace_hex = char(parsed_sampled_trace_raw);
 
 %% Disassemble each instruction that we sampled.
 sampled_trace_bin = dec2bin(hex2dec(sampled_trace_hex),k);
@@ -164,6 +164,11 @@ success = NaN(num_inst, num_error_patterns); % Init
 could_have_crashed = NaN(num_inst, num_error_patterns); % Init
 success_with_crash_option = NaN(num_inst, num_error_patterns); % Init
 verbose_recovery = '0';
+
+
+%% Set up parallel computing
+pctconfig('preservejobs', true);
+mypool = parpool(n_threads);
 
 parfor i=1:num_inst % Parallelize loop across separate threads, since this could take a long time. Each instruction is a totally independent procedure to perform.
     %% Get the "message," which is the original instruction, i.e., the ground truth from input file.
