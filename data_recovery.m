@@ -1,7 +1,7 @@
 function [original_codeword, received_string, num_candidate_messages, recovered_message, suggest_to_crash, recovered_successfully] = data_recovery(architecture, n, k, original_message, error_pattern, code_type, policy, tiebreak_policy, cacheline_bin, message_blockpos, verbose)
 % TODO: better error handling and input handling
 
-%architecturen
+%architecture
 n = str2num(n);
 k = str2num(k);
 %original_message
@@ -11,6 +11,19 @@ k = str2num(k);
 %tiebreak_policy
 %cacheline_bin
 verbose = str2num(verbose);
+
+if verbose == 1
+    architecture
+    n
+    k
+    original_message
+    error_pattern
+    code_type
+    policy
+    tiebreak_policy
+    cacheline_bin
+    verbose
+end
 
 words_per_block = size(cacheline_bin,2);
 
@@ -168,16 +181,18 @@ else
     display(['Error! tiebreak_policy was ' tiebreak_policy]);
 end
 
-%cacheline_hex
-%candidate_correct_message_scores
-%min_score
-%min_score_indices
-%message_blockpos
-%target_message_index
+if verbose == 1
+    cacheline_hex
+    candidate_correct_message_scores
+    min_score
+    min_score_indices
+    message_blockpos
+    target_message_index
+end
 
 
 num_candidate_messages = size(candidate_correct_messages,1);
-
+recovered_message = candidate_correct_messages(target_message_index,:);
 %% Compute whether we got the correct answer or not for this data/error pattern pairing
 if target_message_index == message_blockpos % Success!
     recovered_successfully = 1;
@@ -186,6 +201,8 @@ else % Failed to correct error -- corrupted recovery
     recovered_successfully = 0;
     suggest_to_crash = 0; % TODO: implement crash policy
 end
+
+fprintf(1,'%s', recovered_message);
 
 
 

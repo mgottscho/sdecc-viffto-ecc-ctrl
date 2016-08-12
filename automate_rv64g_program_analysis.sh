@@ -14,8 +14,8 @@ fi
 
 ########################## FEEL FREE TO CHANGE THESE OPTIONS ##################################
 ISA=rv64g    # Set the target ISA; benchmarks must be disassembled for this as well
-#SPEC_BENCHMARKS="astar bwaves bzip2 calculix dealII gamess gcc GemsFDTD gobmk h264ref hmmer lbm leslie3d libquantum mcf milc namd omnetpp perlbench povray sjeng soplex sphinx3 specrand998 specrand999 tonto wrf xalancbmk zeusmp"		# String of SPEC CPU2006 benchmark names to run, delimited by spaces.
-SPEC_BENCHMARKS="bzip2 gcc h264ref perlbench povray"		# String of SPEC CPU2006 benchmark names to run, delimited by spaces.
+SPEC_BENCHMARKS="astar bwaves bzip2 calculix dealII gamess gcc GemsFDTD gobmk h264ref hmmer lbm leslie3d libquantum mcf milc namd omnetpp perlbench povray sjeng soplex sphinx3 specrand998 specrand999 tonto wrf xalancbmk zeusmp"		# String of SPEC CPU2006 benchmark names to run, delimited by spaces.
+#SPEC_BENCHMARKS="bzip2 gcc h264ref perlbench povray"		# String of SPEC CPU2006 benchmark names to run, delimited by spaces.
 #SPEC_BENCHMARKS="bzip2 gobmk h264ref lbm libquantum mcf milc namd omnetpp perlbench povray sjeng soplex specrand998 specrand999"		# String of SPEC CPU2006 benchmark names to run, delimited by spaces.
 K=32
 
