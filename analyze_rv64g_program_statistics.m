@@ -295,9 +295,11 @@ for i=1:total_num_inst
     message_hex = reverse_byte_order(remain(2:end)); % Put the instruction in big-endian format.
 
     [legal, mnemonic, codec, rd, rs1, rs2, rs3, imm, arg] = parse_rv64g_decoder_output(message_hex);
-    inner_map = joint_mnemonic_rd_count(mnemonic);
-    if inner_map.isKey(rd) % Account for NA cases
-        inner_map(rd) = inner_map(rd)+1;
+    if legal == 1
+        inner_map = joint_mnemonic_rd_count(mnemonic);
+        if inner_map.isKey(rd) % Account for NA cases
+            inner_map(rd) = inner_map(rd)+1;
+        end
     end
 end
 

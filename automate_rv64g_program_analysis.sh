@@ -24,7 +24,6 @@ OUTPUT_DIRECTORY=~/project-eedept/swd_ecc_output/$ISA/program-statistics
 # Prepare directories
 mkdir -p $OUTPUT_DIRECTORY
 
-
 # Submit all the SPEC CPU2006 benchmarks
 echo "Analyzing..."
 echo ""
