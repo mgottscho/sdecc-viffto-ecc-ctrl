@@ -24,8 +24,8 @@ CODE_TYPE=hsiao1970
 POLICY=delta
 TIEBREAK_POLICY=pick_random
 
-INPUT_DIRECTORY=~/project-puneet/swd_ecc_input/$ISA
-OUTPUT_DIRECTORY=~/project-puneet/swd_ecc_output/$ISA/data-recovery/offline/$CODE_TYPE/$POLICY/$TIEBREAK_POLICY
+INPUT_DIRECTORY=~/project-puneet/swd_ecc_data/$ISA/spike
+OUTPUT_DIRECTORY=~/project-puneet/swd_ecc_data/$ISA/data-recovery/offline-dynamic/$CODE_TYPE/$POLICY/$TIEBREAK_POLICY
 
 ###############################################################################################
 

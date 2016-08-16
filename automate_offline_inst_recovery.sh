@@ -21,10 +21,10 @@ NUM_INST=1000
 NUM_THREADS=$(cat /proc/cpuinfo | grep ^processor | wc -l ) 
 CODE_TYPE=hsiao1970
 POLICY=filter-rank
-TIEBREAK_POLICY=pick_last
+TIEBREAK_POLICY=pick_first
 
-INPUT_DIRECTORY=~/project-puneet/swd_ecc_input/$ISA
-OUTPUT_DIRECTORY=~/project-puneet/swd_ecc_output/$ISA/inst-recovery/offline/$CODE_TYPE/$POLICY/$TIEBREAK_POLICY
+INPUT_DIRECTORY=~/project-eedept/swd_ecc_data/$ISA/disassembly
+OUTPUT_DIRECTORY=~/project-eedept/swd_ecc_data/$ISA/inst-recovery/offline-dynamic/$CODE_TYPE/$POLICY/$TIEBREAK_POLICY
 
 MNEMONIC_HOTNESS_FILENAME=$INPUT_DIRECTORY/$ISA-mnemonic-hotness-export.csv
 RD_HOTNESS_FILENAME=$INPUT_DIRECTORY/$ISA-rd-hotness-export.csv

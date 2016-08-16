@@ -10,8 +10,8 @@ ERROR_PATTERN=100000000000000100000000000000000000000
 CODE_TYPE=hsiao1970
 POLICY=filter-rank
 TIEBREAK_POLICY=pick_first
-MNEMONIC_HOTNESS_FILENAME=/u/project/puneet/mgottsch/swd_ecc_input/rv64g/rv64g-mnemonic-hotness-export.csv
-RD_HOTNESS_FILENAME=/u/project/puneet/mgottsch/swd_ecc_input/rv64g/rv64g-rd-hotness-export.csv
+MNEMONIC_HOTNESS_FILENAME=/u/project/puneet/mgottsch/swd_ecc_data/rv64g/disassembly/rv64g-mnemonic-hotness-export.csv
+RD_HOTNESS_FILENAME=/u/project/puneet/mgottsch/swd_ecc_data/rv64g/disassembly/rv64g-rd-hotness-export.csv
 VERBOSE=0
 
 # Library paths are for running on Hoffman2
