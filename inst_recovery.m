@@ -180,7 +180,7 @@ for x=1:num_candidate_messages
        valid_messages_rd{num_valid_messages,1} = rd;
 
        if verbose == 1
-           display(['Index ' num2str(x) ' candidate valid message: ' message]);
+           display(['Index ' num2str(num_valid_messages) ' valid candidate message: ' message]);
        end
     elseif verbose == 1
        display(['Candidate-correct BUT NOT VALID message: ' message]);

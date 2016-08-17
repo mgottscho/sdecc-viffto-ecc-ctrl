@@ -94,6 +94,7 @@ fclose(fid);
 
 %% Parse the raw trace depending on its format.
 % If it is hexadecimal instructions in big-endian format, one instruction per line of the form
+% FIXME!!!
 % 00000000
 % deadbeef
 % 01234567
@@ -113,34 +114,43 @@ fclose(fid);
 % NOTE: we only expect instruction cache lines to be in this file!
 % NOTE: addresses and decimal values in these traces are in BIG-ENDIAN
 % format.
-parsed_sampled_trace_raw = cell(num_inst,1);
+stripped_sampled_trace_raw = cell(1,1); % FIXME
+parsed_sampled_trace_raw = cell(1,1);
+sampled_trace_inst_disassembly = cell(1,1);
+x = 1;
 for i=1:num_inst
    remain = sampled_trace_raw{i,1};
    for j=1:9 % 9 iterations because payload is 9th entry in a row of the above format
        [token,remain] = strtok(remain,',');
    end
    [token, remain] = strtok(token,'x'); % Find the part of "PAYLOAD 0xDEADBEEF" after the "0x" part.
-   parsed_sampled_trace_raw{i,1} = reverse_byte_order(remain(2:end)); % Put the instruction in big-endian format.
-end
-sampled_trace_hex = char(parsed_sampled_trace_raw);
+   inst_hex = reverse_byte_order(remain(2:end)); % Put the instruction in big-endian format.
 
-%% Disassemble each instruction that we sampled.
-sampled_trace_bin = dec2bin(hex2dec(sampled_trace_hex),k);
-sampled_trace_inst_disassembly = cell(num_inst,1);
-for i=1:num_inst
-    [legal, mnemonic, codec, rd, rs1, rs2, rs3, imm, arg] = parse_rv64g_decoder_output(sampled_trace_hex(i,:));
-    map = containers.Map();
-    map('legal') = legal; 
-    map('mnemonic') = mnemonic; 
-    map('codec') = codec; 
-    map('rd') = rd; 
-    map('rs1') = rs1; 
-    map('rs2') = rs2; 
-    map('rs3') = rs3; 
-    map('imm') = imm; 
-    map('arg') = arg; 
-    sampled_trace_inst_disassembly{i} = map;
+   %% Disassemble each instruction that we sampled.
+   [legal, mnemonic, codec, rd, rs1, rs2, rs3, imm, arg] = parse_rv64g_decoder_output(inst_hex);
+   map = containers.Map();
+   map('legal') = legal; 
+   map('mnemonic') = mnemonic; 
+   map('codec') = codec; 
+   map('rd') = rd; 
+   map('rs1') = rs1; 
+   map('rs2') = rs2; 
+   map('rs3') = rs3; 
+   map('imm') = imm; 
+   map('arg') = arg; 
+
+   % FIXME: this is just a policy testing thing, not intended to STAY IN THE CODE!!! 8/16/2016
+   if strcmp(codec, 'u') == 1 || strcmp(codec, 'uj') == 1
+       stripped_sampled_trace_raw{x,1} = sampled_trace_raw{i,1}; % FIXME
+       sampled_trace_inst_disassembly{x,1} = map;
+       parsed_sampled_trace_raw{x,1} = inst_hex;
+       x = x+1;
+   end
 end
+
+sampled_trace_hex = char(parsed_sampled_trace_raw);
+sampled_trace_bin = dec2bin(hex2dec(sampled_trace_hex),k);
+num_inst = size(sampled_trace_hex,1); % FIXME
 
 %% Construct a matrix containing all possible 2-bit error patterns as bit-strings.
 display('Constructing error-pattern matrix...');
