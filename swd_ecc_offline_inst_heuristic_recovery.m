@@ -94,7 +94,7 @@ fclose(fid);
 
 %% Parse the raw trace depending on its format.
 % If it is hexadecimal instructions in big-endian format, one instruction per line of the form
-% FIXME!!!
+% FIXME!!! This mode isn't currently supported by the following code.
 % 00000000
 % deadbeef
 % 01234567
@@ -114,7 +114,6 @@ fclose(fid);
 % NOTE: we only expect instruction cache lines to be in this file!
 % NOTE: addresses and decimal values in these traces are in BIG-ENDIAN
 % format.
-stripped_sampled_trace_raw = cell(1,1); % FIXME
 parsed_sampled_trace_raw = cell(1,1);
 sampled_trace_inst_disassembly = cell(1,1);
 x = 1;
@@ -139,18 +138,13 @@ for i=1:num_inst
    map('imm') = imm; 
    map('arg') = arg; 
 
-   % FIXME: this is just a policy testing thing, not intended to STAY IN THE CODE!!! 8/16/2016
-   if strcmp(codec, 'u') == 1 || strcmp(codec, 'uj') == 1
-       stripped_sampled_trace_raw{x,1} = sampled_trace_raw{i,1}; % FIXME
-       sampled_trace_inst_disassembly{x,1} = map;
-       parsed_sampled_trace_raw{x,1} = inst_hex;
-       x = x+1;
-   end
+   sampled_trace_inst_disassembly{x,1} = map;
+   parsed_sampled_trace_raw{x,1} = inst_hex;
+   x = x+1;
 end
 
 sampled_trace_hex = char(parsed_sampled_trace_raw);
 sampled_trace_bin = dec2bin(hex2dec(sampled_trace_hex),k);
-num_inst = size(sampled_trace_hex,1); % FIXME
 
 %% Construct a matrix containing all possible 2-bit error patterns as bit-strings.
 display('Constructing error-pattern matrix...');
