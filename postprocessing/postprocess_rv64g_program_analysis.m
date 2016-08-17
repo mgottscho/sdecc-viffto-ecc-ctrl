@@ -6,7 +6,7 @@ input_directory = '/Users/Mark/Dropbox/SoftwareDefinedECC/data/rv64g/program-sta
 output_directory = [input_directory filesep 'postprocessed'];
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-%% Read in names of benchmarks to process as subdirectories
+%% Read in names of benchmarks to process
 dir_contents = dir(input_directory);
 j=1;
 benchmark_filenames = cell(1,1);
