@@ -44,6 +44,6 @@ end
 % Uniquify the candidate messages
 if x > 1
     candidate_correct_messages = candidate_correct_messages(1:x-1, :);
-    candidate_correct_messages = unique(candidate_correct_messages,'rows','stable'); % REVELATION 8/16/2016: THIS IS THE SOURCE OF THE PICK_FIRST, PICK_LAST, PICK_RANDOM tiebreaker policy differences! It all has to to with sorting and the prevalance of leading 0s in most instructions!! We can actually use this as a feature.
+    candidate_correct_messages = unique(candidate_correct_messages,'rows','sort'); % Sort feature is important
     retval = 0;
 end

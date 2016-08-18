@@ -21,7 +21,7 @@ NUM_INST=1000
 NUM_THREADS=$(cat /proc/cpuinfo | grep ^processor | wc -l ) 
 CODE_TYPE=hsiao1970
 POLICY=filter-rank
-TIEBREAK_POLICY=pick_first
+TIEBREAK_POLICY=pick_last
 
 INPUT_DIRECTORY=~/project-eedept/swd_ecc_data/$ISA/spike
 OUTPUT_DIRECTORY=~/project-eedept/swd_ecc_data/$ISA/inst-recovery/offline-dynamic/$CODE_TYPE/$POLICY/$TIEBREAK_POLICY
