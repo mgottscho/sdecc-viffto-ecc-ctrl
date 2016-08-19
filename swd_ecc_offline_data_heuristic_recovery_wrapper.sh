@@ -14,7 +14,5 @@ CODE_TYPE=${11}
 POLICY=${12}
 TIEBREAK_POLICY=${13}
 
-#./extract_data_lines_from_memdatatrace.sh $INPUT_FILE ${INPUT_FILE}.data
-
 # Library paths are for running on Hoffman2
-LD_PRELOAD=$GCC5/lib64/libstdc++.so.6 LD_LIBRARY_PATH=$MATLAB/bin/glnxa64:$MATLAB/runtime/glnxa64:$LD_LIBRARY_PATH $BINARY_LOCATION/swd_ecc_offline_data_heuristic_recovery $ISA $BENCHMARK $N $K $NUM_WORDS $WORDS_PER_BLOCK ${INPUT_FILE}.data $OUTPUT_FILE $NUM_THREADS $CODE_TYPE $POLICY $TIEBREAK_POLICY
+LD_PRELOAD=$GCC5/lib64/libstdc++.so.6 LD_LIBRARY_PATH=$MATLAB/bin/glnxa64:$MATLAB/runtime/glnxa64:$LD_LIBRARY_PATH $BINARY_LOCATION/swd_ecc_offline_data_heuristic_recovery $ISA $BENCHMARK $N $K $NUM_WORDS $WORDS_PER_BLOCK $INPUT_FILE $OUTPUT_FILE $NUM_THREADS $CODE_TYPE $POLICY $TIEBREAK_POLICY
