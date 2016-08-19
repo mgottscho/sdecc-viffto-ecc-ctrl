@@ -46,6 +46,8 @@ if verbose == 1
     rd_hotness_filename
 end
 
+rng('shuffle'); % Seed RNG based on current time
+
 % init some return values
 recovered_message = repmat('X',1,k);
 suggest_to_crash = 0;
@@ -288,7 +290,7 @@ elseif strcmp(policy, 'filter-rank-pick-random') == 1 || strcmp(policy, 'filter-
             display('RECOVERY STEP 2: FREQUENCY. Estimate the probability of each valid message being individually correct.');
         end
 
-        num_matching_message_mnemonics = containers.Map();
+        %num_matching_message_mnemonics = containers.Map();
         rel_freq_mnemonics = zeros(num_valid_messages,1);
         for x=1:num_valid_messages
             mnemonic = valid_messages_mnemonic{x,1};
@@ -299,40 +301,39 @@ elseif strcmp(policy, 'filter-rank-pick-random') == 1 || strcmp(policy, 'filter-
             end
             
             % Get number of valid messages with this mnemonic
-            if num_matching_message_mnemonics.isKey(mnemonic)
-                num_matching_message_mnemonics(mnemonic) = num_matching_message_mnemonics(mnemonic) + 1;
-            else
-                num_matching_message_mnemonics(mnemonic) = 1;
-            end
+            %if num_matching_message_mnemonics.isKey(mnemonic)
+            %    num_matching_message_mnemonics(mnemonic) = num_matching_message_mnemonics(mnemonic) + 1;
+            %else
+            %    num_matching_message_mnemonics(mnemonic) = 1;
+            %end
         end
 
         % Compute probability of each message according to their groups
         valid_messages_probabilities = zeros(num_valid_messages,1);
         for x=1:num_valid_messages
-            num_matching_message_mnemonics = 0;
-            valid_messages_probabilities(x,1) = rel_freq_mnemonics(x,1) / sum(rel_freq_mnemonics) * (1 / num_matching_message_mnemonics(valid_messages_mnemonic{x,1}));
+            valid_messages_probabilities(x,1) = rel_freq_mnemonics(x,1) / sum(rel_freq_mnemonics);%* (1 / num_matching_message_mnemonics(valid_messages_mnemonic{x,1}));
         end
 
-        % Determine list of equivalent targets
-        if strcmp(policy, 'filter-frequency-pick-random') == 1
-            % Find all candidates with the highest probability
-            highest_prob_mnemonic = 0;
-            for x=1:num_valid_messages
-                if valid_messages_probabilities(x,1) >= highest_prob_mnemonic
-                   highest_prob_mnemonic = valid_messages_probabilities(x,1);
-                end
-            end
+        if verbose == 1
+            rel_freq_mnemonics
+            valid_messages_probabilities
+        end
 
-            target_inst_indices = zeros(1,1);
-            y = 1;
-            for x=1:num_valid_messages
-                if valid_messages_probabilities(x,1) == highest_prob_mnemonic
-                    target_inst_indices(y,1) = x;
-                    y = y+1;
-                end
+        % Determine list of equivalent targets - find all candidates with the highest probability
+        highest_prob_mnemonic = 0;
+        for x=1:num_valid_messages
+            if valid_messages_probabilities(x,1) >= highest_prob_mnemonic
+               highest_prob_mnemonic = valid_messages_probabilities(x,1);
             end
-        elseif
-            % TODO
+        end
+
+        target_inst_indices = zeros(1,1);
+        y = 1;
+        for x=1:num_valid_messages
+            if valid_messages_probabilities(x,1) == highest_prob_mnemonic
+                target_inst_indices(y,1) = x;
+                y = y+1;
+            end
         end
     end
 
@@ -340,30 +341,82 @@ elseif strcmp(policy, 'filter-rank-pick-random') == 1 || strcmp(policy, 'filter-
     if size(target_inst_indices,1) == 1 % Have only one recovery target
         target_inst_index = target_inst_indices(1); 
         if verbose == 1
-            display(['We have one recovery target: ' num2str(target_inst_index)]);
+            display(['LAST STEP: CHOOSE TARGET. We have one recovery target: ' num2str(target_inst_index)]);
         end
     else % Have several recovery targets
-        suggest_to_crash = 1;
         if strcmp(policy, 'filter-rank-pick-random') == 1 || strcmp(policy, 'filter-frequency-pick-random') == 1
+            if verbose == 1
+                display('LAST STEP: CHOOSE TARGET. Pick randomly. We recommend crashing if there are more than 2 equivalent targets here.');
+            end
+
+            if size(target_inst_indices,1) > 2
+                suggest_to_crash = 1;
+            end
             target_inst_index = target_inst_indices(randi(size(target_inst_indices,1),1));
         end
-        if strcmp(policy, 'filter-rank-sort-pick-first') == 1 || strcmp(tiebreak_policy, 'filter-rank-rank-sort-pick-first') == 1
+
+        if strcmp(policy, 'filter-rank-sort-pick-first') == 1 || strcmp(policy, 'filter-rank-rank-sort-pick-first') == 1
+            if verbose == 1
+                display('LAST STEP: CHOOSE TARGET. Pick the first in the sorted list of equivalent targets. We recommend crashing if there are more than 2 equivalent targets here.');
+            end
+
+            if size(target_inst_indices,1) > 2
+                suggest_to_crash = 1;
+            end
             target_inst_index = target_inst_indices(1);
         end
-        if strcmp(policy, 'filter-frequency-sort-pick-first') == 1 || strcmp(policy, 'filter-frequency-sort-pick-longest-pad') == 1
-            % TODO
+
+        if strcmp(policy, 'filter-frequency-sort-pick-first') == 1
+            if verbose == 1
+                display('LAST STEP: CHOOSE TARGET. Pick the first in the sorted list of equivalent targets. We recommend crashing if Pr{guessing correctly} < 0.5');
+            end
+
+
+            target_inst_index = target_inst_indices(1);
+            if valid_messages_probabilities(target_inst_index) < 0.5
+                suggest_to_crash = 1;
+            end
+        end
+
+        if strcmp(policy, 'filter-frequency-sort-pick-longest-pad') == 1
+            if verbose == 1
+                display('LAST STEP: CHOOSE TARGET. Pick the target that has the longest run of leading 0s or 1s (longest pad). In a tie, pick first in sorted order. We recommend crashing if Pr{guessing correctly} < 0.5');
+            end
+            
+            y = 1;
+            pad_lengths = zeros(size(target_inst_indices,1),1);
+            for x=1:size(target_inst_indices,1)
+                pad_lengths(x) = compute_pad_length(candidate_valid_messages(target_inst_indices(x),:));
+            end
+            max_pad_length = max(pad_lengths);
+
+            if verbose == 1
+                pad_lengths
+            end
+
+            max_pad_length_indices = 0;
+            y = 1;
+            for x=1:size(target_inst_indices,1)
+                if pad_lengths(x) == max_pad_length
+                    max_pad_length_indices(y) = x;
+                    y = y+1;
+                end
+            end
+            target_inst_index = max_pad_length_indices(1);
+            if valid_messages_probabilities(target_inst_index) < 0.5
+                suggest_to_crash = 1;
+            end
         end
     end
 end
 
 if verbose == 1
     target_inst_indices
-    target_index
+    target_inst_index
 end
 
 %% Final result
 recovered_message = candidate_valid_messages(target_inst_index,:);
-%suggest_to_crash
 recovered_successfully = (strcmp(recovered_message, original_message) == 1);
 
 if verbose == 1

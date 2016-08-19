@@ -20,11 +20,11 @@ K=32
 NUM_INST=1000
 NUM_THREADS=$(cat /proc/cpuinfo | grep ^processor | wc -l ) 
 CODE_TYPE=hsiao1970
-POLICY=filter-rank
-TIEBREAK_POLICY=pick_last
-
-INPUT_DIRECTORY=~/project-eedept/swd_ecc_data/$ISA/spike
-OUTPUT_DIRECTORY=~/project-eedept/swd_ecc_data/$ISA/inst-recovery/offline-dynamic/$CODE_TYPE/$POLICY/$TIEBREAK_POLICY
+POLICY=filter-frequency-sort-pick-first
+INPUT_TYPE=static
+#INPUT_DIRECTORY=~/project-eedept/swd_ecc_data/$ISA/spike
+INPUT_DIRECTORY=~/project-eedept/swd_ecc_data/$ISA/disassembly
+OUTPUT_DIRECTORY=~/project-eedept/swd_ecc_data/$ISA/inst-recovery/offline-$INPUT_TYPE/$CODE_TYPE/$POLICY
 
 MNEMONIC_HOTNESS_FILENAME=~/project-eedept/swd_ecc_data/$ISA/disassembly/$ISA-mnemonic-hotness-export.csv
 RD_HOTNESS_FILENAME=~/project-eedept/swd_ecc_data/$ISA/disassembly/$ISA-rd-hotness-export.csv
@@ -41,7 +41,7 @@ for SPEC_BENCHMARK in $SPEC_BENCHMARKS; do
     #INPUT_FILE="$INPUT_DIRECTORY/${ISA}-${SPEC_BENCHMARK}-text-section-inst.txt" # For static analysis
     INPUT_FILE="$INPUT_DIRECTORY/spike_mem_data_trace_${SPEC_BENCHMARK}.txt" # For dynamic analysis
     OUTPUT_FILE="$OUTPUT_DIRECTORY/${ISA}-${SPEC_BENCHMARK}-inst-heuristic-recovery.mat"
-	./swd_ecc_offline_inst_heuristic_recovery_wrapper.sh $PWD $ISA $SPEC_BENCHMARK $N $K $NUM_INST $INPUT_FILE $OUTPUT_FILE $NUM_THREADS $CODE_TYPE $POLICY $TIEBREAK_POLICY $MNEMONIC_HOTNESS_FILENAME $RD_HOTNESS_FILENAME > $OUTPUT_DIRECTORY/${ISA}-${SPEC_BENCHMARK}-inst-heuristic-recovery.log
+	./swd_ecc_offline_inst_heuristic_recovery_wrapper.sh $PWD $ISA $SPEC_BENCHMARK $N $K $NUM_INST $INPUT_FILE $OUTPUT_FILE $NUM_THREADS $CODE_TYPE $POLICY $MNEMONIC_HOTNESS_FILENAME $RD_HOTNESS_FILENAME > $OUTPUT_DIRECTORY/${ISA}-${SPEC_BENCHMARK}-inst-heuristic-recovery.log
 done
 
 echo "Done."

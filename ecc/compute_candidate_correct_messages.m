@@ -44,6 +44,6 @@ end
 % Uniquify the candidate messages
 if x > 1
     candidate_correct_messages = candidate_correct_messages(1:x-1, :);
-    candidate_correct_messages = unique(candidate_correct_messages,'rows','sort'); % Sort feature is important
+    candidate_correct_messages = unique(candidate_correct_messages,'rows','sorted'); % Sort feature is important
     retval = 0;
 end

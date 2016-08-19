@@ -25,6 +25,8 @@ if verbose == 1
     verbose
 end
 
+rng('shuffle'); % Seed RNG based on current time
+
 words_per_block = size(cacheline_bin,2);
 
 % Init some return values
