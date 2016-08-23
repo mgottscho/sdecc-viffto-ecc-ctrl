@@ -24,8 +24,8 @@ CODE_TYPE=hsiao1970
 POLICY=delta
 TIEBREAK_POLICY=pick_random
 
-INPUT_DIRECTORY=~/project-puneet/swd_ecc_data/$ISA/spike
-OUTPUT_DIRECTORY=~/project-puneet/swd_ecc_data/$ISA/data-recovery/offline-dynamic/$CODE_TYPE/$POLICY/$TIEBREAK_POLICY
+INPUT_DIRECTORY=$MWG_DATA_PATH/swd_ecc_data/$ISA/spike
+OUTPUT_DIRECTORY=$MWG_DATA_PATH/swd_ecc_data/$ISA/data-recovery/offline-dynamic/$CODE_TYPE/$POLICY/$TIEBREAK_POLICY
 
 ###############################################################################################
 
@@ -37,7 +37,7 @@ echo "Running..."
 echo ""
 for SPEC_BENCHMARK in $SPEC_BENCHMARKS; do
 	echo "$SPEC_BENCHMARK..."
-    INPUT_FILE="$INPUT_DIRECTORY/spike_data_mem_trace_${SPEC_BENCHMARK}_shortened.txt"
+    INPUT_FILE="$INPUT_DIRECTORY/spike_data_mem_trace_${SPEC_BENCHMARK}.txt.data.reads"
     OUTPUT_FILE="$OUTPUT_DIRECTORY/${ISA}-${SPEC_BENCHMARK}-data-heuristic-recovery.mat"
 	./swd_ecc_offline_data_heuristic_recovery_wrapper.sh $PWD $ISA $SPEC_BENCHMARK $N $K $NUM_WORDS $WORDS_PER_BLOCK $INPUT_FILE $OUTPUT_FILE $NUM_THREADS $CODE_TYPE $POLICY $TIEBREAK_POLICY
 done

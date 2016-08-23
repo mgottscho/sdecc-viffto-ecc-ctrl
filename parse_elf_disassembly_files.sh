@@ -1,5 +1,7 @@
 #!/bin/bash
 
+# This script takes objdump disassembly and strips it into more usable colon-delimited CSV format as well as a pure instruction hex format.
+
 INPUT_PREFIX=$1
 FILE_1=$INPUT_PREFIX-disassembly.txt
 FILE_2=$INPUT_PREFIX-disassembly-formatted.txt
