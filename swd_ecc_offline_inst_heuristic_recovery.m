@@ -80,6 +80,7 @@ sampled_trace_raw = cell(num_inst,1);
 j = 1;
 for i=1:total_num_inst
     line = fgets(fid);
+    line = line(1:end-1); % Throw away newline character
     if strcmp(line,'') == 1 || j > size(sampled_inst_indices,1)
         break;
     end

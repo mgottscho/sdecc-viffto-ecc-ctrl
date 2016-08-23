@@ -60,6 +60,7 @@ end
 for i=1:total_num_inst
     %% Read line from file
     line = fgets(fid);
+    line = line(1:end-1); % Throw away newline character
 
     %% Parse the line depending on its format to get the instruction of interest.
     % If it is hexadecimal instructions in big-endian format, one instruction per line of the form
