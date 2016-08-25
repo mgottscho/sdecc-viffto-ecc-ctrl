@@ -186,7 +186,7 @@ parfor i=1:num_inst % Parallelize loop across separate threads, since this could
     
     %% Check that the message is actually a valid instruction to begin with.
     if legal == 0 
-       display(['WARNING: Found illegal input instruction: ' message_hex '. This should not happen!']);
+       display(['WARNING: Found illegal input instruction: ' message_hex '. This should not happen. However, we will try heuristic recovery anyway.']);
     end
 
     %% Iterate over all possible 2-bit error patterns.

@@ -132,6 +132,13 @@ if verbose == 1
     display('Attempting heuristic recovery...');
 end
 
+%% Warn if input message is actually illegal
+original_message_hex = dec2hex(bin2dec(original_message),8);
+[status, decoderOutput] = MyRv64gDecoder(original_message_hex);
+if verbose == 1 && status ~= 0
+    display('WARNING: Input message is not a legal instruction!');
+end
+
 %% Flip 1 bit at a time on the corrupted codeword, and attempt decoding on each. We should find several bit positions that decode successfully with just a single-bit error.
 if verbose == 1
     display('Computing candidate codewords...');
@@ -342,6 +349,15 @@ elseif strcmp(policy, 'filter-rank-pick-random') == 1 || strcmp(policy, 'filter-
         target_inst_index = target_inst_indices(1); 
         if verbose == 1
             display(['LAST STEP: CHOOSE TARGET. We have one recovery target: ' num2str(target_inst_index)]);
+        end
+
+        % Handle special case, where NO candidate-correct messages were valid, perhaps because input message was an illegal instruction. In this case, actually revert to picking randomly and advise to crash.
+        if target_inst_index == 0
+            suggest_to_crash = 1;
+            target_inst_index = randi(num_candidate_messages,1);
+            if verbose == 1
+                display(['SPECIAL CASE ENCOUNTERED: The recovery target is invalid, perhaps because none of the candidate messages are actually valid (perhaps the input instruction is illegal). We reverted to picking target randomly and got ' num2str(target_inst_index) '. Recommend always crashing in this case.']);
+            end
         end
     else % Have several recovery targets
         if strcmp(policy, 'filter-rank-pick-random') == 1 || strcmp(policy, 'filter-frequency-pick-random') == 1
