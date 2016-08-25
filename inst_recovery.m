@@ -432,7 +432,11 @@ if verbose == 1
 end
 
 %% Final result
-recovered_message = candidate_valid_messages(target_inst_index,:);
+if size(target_inst_indices,1) == 0 % Special case where no candidates were valid and we handled it above by setting target_inst_index
+    recovered_message = candidate_correct_messages(target_inst_index,:);
+else % Typical case
+    recovered_message = candidate_valid_messages(target_inst_index,:);
+end
 recovered_successfully = (strcmp(recovered_message, original_message) == 1);
 
 if verbose == 1
