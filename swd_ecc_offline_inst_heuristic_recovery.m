@@ -115,18 +115,14 @@ x = 1;
 for i=1:num_inst
    remain = sampled_trace_raw{i,1};
    if size(strfind(remain, ',')) ~= 0 % Dynamic trace mode
-       if verbose == 1
-           display('Detected dynamic trace, parsing...');
-       end
+       display('Detected dynamic trace, parsing...');
        for j=1:9 % 9 iterations because payload is 9th entry in a row of the above format
            [token,remain] = strtok(remain,',');
        end
        [token, remain] = strtok(token,'x'); % Find the part of "PAYLOAD 0xDEADBEEF" after the "0x" part.
        inst_hex = reverse_byte_order(remain(2:end)); % Put the instruction in big-endian format.
    else
-       if verbose == 1
-           display('Detected static trace, parsing...');
-       end
+       display('Detected static trace, parsing...');
        inst_hex = remain;
    end
 
