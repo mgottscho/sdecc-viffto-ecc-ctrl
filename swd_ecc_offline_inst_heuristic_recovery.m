@@ -174,7 +174,9 @@ verbose_recovery = '0';
 
 %% Set up parallel computing
 pctconfig('preservejobs', true);
-mypool = parpool(n_threads);
+mycluster = parcluster('local');
+mycluster.NumWorkers = n_threads;
+mypool = parpool(mycluster,n_threads);
 
 parfor i=1:num_inst % Parallelize loop across separate threads, since this could take a long time. Each instruction is a totally independent procedure to perform.
     %% Get the "message," which is the original instruction, i.e., the ground truth from input file.
