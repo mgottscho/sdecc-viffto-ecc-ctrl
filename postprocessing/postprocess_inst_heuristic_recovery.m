@@ -2,15 +2,14 @@
 % Author: Mark Gottscho <mgottscho@ucla.edu>
 
 %%%%%%%% CHANGE ME AS NEEDED %%%%%%%%%%%%
-input_directory = '/Users/Mark/Dropbox/SoftwareDefinedECC/data/rv64g/heuristic-recovery/instructions/hsiao-code/offline-dynamic-random-sampling/2016-8-16 rv64g 1000inst filter-rank pick_first';
+input_directory = '/Users/Mark/Dropbox/SoftwareDefinedECC/data/rv64g/heuristic-recovery/instructions/hsiao-code/offline-static-random-sampling/2016-8-26 rv64g 1000inst filter-frequency-sort-pick-longest-pad';
 output_directory = input_directory;
 inst_fields_file = '/Users/Mark/Dropbox/SoftwareDefinedECC/data/rv64g/rv64g_inst_field_bitmasks.mat';
 num_inst = 1000;
 num_error_patterns = 741;
 architecture = 'rv64g';
 code_type = 'hsiao1970';
-policy = 'Filter-Rank';
-tiebreaker_policy = 'Pick First';
+policy = 'Filter-Frequency-Sort-Pick-Longest-Pad';
 
 %% Read in names of benchmarks to process
 dir_contents = dir(input_directory);
@@ -18,7 +17,12 @@ j=1;
 benchmark_filenames = cell(1,1);
 benchmark_names = cell(1,1);
 for i=1:size(dir_contents,1)
-    if dir_contents(i).isdir || strcmp(dir_contents(i).name, '.') == 1 || strcmp(dir_contents(i).name, '..') == 1 || strcmp(dir_contents(i).name, '.DS_Store') == 1 || size(strfind(dir_contents(i).name,'.log'),1) > 0
+    %if dir_contents(i).isdir || strcmp(dir_contents(i).name, '.') == 1 || strcmp(dir_contents(i).name, '..') == 1 || strcmp(dir_contents(i).name, '.DS_Store') == 1 || size(strfind(dir_contents(i).name,'.log'),1) > 0
+    %    continue;
+    %end
+    
+    % Skip all files except those containing '.mat'
+    if dir_contents(i).isdir || size(strfind(dir_contents(i).name,'.mat'),1) <= 0
         continue;
     end
     
@@ -44,7 +48,7 @@ for bench=1:num_benchmarks
     benchmark_could_have_crashed(:,:,bench) = could_have_crashed;
     benchmark_success_with_crash_option(:,:,bench) = success_with_crash_option;
     heuristic_recovery_plot;
-    print(gcf, '-depsc2', [output_directory filesep benchmark filesep architecture '-' benchmark '-inst-heuristic-recovery.eps']);
+    print(gcf, '-depsc2', [output_directory filesep architecture '-' benchmark '-inst-heuristic-recovery.eps']);
     close(gcf);
 end
 
@@ -66,6 +70,7 @@ avg_benchmark_successes = reshape(mean(mean(benchmark_successes,1),2), [size(ben
 figure;
 barh(avg_benchmark_successes, 'k');
 ylabel('Benchmark', 'FontSize', 12, 'FontName', 'Arial');
+set(gca,'YTick', 1:size(benchmark_names,1));
 set(gca,'YTickLabel', benchmark_names, 'FontSize', 12, 'FontName', 'Arial');
 xlim([0 1]);
 xlabel('Average Rate of Heuristic Recovery', 'FontSize', 12, 'FontName', 'Arial');
@@ -76,6 +81,7 @@ avg_benchmark_could_have_crashed = reshape(mean(mean(benchmark_could_have_crashe
 figure;
 barh(avg_benchmark_could_have_crashed, 'k');
 ylabel('Benchmark', 'FontSize', 12, 'FontName', 'Arial');
+set(gca,'YTick', 1:size(benchmark_names,1));
 set(gca,'YTickLabel', benchmark_names, 'FontSize', 12, 'FontName', 'Arial');
 xlim([0 1]);
 xlabel('Average Rate of Crash Opt-In', 'FontSize', 12, 'FontName', 'Arial');
@@ -86,6 +92,7 @@ avg_benchmark_success_with_crash_option = reshape(mean(mean(benchmark_success_wi
 figure;
 barh(avg_benchmark_success_with_crash_option, 'k');
 ylabel('Benchmark', 'FontSize', 12, 'FontName', 'Arial');
+set(gca,'YTick', 1:size(benchmark_names,1));
 set(gca,'YTickLabel', benchmark_names, 'FontSize', 12, 'FontName', 'Arial');
 xlim([0 1]);
 xlabel('Average Rate of Success With Crash Opt-in', 'FontSize', 12, 'FontName', 'Arial');
