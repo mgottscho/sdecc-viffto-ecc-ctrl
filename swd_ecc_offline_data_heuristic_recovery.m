@@ -1,4 +1,4 @@
-function swd_ecc_offline_data_heuristic_recovery(architecture, benchmark, n, k, num_words, words_per_block, input_filename, output_filename, n_threads, code_type, policy, tiebreak_policy)
+function swd_ecc_offline_data_heuristic_recovery(architecture, benchmark, n, k, num_words, words_per_block, input_filename, output_filename, n_threads, code_type, policy)
 % This function iterates over a series of data cache lines that are statically extracted
 % from a compiled program that was executed and produced a dynamic memory trace.
 % We choose a cache line and word within a cache line randomly.
@@ -23,8 +23,7 @@ function swd_ecc_offline_data_heuristic_recovery(architecture, benchmark, n, k, 
 %   output_filename --  String
 %   n_threads --        String: '[1|2|3|...]'
 %   code_type --        String: '[hsiao1970|davydov1991]'
-%   policy --           String: '[hamming|longest_run|delta]'
-%   tiebreak_policy --String: '[pick_first|pick_last|pick_random]'
+%   policy --           String: '[baseline-pick-random|hamming-pick-random|longest-run-pick-random|delta-pick-random]'
 %
 % Returns:
 %   Nothing.
@@ -43,7 +42,6 @@ output_filename
 n_threads = str2num(n_threads)
 code_type
 policy
-tiebreak_policy
 
 r = n-k;
 
@@ -168,13 +166,19 @@ parfor i=1:num_words % Parallelize loop across separate threads, since this coul
     cacheline_bin  = sampled_trace_cachelines_bin(i,:);
     message_hex = cacheline_hex{sampled_blockpos_indices(i)};
     message_bin = cacheline_bin{sampled_blockpos_indices(i)};
+
+    %% Serialize cacheline_bin into a string, as data_recovery() requires this instead of cell array.
+    serialized_cacheline_bin = cacheline_bin{1}; % init
+    for j=2:size(cacheline_bin,1)
+        serialized_cacheline_bin = [serialized_cacheline_bin ',' cacheline_bin{j}];
+    end
     
     %% Iterate over all possible 2-bit error patterns.
     for j=1:num_error_patterns
         error = error_patterns(j,:);
 
         %% Do heuristic recovery for this message/error pattern combo.
-        [original_codeword, received_string, num_candidate_messages, recovered_message, suggest_to_crash, recovered_successfully] = data_recovery('rv64g', num2str(n), num2str(k), message_bin, error, code_type, policy, tiebreak_policy, cacheline_bin, sampled_blockpos_indices(i), verbose_recovery);
+        [original_codeword, received_string, num_candidate_messages, recovered_message, suggest_to_crash, recovered_successfully] = data_recovery('rv64g', num2str(n), num2str(k), message_bin, error, code_type, policy, serialized_cacheline_bin, sampled_blockpos_indices(i), verbose_recovery);
 
         %% Store results for this message/error pattern pair
         results_candidate_messages(i,j) = num_candidate_messages;
