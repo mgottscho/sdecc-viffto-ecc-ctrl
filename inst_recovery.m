@@ -156,6 +156,7 @@ if verbose == 1
 end
 
 %% Policies
+bailout = 0;
 if strcmp(policy, 'baseline-pick-random') == 1
     if verbose == 1
         display('RECOVERY STEP 1: PICK RANDOMLY from all candidate-correct messages.');
@@ -345,7 +346,6 @@ elseif strcmp(policy, 'filter-rank-pick-random') == 1 || strcmp(policy, 'filter-
     end
 
     % Choose recovery target
-    bailout = 0;
     if size(target_inst_indices,1) == 1 % Have only one recovery target
         target_inst_index = target_inst_indices(1); 
         if verbose == 1
