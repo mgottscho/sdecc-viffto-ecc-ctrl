@@ -7,10 +7,10 @@ K=32
 ORIGINAL_MESSAGE=$1
 ERROR_PATTERN=000000100000000000100000000000000000000
 CODE_TYPE=hsiao1970
-POLICY=filter-rank-rank-sort-pick-first
+POLICY=filter-rank-pick-random
 MNEMONIC_HOTNESS_FILENAME=$MWG_DATA_PATH/swd_ecc_data/rv64g/program-statistics/static/rv64g-mnemonic-hotness-export.csv
 RD_HOTNESS_FILENAME=$MWG_DATA_PATH/swd_ecc_data/rv64g/program-statistics/static/rv64g-rd-hotness-export.csv
-VERBOSE=1
+VERBOSE=0
 
 if [[ "$MWG_MACHINE_NAME" == "hoffman" ]]; then
     MY_PRELOAD=$GCC5/lib64/libstdc++.so.6

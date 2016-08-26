@@ -162,6 +162,8 @@ if strcmp(policy, 'baseline-pick-random') == 1
         display('RECOVERY STEP 1: PICK RANDOMLY from all candidate-correct messages.');
     end
 
+    candidate_valid_messages = candidate_correct_messages;
+    num_valid_messages = size(candidate_valid_messages,1);
     target_inst_indices = (1:size(candidate_correct_messages,1))';
     target_inst_index = target_inst_indices(randi(size(target_inst_indices,1),1));
 
