@@ -267,7 +267,7 @@ end
 
 recovered_message = candidate_correct_messages(target_message_index,:);
 %% Compute whether we got the correct answer or not for this data/error pattern pairing
-if target_message_index == message_blockpos+1 % Success!
+if recovered_message == original_message % Success!
     recovered_successfully = 1;
     suggest_to_crash = 0; % TODO: implement crash policy
 else % Failed to correct error -- corrupted recovery
