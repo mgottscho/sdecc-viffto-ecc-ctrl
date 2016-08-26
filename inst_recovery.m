@@ -345,6 +345,7 @@ elseif strcmp(policy, 'filter-rank-pick-random') == 1 || strcmp(policy, 'filter-
     end
 
     % Choose recovery target
+    bailout = 0;
     if size(target_inst_indices,1) == 1 % Have only one recovery target
         target_inst_index = target_inst_indices(1); 
         if verbose == 1
@@ -355,6 +356,7 @@ elseif strcmp(policy, 'filter-rank-pick-random') == 1 || strcmp(policy, 'filter-
         if target_inst_index == 0
             suggest_to_crash = 1;
             target_inst_index = randi(num_candidate_messages,1);
+            bailout = 1;
             if verbose == 1
                 display(['SPECIAL CASE ENCOUNTERED: The recovery target is invalid, perhaps because none of the candidate messages are actually valid (perhaps the input instruction is illegal). We reverted to picking target randomly and got ' num2str(target_inst_index) '. Recommend always crashing in this case.']);
             end
@@ -432,7 +434,7 @@ if verbose == 1
 end
 
 %% Final result
-if size(target_inst_indices,1) == 0 % Special case where no candidates were valid and we handled it above by setting target_inst_index
+if bailout == 1 % Special case where no candidates were valid and we handled it above by setting target_inst_index
     recovered_message = candidate_correct_messages(target_inst_index,:);
 else % Typical case
     recovered_message = candidate_valid_messages(target_inst_index,:);
