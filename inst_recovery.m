@@ -1,10 +1,10 @@
 function [original_codeword, received_string, num_candidate_messages, num_valid_messages, recovered_message, suggest_to_crash, recovered_successfully] = inst_recovery(architecture, n, k, original_message, error_pattern, code_type, policy, mnemonic_hotness_filename, rd_hotness_filename, verbose)
 % This function attempts to heuristically recover from a DUE affecting a single received string.
-% The message is assumed to be an instruction of the given architecture.
-% To compute candidate codewords, we flip a single bit one at a time and decode using specified SECDED decoder..
+% The message is assumed to be an instruction of the given architecture in big endian format.
+% To compute candidate codewords, we flip a single bit one at a time and decode using specified ECC decoder.
 % We should obtain a set of unique candidate codewords.
 % Based on the policy, we then try to recover the most likely corresponding instruction-message.
-% TODO: fully support DECTED and ChipKill codes
+% TODO: fully support codes other than SECDED such as DECTED and ChipKill.
 %
 % Input arguments:
 %   architecture --     String: '[rv64g]'

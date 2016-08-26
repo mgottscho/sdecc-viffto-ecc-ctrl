@@ -21,11 +21,10 @@ NUM_WORDS=1000
 WORDS_PER_BLOCK=8
 NUM_THREADS=$(cat /proc/cpuinfo | grep ^processor | wc -l ) 
 CODE_TYPE=hsiao1970
-POLICY=delta
-TIEBREAK_POLICY=pick_random
+POLICY=delta-pick-random
 
 INPUT_DIRECTORY=$MWG_DATA_PATH/swd_ecc_data/$ISA/spike
-OUTPUT_DIRECTORY=$MWG_DATA_PATH/swd_ecc_data/$ISA/data-recovery/offline-dynamic/$CODE_TYPE/$POLICY/$TIEBREAK_POLICY
+OUTPUT_DIRECTORY=$MWG_DATA_PATH/swd_ecc_data/$ISA/data-recovery/offline-dynamic/$CODE_TYPE/$POLICY
 
 ###############################################################################################
 
@@ -39,7 +38,7 @@ for SPEC_BENCHMARK in $SPEC_BENCHMARKS; do
 	echo "$SPEC_BENCHMARK..."
     INPUT_FILE="$INPUT_DIRECTORY/spike_data_mem_trace_${SPEC_BENCHMARK}.txt.data.reads"
     OUTPUT_FILE="$OUTPUT_DIRECTORY/${ISA}-${SPEC_BENCHMARK}-data-heuristic-recovery.mat"
-	./swd_ecc_offline_data_heuristic_recovery_wrapper.sh $PWD $ISA $SPEC_BENCHMARK $N $K $NUM_WORDS $WORDS_PER_BLOCK $INPUT_FILE $OUTPUT_FILE $NUM_THREADS $CODE_TYPE $POLICY $TIEBREAK_POLICY
+	./swd_ecc_offline_data_heuristic_recovery_wrapper.sh $PWD $ISA $SPEC_BENCHMARK $N $K $NUM_WORDS $WORDS_PER_BLOCK $INPUT_FILE $OUTPUT_FILE $NUM_THREADS $CODE_TYPE $POLICY
 done
 
 echo "Done."
