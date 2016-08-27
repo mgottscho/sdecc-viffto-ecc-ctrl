@@ -37,9 +37,9 @@ echo "Running..."
 echo ""
 for SPEC_BENCHMARK in $SPEC_BENCHMARKS; do
 	echo "$SPEC_BENCHMARK..."
-    INPUT_FILE="$INPUT_DIRECTORY/spike_data_mem_trace_${SPEC_BENCHMARK}.txt.data.reads"
+    INPUT_FILE="$INPUT_DIRECTORY/spike_mem_data_trace_${SPEC_BENCHMARK}.txt.data.reads"
     OUTPUT_FILE="$OUTPUT_DIRECTORY/${ISA}-${SPEC_BENCHMARK}-data-heuristic-recovery.mat"
-	./swd_ecc_offline_data_heuristic_recovery_wrapper.sh $PWD $ISA $SPEC_BENCHMARK $N $K $NUM_WORDS $WORDS_PER_BLOCK $INPUT_FILE $OUTPUT_FILE $NUM_THREADS $CODE_TYPE $POLICY
+	./swd_ecc_offline_data_heuristic_recovery_wrapper.sh $PWD $ISA $SPEC_BENCHMARK $N $K $NUM_WORDS $WORDS_PER_BLOCK $INPUT_FILE $OUTPUT_FILE $NUM_THREADS $CODE_TYPE $POLICY > $OUTPUT_DIRECTORY/${ISA}-${SPEC_BENCHMARK}-data-heuristic-recovery.log
 done
 
 echo "Done."

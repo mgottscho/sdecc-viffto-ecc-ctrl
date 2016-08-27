@@ -280,7 +280,7 @@ if verbose == 1
     suggest_to_crash
 end
 
-fprintf(1,'%s', recovered_message);
+fprintf(1,'%s\n', recovered_message);
 
 
 
