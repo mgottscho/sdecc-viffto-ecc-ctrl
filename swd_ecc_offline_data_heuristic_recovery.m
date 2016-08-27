@@ -169,8 +169,8 @@ parfor i=1:num_words % Parallelize loop across separate threads, since this coul
 
     %% Serialize cacheline_bin into a string, as data_recovery() requires this instead of cell array.
     serialized_cacheline_bin = cacheline_bin{1}; % init
-    for j=2:size(cacheline_bin,1)
-        serialized_cacheline_bin = [serialized_cacheline_bin ',' cacheline_bin{j}];
+    for x=2:size(cacheline_bin,1)
+        serialized_cacheline_bin = [serialized_cacheline_bin ',' cacheline_bin{x}];
     end
     
     %% Iterate over all possible 2-bit error patterns.
@@ -181,7 +181,6 @@ parfor i=1:num_words % Parallelize loop across separate threads, since this coul
         [original_codeword, received_string, num_candidate_messages, recovered_message, suggest_to_crash, recovered_successfully] = data_recovery('rv64g', num2str(n), num2str(k), message_bin, error, code_type, policy, serialized_cacheline_bin, sampled_blockpos_indices(i), verbose_recovery);
 
         %% Store results for this message/error pattern pair
-        results_candidate_messages(i,j) = num_candidate_messages;
         success(i,j) = recovered_successfully;
         could_have_crashed(i,j) = suggest_to_crash;
         if suggest_to_crash == 1
@@ -189,6 +188,7 @@ parfor i=1:num_words % Parallelize loop across separate threads, since this coul
         else
             success_with_crash_option(i,j) = success(i,j); % If we decide not to crash, success rate is same.
         end
+        results_candidate_messages(i,j) = num_candidate_messages;
     end
 
     %% Progress indicator

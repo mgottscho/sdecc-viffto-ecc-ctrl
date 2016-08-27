@@ -19,15 +19,15 @@ N=39
 K=32
 NUM_INST=1000
 NUM_THREADS=$(cat /proc/cpuinfo | grep ^processor | wc -l ) 
-CODE_TYPE=hsiao1970
-POLICY=filter-frequency-sort-pick-first
+CODE_TYPE=davydov1991
+POLICY=filter-frequency-sort-pick-longest-pad
 INPUT_TYPE=static
 INPUT_DIRECTORY=$MWG_DATA_PATH/swd_ecc_data/$ISA/disassembly/linux-gnu # For static
-#INPUT_DIRECTORY=$MWG_DATA_PATH/project-eedept/swd_ecc_data/$ISA/spike # For dynamic
+#INPUT_DIRECTORY=$MWG_DATA_PATH/swd_ecc_data/$ISA/spike_safe # For dynamic
 OUTPUT_DIRECTORY=$MWG_DATA_PATH/swd_ecc_data/$ISA/inst-recovery/offline-$INPUT_TYPE/$CODE_TYPE/$POLICY # For static or dynamic
 
-MNEMONIC_HOTNESS_FILENAME=$MWG_DATA_PATH/swd_ecc_data/$ISA/program-statistics/$INPUT_TYPE/$ISA-mnemonic-hotness-export.csv
-RD_HOTNESS_FILENAME=$MWG_DATA_PATH/swd_ecc_data/$ISA/program-statistics/$INPUT_TYPE/$ISA-rd-hotness-export.csv
+MNEMONIC_HOTNESS_FILENAME=$MWG_DATA_PATH/swd_ecc_data/$ISA/program-statistics/static/$ISA-mnemonic-hotness-export.csv
+RD_HOTNESS_FILENAME=$MWG_DATA_PATH/swd_ecc_data/$ISA/program-statistics/static/$ISA-rd-hotness-export.csv
 ###############################################################################################
 
 # Prepare directories

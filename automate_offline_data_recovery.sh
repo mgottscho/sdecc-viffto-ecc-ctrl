@@ -14,7 +14,8 @@ fi
 
 ########################## FEEL FREE TO CHANGE THESE OPTIONS ##################################
 ISA=rv64g    # Set the target ISA; benchmarks must be disassembled for this as well
-SPEC_BENCHMARKS="400.perlbench 401.bzip2 403.gcc 410.bwaves 416.gamess 429.mcf 433.milc 434.zeusmp 435.gromacs 436.cactusADM 437.leslie3d 444.namd 445.gobmk 447.dealII 450.soplex 453.povray 454.calculix 456.hmmer 458.sjeng 459.GemsFDTD 462.libquantum 464.h264ref 465.tonto 470.lbm 471.omnetpp 473.astar 481.wrf 482.sphinx3 483.xalancbmk"
+#SPEC_BENCHMARKS="400.perlbench 401.bzip2 403.gcc 410.bwaves 416.gamess 429.mcf 433.milc 434.zeusmp 435.gromacs 436.cactusADM 437.leslie3d 444.namd 445.gobmk 447.dealII 450.soplex 453.povray 454.calculix 456.hmmer 458.sjeng 459.GemsFDTD 462.libquantum 464.h264ref 465.tonto 470.lbm 471.omnetpp 473.astar 481.wrf 482.sphinx3 483.xalancbmk"
+SPEC_BENCHMARKS="400.perlbench 401.bzip2 403.gcc 410.bwaves 444.namd 450.soplex 453.povray 456.hmmer 459.GemsFDTD 462.libquantum 464.h264ref 470.lbm 471.omnetpp 473.astar 482.sphinx3"
 N=72
 K=64
 NUM_WORDS=1000
@@ -23,7 +24,7 @@ NUM_THREADS=$(cat /proc/cpuinfo | grep ^processor | wc -l )
 CODE_TYPE=hsiao1970
 POLICY=delta-pick-random
 
-INPUT_DIRECTORY=$MWG_DATA_PATH/swd_ecc_data/$ISA/spike
+INPUT_DIRECTORY=$MWG_DATA_PATH/swd_ecc_data/$ISA/spike_safe
 OUTPUT_DIRECTORY=$MWG_DATA_PATH/swd_ecc_data/$ISA/data-recovery/offline-dynamic/$CODE_TYPE/$POLICY
 
 ###############################################################################################
