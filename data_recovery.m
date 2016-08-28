@@ -160,7 +160,12 @@ end
 
 %% Score the candidate-correct messages
 candidate_correct_message_scores = NaN(size(candidate_correct_messages,1),1); % Init scores
-if strcmp(policy, 'hamming-pick-random') == 1
+if strcmp(policy, 'baseline-pick-random') == 1
+    if verbose == 1
+        display('RECOVERY STEP 1: Each candidate-correct message is scored equally.');
+    end
+    candidate_correct_message_scores = ones(size(candidate_correct_messages,1),1); % All outcomes equally scored
+elseif strcmp(policy, 'hamming-pick-random') == 1
     %% Now compute scores for each candidate message
     % HAMMING METRIC
     % For each candidate message, compute the average Hamming distance to each of its neighboring words in the cacheline
@@ -187,7 +192,7 @@ elseif strcmp(policy, 'longest-run-pick-random') == 1
         display('RECOVERY STEP 1: Compute scores of all candidate-correct messages by longest run of either 0s or 1s. Ignore values of neighboring words in cacheline. Lower scores are better.');
     end
     for x=1:size(candidate_correct_messages,1) % For each candidate message
-        score = k - count_longest-run(candidate_correct_messages(x,:));
+        score = k - count_longest_run(candidate_correct_messages(x,:));
         if score < 0 || score > k
             print(['Error! score for longest 0/1s was ' num2str(score)]);
         end
