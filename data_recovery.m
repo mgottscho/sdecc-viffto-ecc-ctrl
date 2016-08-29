@@ -246,7 +246,7 @@ end
 min_score_indices = zeros(1,1);
 y = 1;
 for x=1:size(candidate_correct_message_scores,1) % For each candidate message score
-   if candidate_correct_message_scores(x) == min_score
+   if candidate_correct_message_scores(x) >= min_score-1e-4 && candidate_correct_message_scores(x) <= min_score+1e-4 % Tolerance of 0.0001 as we are often comparing floating point scores
        min_score_indices(y,1) = x;
        y = y+1;
    end
