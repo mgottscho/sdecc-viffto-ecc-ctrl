@@ -19,7 +19,7 @@ function [original_codeword, received_string, num_candidate_messages, recovered_
 %   policy --           String: '[hamming-pick-random|longest-run-pick-random|delta-pick-random]'
 %   cacheline_bin --    String: Set of words_per_block k-bit binary strings, e.g. '0001010101....00001,0000000000.....00000,...,111101010...00101'. words_per_block is inferred by the number of binary strings that are delimited by commas.
 %   message_blockpos -- String: '[0-(words_per_block-1)]' denoting the position of the message under test within the cacheline. This message should match original_message argument above.
-%   verbose -- 1 if you want console printouts of progress to stdout.
+%   verbose -- '1' if you want console printouts of progress to stdout.
 %
 % Returns:
 %   original_codeword -- n-bit encoded version of original_message

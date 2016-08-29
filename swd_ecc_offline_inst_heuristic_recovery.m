@@ -1,4 +1,4 @@
-function swd_ecc_offline_inst_heuristic_recovery(architecture, benchmark, n, k, num_inst, input_filename, output_filename, n_threads, code_type, policy, mnemonic_hotness_filename, rd_hotness_filename)
+function swd_ecc_offline_inst_heuristic_recovery(architecture, benchmark, n, k, num_inst, input_filename, output_filename, n_threads, code_type, policy, mnemonic_hotness_filename, rd_hotness_filename, verbose_recovery)
 % This function evaluates heuristic recovery from corrupted instructions in an offline manner.
 %
 % It iterates over a series of instructions that are statically extracted from a compiled program.
@@ -26,6 +26,7 @@ function swd_ecc_offline_inst_heuristic_recovery(architecture, benchmark, n, k, 
 %   policy --           String: '[baseline-pick-random | filter-rank-pick-random | filter-rank-sort-pick-first | filter-rank-rank-sort-pick-first | filter-frequency-pick-random | filter-frequency-sort-pick-first | filter-frequency-sort-pick-longest-pad]'
 %   mnemonic_hotness_filename -- String: full path to CSV file containing the relative frequency of each instruction to use for ranking
 %   rd_hotness_filename -- String: full path to CSV file containing the relative frequency of each destination register address to use for ranking
+%   verbose_recovery -- String: '[0|1]'
 %
 % Returns:
 %   Nothing.
@@ -45,6 +46,7 @@ code_type
 policy
 mnemonic_hotness_filename
 rd_hotness_filename
+verbose_recovery
 
 if ~isdeployed
     addpath ecc common rv64g % Add sub-folders to MATLAB search paths for calling other functions we wrote
@@ -169,8 +171,6 @@ results_valid_messages = NaN(num_inst,num_error_patterns); % Init
 success = NaN(num_inst, num_error_patterns); % Init
 could_have_crashed = NaN(num_inst, num_error_patterns); % Init
 success_with_crash_option = NaN(num_inst, num_error_patterns); % Init
-verbose_recovery = '0';
-
 
 %% Set up parallel computing
 pctconfig('preservejobs', true);

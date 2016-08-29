@@ -21,6 +21,8 @@ NUM_INST=1000
 NUM_THREADS=$(cat /proc/cpuinfo | grep ^processor | wc -l ) 
 CODE_TYPE=davydov1991
 POLICY=filter-frequency-sort-pick-longest-pad
+VERBOSE_RECOVERY=0
+
 INPUT_TYPE=static
 INPUT_DIRECTORY=$MWG_DATA_PATH/swd_ecc_data/$ISA/disassembly/linux-gnu # For static
 #INPUT_DIRECTORY=$MWG_DATA_PATH/swd_ecc_data/$ISA/spike_safe # For dynamic
@@ -41,7 +43,7 @@ for SPEC_BENCHMARK in $SPEC_BENCHMARKS; do
     INPUT_FILE="$INPUT_DIRECTORY/${ISA}-${SPEC_BENCHMARK}-instructions.txt" # For static analysis
     #INPUT_FILE="$INPUT_DIRECTORY/spike_mem_data_trace_${SPEC_BENCHMARK}.txt.inst" # For dynamic analysis
     OUTPUT_FILE="$OUTPUT_DIRECTORY/${ISA}-${SPEC_BENCHMARK}-inst-heuristic-recovery.mat"
-	./swd_ecc_offline_inst_heuristic_recovery_wrapper.sh $PWD $ISA $SPEC_BENCHMARK $N $K $NUM_INST $INPUT_FILE $OUTPUT_FILE $NUM_THREADS $CODE_TYPE $POLICY $MNEMONIC_HOTNESS_FILENAME $RD_HOTNESS_FILENAME > $OUTPUT_DIRECTORY/${ISA}-${SPEC_BENCHMARK}-inst-heuristic-recovery.log 2>&1
+	./swd_ecc_offline_inst_heuristic_recovery_wrapper.sh $PWD $ISA $SPEC_BENCHMARK $N $K $NUM_INST $INPUT_FILE $OUTPUT_FILE $NUM_THREADS $CODE_TYPE $POLICY $MNEMONIC_HOTNESS_FILENAME $RD_HOTNESS_FILENAME $VERBOSE_RECOVERY > $OUTPUT_DIRECTORY/${ISA}-${SPEC_BENCHMARK}-inst-heuristic-recovery.log 2>&1
 done
 
 echo "Done."

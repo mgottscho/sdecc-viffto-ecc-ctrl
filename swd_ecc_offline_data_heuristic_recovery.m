@@ -1,4 +1,4 @@
-function swd_ecc_offline_data_heuristic_recovery(architecture, benchmark, n, k, num_words, words_per_block, input_filename, output_filename, n_threads, code_type, policy)
+function swd_ecc_offline_data_heuristic_recovery(architecture, benchmark, n, k, num_words, words_per_block, input_filename, output_filename, n_threads, code_type, policy, verbose_recovery)
 % This function iterates over a series of data cache lines that are statically extracted
 % from a compiled program that was executed and produced a dynamic memory trace.
 % We choose a cache line and word within a cache line randomly.
@@ -24,6 +24,7 @@ function swd_ecc_offline_data_heuristic_recovery(architecture, benchmark, n, k, 
 %   n_threads --        String: '[1|2|3|...]'
 %   code_type --        String: '[hsiao1970|davydov1991]'
 %   policy --           String: '[baseline-pick-random|hamming-pick-random|longest-run-pick-random|delta-pick-random]'
+%   verbose_recovery -- String: '[0|1]'
 %
 % Returns:
 %   Nothing.
@@ -42,6 +43,7 @@ output_filename
 n_threads = str2num(n_threads)
 code_type
 policy
+verbose_recovery
 
 r = n-k;
 
@@ -149,7 +151,6 @@ results_candidate_messages = NaN(num_words,num_error_patterns); % Init
 success = NaN(num_words, num_error_patterns); % Init
 could_have_crashed = NaN(num_words, num_error_patterns); % Init
 success_with_crash_option = NaN(num_words, num_error_patterns); % Init
-verbose_recovery = '0';
 
 display('Evaluating SWD-ECC...');
 
