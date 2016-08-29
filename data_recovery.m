@@ -237,16 +237,18 @@ end
 %% Now we have scores, let's rank and choose the best candidate message. LOWER SCORES ARE BETTER.
 % TODO: how to decide when to crash? need to quantify level of variation or distinguishability between candidates..
 min_score = Inf;
-min_score_indices = NaN;
 for x=1:size(candidate_correct_message_scores,1) % For each candidate message score
    if candidate_correct_message_scores(x) < min_score
        min_score = candidate_correct_message_scores(x);
    end
 end
 
+min_score_indices = zeros(1,1);
+y = 1;
 for x=1:size(candidate_correct_message_scores,1) % For each candidate message score
    if candidate_correct_message_scores(x) == min_score
-       min_score_indices = x;
+       min_score_indices(y,1) = x;
+       y = y+1;
    end
 end
 
