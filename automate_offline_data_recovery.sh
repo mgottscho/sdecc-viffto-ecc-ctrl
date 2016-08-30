@@ -20,10 +20,11 @@ N=72
 K=64
 NUM_WORDS=1000
 WORDS_PER_BLOCK=8
-NUM_THREADS=$(cat /proc/cpuinfo | grep ^processor | wc -l ) 
+#NUM_THREADS=$(cat /proc/cpuinfo | grep ^processor | wc -l ) 
+NUM_THREADS=1
 CODE_TYPE=hsiao1970
 POLICY=hamming-pick-random
-VERBOSE_RECOVERY=0
+VERBOSE_RECOVERY=1
 
 INPUT_DIRECTORY=$MWG_DATA_PATH/swd_ecc_data/$ISA/spike_safe
 OUTPUT_DIRECTORY=$MWG_DATA_PATH/swd_ecc_data/$ISA/data-recovery/offline-dynamic/$CODE_TYPE/$POLICY
