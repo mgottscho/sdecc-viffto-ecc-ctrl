@@ -7,7 +7,7 @@
 % Author: Mark Gottscho
 % Email: mgottscho@ucla.edu
 
-x = mean(results_valid_messages);
+x = mean(results_candidate_messages);
 y = mean(success);
 
 figure;
@@ -25,4 +25,4 @@ ylim([0 1]);
 legend('opcode','rd','funct3','rs1','rs2','funct7','parity');
 xlabel('Average Number of Valid (Filtered) Candidate Messages', 'FontSize', 12, 'FontName', 'Arial');
 ylabel('Average Rate of Recovery', 'FontSize', 12, 'FontName', 'Arial');
-title(['Rate of Heuristic Recovery for ' code_type ' (39,32) SECDED -- ' benchmark ' -- ' policy], 'FontSize', 12, 'FontName', 'Arial');
+title(['Rate of Heuristic Recovery for ' code_type ' -- ' benchmark ' -- ' policy], 'FontSize', 12, 'FontName', 'Arial');

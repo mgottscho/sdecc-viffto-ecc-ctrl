@@ -1,15 +1,16 @@
-%% This script automates the post-processing and plotting of instruction heuristic recovery rates for each benchmark, and overall trend
+%% This script automates the post-processing and plotting of data heuristic recovery rates for each benchmark, and overall trend
 % Author: Mark Gottscho <mgottscho@ucla.edu>
 
 %%%%%%%% CHANGE ME AS NEEDED %%%%%%%%%%%%
-input_directory = '/Users/Mark/Dropbox/SoftwareDefinedECC/data/rv64g/heuristic-recovery/instructions/hsiao-code/offline-static-random-sampling/2016-8-26 rv64g 1000inst filter-frequency-sort-pick-longest-pad';
+input_directory = '/Users/Mark/Dropbox/SoftwareDefinedECC/data/rv64g/heuristic-recovery/data/hsiao-code/offline-dynamic-random-sampling/2016-8-29 rv64g 1000words longest-run-pick-random';
 output_directory = input_directory;
-inst_fields_file = '/Users/Mark/Dropbox/SoftwareDefinedECC/data/rv64g/rv64g_inst_field_bitmasks.mat';
-num_inst = 1000;
-num_error_patterns = 741; % For (39,32) SECDED
+num_words = 1000;
+%num_error_patterns = 741; % For (39,32) SECDED
+num_error_patterns = 2556; % For (72,64) SECDED
 architecture = 'rv64g';
-code_type = 'hsiao1970 (39,32) SECDED';
-policy = 'Filter-Frequency-Sort-Pick-Longest-Pad';
+%code_type = 'hsiao1970 (39,32) SECDED';
+code_type = 'hsiao1970 (72,64) SECDED';
+policy = 'Longest-Run-Pick-Random';
 
 %% Read in names of benchmarks to process
 dir_contents = dir(input_directory);
@@ -36,19 +37,18 @@ end
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 num_benchmarks = size(benchmark_names,1);
-benchmark_successes = NaN(num_inst,num_error_patterns,num_benchmarks);
-benchmark_could_have_crashed = NaN(num_inst,num_error_patterns,num_benchmarks);
-benchmark_success_with_crash_option = NaN(num_inst,num_error_patterns,num_benchmarks);
-load(inst_fields_file);
+benchmark_successes = NaN(num_words,num_error_patterns,num_benchmarks);
+benchmark_could_have_crashed = NaN(num_words,num_error_patterns,num_benchmarks);
+benchmark_success_with_crash_option = NaN(num_words,num_error_patterns,num_benchmarks);
 
 for bench=1:num_benchmarks
     benchmark = benchmark_names{bench};
-    load([input_directory filesep architecture '-' benchmark '-inst-heuristic-recovery.mat'], 'results_valid_messages', 'success', 'could_have_crashed', 'success_with_crash_option');
+    load([input_directory filesep architecture '-' benchmark '-data-heuristic-recovery.mat'], 'results_candidate_messages', 'success', 'could_have_crashed', 'success_with_crash_option');
     benchmark_successes(:,:,bench) = success;
     benchmark_could_have_crashed(:,:,bench) = could_have_crashed;
     benchmark_success_with_crash_option(:,:,bench) = success_with_crash_option;
-    heuristic_recovery_plot;
-    print(gcf, '-depsc2', [output_directory filesep architecture '-' benchmark '-inst-heuristic-recovery.eps']);
+    data_heuristic_recovery_plot;
+    print(gcf, '-depsc2', [output_directory filesep architecture '-' benchmark '-data-heuristic-recovery.eps']);
     close(gcf);
 end
 
