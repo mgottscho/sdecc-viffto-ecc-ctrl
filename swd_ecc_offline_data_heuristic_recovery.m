@@ -169,9 +169,9 @@ parfor i=1:num_words % Parallelize loop across separate threads, since this coul
     message_bin = cacheline_bin{sampled_blockpos_indices(i)};
 
     %% Serialize cacheline_bin into a string, as data_recovery() requires this instead of cell array.
-    serialized_cacheline_bin = cacheline_bin{1}; % init
-    for x=2:size(cacheline_bin,1)
-        serialized_cacheline_bin = [serialized_cacheline_bin ',' cacheline_bin{x}];
+    serialized_cacheline_bin = cacheline_bin{1,1}; % init
+    for x=2:size(cacheline_bin,2)
+        serialized_cacheline_bin = [serialized_cacheline_bin ',' cacheline_bin{1,x}];
     end
     
     %% Iterate over all possible 2-bit error patterns.
