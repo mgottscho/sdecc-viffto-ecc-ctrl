@@ -47,9 +47,7 @@ for bench=1:num_benchmarks
     benchmark_successes(:,:,bench) = success;
     benchmark_could_have_crashed(:,:,bench) = could_have_crashed;
     benchmark_success_with_crash_option(:,:,bench) = success_with_crash_option;
-    heuristic_recovery_plot;
-    print(gcf, '-depsc2', [output_directory filesep architecture '-' benchmark '-inst-heuristic-recovery.eps']);
-    close(gcf);
+    inst_heuristic_recovery_plot;
 end
 
 figure;

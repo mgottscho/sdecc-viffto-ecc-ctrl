@@ -43,13 +43,11 @@ benchmark_success_with_crash_option = NaN(num_words,num_error_patterns,num_bench
 
 for bench=1:num_benchmarks
     benchmark = benchmark_names{bench};
-    load([input_directory filesep architecture '-' benchmark '-data-heuristic-recovery.mat'], 'results_candidate_messages', 'success', 'could_have_crashed', 'success_with_crash_option');
+    load([input_directory filesep architecture '-' benchmark '-data-heuristic-recovery.mat'], 'results_candidate_messages', 'success', 'could_have_crashed', 'success_with_crash_option','n');
     benchmark_successes(:,:,bench) = success;
     benchmark_could_have_crashed(:,:,bench) = could_have_crashed;
     benchmark_success_with_crash_option(:,:,bench) = success_with_crash_option;
     data_heuristic_recovery_plot;
-    print(gcf, '-depsc2', [output_directory filesep architecture '-' benchmark '-data-heuristic-recovery.eps']);
-    close(gcf);
 end
 
 figure;
