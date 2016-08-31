@@ -37,12 +37,28 @@ success_2d(:,end) = NaN;
 
 figure;
 pcolor(success_2d);
-xlim([0 n]);
-ylim([0 n]);
+xlim([1 n]);
+ylim([1 n]);
 
 xlabel('Index of 1st bit in error', 'FontSize', 12, 'FontName', 'Arial');
 ylabel('Index of 2nd bit in error', 'FontSize', 12, 'FontName', 'Arial');
 title(['Rate of Heuristic Recovery for ' code_type ' -- ' benchmark ' -- ' policy], 'FontSize', 12, 'FontName', 'Arial');
 
 print(gcf, '-depsc2', [output_directory filesep architecture '-' benchmark '-data-heuristic-recovery-heatmap.eps']);
+close(gcf);
+
+
+
+figure;
+surf(success_2d);
+xlim([1 n]);
+ylim([1 n]);
+zlim([0 1]);
+
+xlabel('Index of 1st bit in error', 'FontSize', 12, 'FontName', 'Arial');
+ylabel('Index of 2nd bit in error', 'FontSize', 12, 'FontName', 'Arial');
+zlabel('Average Rate of Heuristic Recovery');
+title(['Rate of Heuristic Recovery for ' code_type ' -- ' benchmark ' -- ' policy], 'FontSize', 12, 'FontName', 'Arial');
+
+print(gcf, '-depsc2', [output_directory filesep architecture '-' benchmark '-data-heuristic-recovery-surf.eps']);
 close(gcf);

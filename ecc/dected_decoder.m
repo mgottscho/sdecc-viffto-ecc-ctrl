@@ -14,8 +14,7 @@ function [decoded_message, num_error_bits] = dected_decoder(received_codeword, H
 %
 % Input arguments:
 %   received_codeword --      String: 1xn character array, each entry is '0' or '1'
-%   H --                      Matrix: (n-k)xn decimal matrix with 0 or 1 entries that corresponds to a SECDED parity-check matrix
-%   code_type --              String: '[hsiao1970|davydov1991]'
+%   H --                      Matrix: (n-k)xn decimal matrix with 0 or 1 entries that corresponds to a DECTED parity-check matrix
 %
 % Returns:
 %   decoded_message --        String: 1xk character array, each entry is '0' or '1' UNLESS decoding fails, in which case it is repeated 'X' and num_error_bits is Inf
@@ -98,11 +97,6 @@ end
 %If we get this far, that means we have detected the error, so we assume
 %there were 3 errors.
 num_error_bits = 3;
-
-
-   
-
-
 
 
 end

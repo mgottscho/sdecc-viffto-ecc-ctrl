@@ -4,15 +4,15 @@ function [original_codeword, received_string, num_candidate_messages, num_valid_
 % To compute candidate codewords, we flip a single bit one at a time and decode using specified ECC decoder.
 % We should obtain a set of unique candidate codewords.
 % Based on the policy, we then try to recover the most likely corresponding instruction-message.
-% TODO: fully support codes other than SECDED such as DECTED and ChipKill.
+% TODO: support ChipKill.
 %
 % Input arguments:
 %   architecture --     String: '[rv64g]'
-%   n --                String: '[39|72]'
+%   n --                String: '[39|45|72|79]'
 %   k --                String: '[32|64]'
 %   original_message -- Binary String of length k bits/chars
 %   error_pattern --    Binary String of length n bits/chars
-%   code_type --        String: '[hsiao1970|davydov1991]'
+%   code_type --        String: '[hsiao1970|davydov1991|bose1960]'
 %   policy --           String: '[baseline-pick-random | filter-rank-pick-random | filter-rank-sort-pick-first | filter-rank-rank-sort-pick-first | filter-frequency-pick-random | filter-frequency-sort-pick-first | filter-frequency-sort-pick-longest-pad]'
 %   mnemonic_hotness_filename -- String: full path to CSV file containing the relative frequency of each instruction to use for ranking
 %   rd_hotness_filename -- String: full path to CSV file containing the relative frequency of each destination register address to use for ranking
@@ -61,7 +61,14 @@ end
 if verbose == 1
     display('Getting ECC encoder and decoder matrices...');
 end
-[G,H] = getSECDEDCodes(n,code_type);
+
+if strcmp(code_type, 'hsiao1970') == 1 || strcmp(code_type, 'davydov1991') == 1 % SECDED
+    [G,H] = getSECDEDCodes(n,code_type);
+elseif strcmp(code_type, 'bose1960') == 1 % DECTED
+    [G,H] = getDECTEDCodes(n);
+else
+    display(['FATAL! Unsupported code type: ' code_type]);
+end
 
 %% Read mnemonic and rd distributions from files now
 if verbose == 1
@@ -95,7 +102,7 @@ if verbose == 1
     display('Getting the original codeword and generating the received (corrupted) string...');
 end
 
-original_codeword = secded_encoder(original_message,G);
+original_codeword = ecc_encoder(original_message,G);
 received_string = my_bitxor(original_codeword, error_pattern);
 
 if verbose == 1
@@ -110,14 +117,18 @@ if verbose == 1
     display('Attempting to decode the received string...');
 end
 
-[recovered_message, num_error_bits] = secded_decoder(received_string, H, code_type);
+if strcmp(code_type, 'hsiao1970') == 1 || strcmp(code_type, 'davydov1991') == 1 % SECDED
+    [recovered_message, num_error_bits] = secded_decoder(received_string, H, code_type);
+elseif strcmp(code_type, 'bose1960') == 1 % DECTED
+    [recovered_message, num_error_bits] = dected_decoder(received_string, H);
+end % didn't check bad code type error condition because we should have caught it earlier anyway
 
 if verbose == 1
-    display(['ECC decoder determined that there are ' num2str(num_error_bits) ' bits in error. The input error pattern had ' num2str(sum(error_pattern=='1')) ' bits flipped.']);
+    display(['Sanity check: ECC decoder determined that there are ' num2str(num_error_bits) ' bits in error. The input error pattern had ' num2str(sum(error_pattern=='1')) ' bits flipped.']);
 end
 
-%% If the ECC decoder had no error or correctable error, we are done
-if num_error_bits == 0 || num_error_bits == 1 
+%% If the ECC decoder returned the correct message, we are done.
+if strcmp(recovered_message,original_message) == 1
     if verbose == 1
         display('No error or correctable error. We are done, no need for heuristic recovery.');
     end

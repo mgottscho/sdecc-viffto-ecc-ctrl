@@ -3,26 +3,27 @@ function swd_ecc_offline_inst_heuristic_recovery(architecture, benchmark, n, k, 
 %
 % It iterates over a series of instructions that are statically extracted from a compiled program.
 % For each instruction, it first checks if it is a valid instruction. If it is, the
-% script encodes the instruction/message in a specified SECDED encoder.
-% The script then iterates over all possible 2-bit error patterns on the
-% resulting codeword. Each of these 2-bit patterns are decoded by our
-% SECDED code and should all be "detected but uncorrectable." For each of
-% these 2-bit errors, we flip a single bit one at a time and decode again.
+% script encodes the instruction/message in a specified ECC encoder.
+% The script then iterates over all possible detected-but-uncorrectable error patterns on the
+% resulting codeword. Each of these (t+1)-bit patterns are decoded by our
+% ECC code and should all be "detected but uncorrectable." For each of
+% these errors, we flip a 1 bit one at a time and decode again.
 % We should obtain X received codewords that are indicated as corrected.
 % These X codewords are "candidates" for the original encoded message.
 % The function then uses the instruction decoder to determine which of
 % the X candidate messages are valid instructions.
+% TODO: support ChipKill
 %
 % Input arguments:
 %   architecture --     String: '[rv64g]'
 %   benchmark --        String
-%   n --                String: '[39|72]'
+%   n --                String: '[39|45|72|79]'
 %   k --                String: '[32|64]'
 %   num_inst --         String: '[1|2|3|...]'
 %   input_filename --   String
 %   output_filename --  String
 %   n_threads --        String: '[1|2|3|...]'
-%   code_type --        String: '[hsiao|davydov1991]'
+%   code_type --        String: '[hsiao|davydov1991|bose1960]'
 %   policy --           String: '[baseline-pick-random | filter-rank-pick-random | filter-rank-sort-pick-first | filter-rank-rank-sort-pick-first | filter-frequency-pick-random | filter-frequency-sort-pick-first | filter-frequency-sort-pick-longest-pad]'
 %   mnemonic_hotness_filename -- String: full path to CSV file containing the relative frequency of each instruction to use for ranking
 %   rd_hotness_filename -- String: full path to CSV file containing the relative frequency of each destination register address to use for ranking
@@ -151,17 +152,36 @@ sampled_trace_bin = dec2bin(hex2dec(sampled_trace_hex),k);
 
 %sampled_trace_hex = char(sampled_trace_raw);
 
-%% Construct a matrix containing all possible 2-bit error patterns as bit-strings.
+%% Construct a matrix containing all possible (t+1)-bit error patterns as bit-strings.
 display('Constructing error-pattern matrix...');
-num_error_patterns = nchoosek(n,2);
-error_patterns = repmat('0',num_error_patterns,n);
-num_error = 1;
-for i=1:n-1
-    for j=i+1:n
-        error_patterns(num_error, i) = '1';
-        error_patterns(num_error, j) = '1';
-        num_error = num_error + 1;
+if strcmp(code_type,'hsiao1970') == 1 || strcmp(code_type,'davydov1991') == 1 % SECDED
+    num_error_patterns = nchoosek(n,2);
+    error_patterns = repmat('0',num_error_patterns,n);
+    num_error = 1;
+    for i=1:n-1
+        for j=i+1:n
+            error_patterns(num_error, i) = '1';
+            error_patterns(num_error, j) = '1';
+            num_error = num_error + 1;
+        end
     end
+elseif strcmp(code_type,'bose1960') == 1 % DECTED
+    num_error_patterns = nchoosek(n,3);
+    error_patterns = repmat('0',num_error_patterns,n);
+    num_error = 1;
+    for i=1:n-2
+        for j=i+1:n-1
+            for l=j+1:n
+                error_patterns(num_error, i) = '1';
+                error_patterns(num_error, j) = '1';
+                error_patterns(num_error, l) = '1';
+                num_error = num_error + 1;
+            end
+        end
+    end
+else
+    display(['FATAL! Unsupported code type: ' code_type]);
+    return;
 end
 
 display('Evaluating SWD-ECC...');
