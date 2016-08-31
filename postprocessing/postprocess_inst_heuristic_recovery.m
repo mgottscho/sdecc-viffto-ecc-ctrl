@@ -8,7 +8,7 @@ inst_fields_file = '/Users/Mark/Dropbox/SoftwareDefinedECC/data/rv64g/rv64g_inst
 num_inst = 1000;
 num_error_patterns = 741; % For (39,32) SECDED
 architecture = 'rv64g';
-code_type = 'hsiao1970 (39,32) SECDED';
+code_type = 'hsiao1970';
 policy = 'Filter-Frequency-Sort-Pick-Longest-Pad';
 
 %% Read in names of benchmarks to process
@@ -43,7 +43,7 @@ load(inst_fields_file);
 
 for bench=1:num_benchmarks
     benchmark = benchmark_names{bench};
-    load([input_directory filesep architecture '-' benchmark '-inst-heuristic-recovery.mat'], 'results_valid_messages', 'success', 'could_have_crashed', 'success_with_crash_option');
+    load([input_directory filesep architecture '-' benchmark '-inst-heuristic-recovery.mat'], 'results_valid_messages', 'success', 'could_have_crashed', 'success_with_crash_option', 'n', 'k');
     benchmark_successes(:,:,bench) = success;
     benchmark_could_have_crashed(:,:,bench) = could_have_crashed;
     benchmark_success_with_crash_option(:,:,bench) = success_with_crash_option;
@@ -61,7 +61,7 @@ xlabel('Error Pattern ID', 'FontSize', 12, 'FontName', 'Arial');
 set(gca, 'FontSize', 12, 'FontName', 'Arial');
 ylabel('Average Rate of Heuristic Recovery', 'FontSize', 12, 'FontName', 'Arial');
 set(gca, 'FontSize', 12, 'FontName', 'Arial');
-title(['Average Rate of Heuristic Recovery for ' code_type ' on ' architecture ': ' policy ' Policy'],  'FontSize', 12, 'FontName', 'Arial');
+title(['Average Rate of Heuristic Recovery for ' code_type ' (' num2str(n) ',' num2str(k) ') ' architecture ': ' policy ' Policy'],  'FontSize', 12, 'FontName', 'Arial');
 print(gcf, '-depsc2', [output_directory filesep 'overall_recovery.eps']);
 
 avg_benchmark_successes = reshape(mean(mean(benchmark_successes,1),2), [size(benchmark_successes,3),1]);
@@ -72,7 +72,7 @@ set(gca,'YTick', 1:size(benchmark_names,1));
 set(gca,'YTickLabel', benchmark_names, 'FontSize', 12, 'FontName', 'Arial');
 xlim([0 1]);
 xlabel('Average Rate of Heuristic Recovery', 'FontSize', 12, 'FontName', 'Arial');
-title(['Overall Average Rate of Heuristic Recovery for ' code_type ' on ' architecture ': ' policy ' Policy'],  'FontSize', 12, 'FontName', 'Arial');
+title(['Overall Average Rate of Heuristic Recovery for ' code_type ' (' num2str(n) ',' num2str(k) ') ' architecture ': ' policy ' Policy'],  'FontSize', 12, 'FontName', 'Arial');
 print(gcf, '-depsc2', [output_directory filesep 'overall_recovery_avg.eps']);
 
 avg_benchmark_could_have_crashed = reshape(mean(mean(benchmark_could_have_crashed,1),2), [size(benchmark_could_have_crashed,3),1]);
@@ -83,7 +83,7 @@ set(gca,'YTick', 1:size(benchmark_names,1));
 set(gca,'YTickLabel', benchmark_names, 'FontSize', 12, 'FontName', 'Arial');
 xlim([0 1]);
 xlabel('Average Rate of Crash Opt-In', 'FontSize', 12, 'FontName', 'Arial');
-title(['Overall Average Rate of Crash Opt-In for ' code_type ' on ' architecture ': ' policy ' Policy'],  'FontSize', 12, 'FontName', 'Arial');
+title(['Overall Average Rate of Crash Opt-In for ' code_type ' (' num2str(n) ',' num2str(k) ') ' architecture ': ' policy ' Policy'],  'FontSize', 12, 'FontName', 'Arial');
 print(gcf, '-depsc2', [output_directory filesep 'overall_could_have_crashed_avg.eps']);
 
 avg_benchmark_success_with_crash_option = reshape(mean(mean(benchmark_success_with_crash_option,1),2), [size(benchmark_success_with_crash_option,3),1]);
@@ -94,5 +94,10 @@ set(gca,'YTick', 1:size(benchmark_names,1));
 set(gca,'YTickLabel', benchmark_names, 'FontSize', 12, 'FontName', 'Arial');
 xlim([0 1]);
 xlabel('Average Rate of Success With Crash Opt-in', 'FontSize', 12, 'FontName', 'Arial');
-title(['Overall Average Rate of Success With Crash Opt-In for ' code_type ' on ' architecture ': ' policy ' Policy'],  'FontSize', 12, 'FontName', 'Arial');
+title(['Overall Average Rate of Success With Crash Opt-In for ' code_type ' (' num2str(n) ',' num2str(k) ') ' architecture ': ' policy ' Policy'],  'FontSize', 12, 'FontName', 'Arial');
 print(gcf, '-depsc2', [output_directory filesep 'overall_recovery_with_crash_option_avg.eps']);
+
+if strcmp(code_type,'hsiao1970') == 1 || strcmp(code_type,'davydov1991') == 1
+    secded_candidate_codewords_heatmap
+    print(gcf, '-depsc2', [output_directory filesep code_type '-' num2str(n) '-' num2str(k) '-cc-heatmap.eps']);
+end

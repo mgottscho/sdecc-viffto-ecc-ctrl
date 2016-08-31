@@ -25,7 +25,7 @@ ylim([0 1]);
 legend('opcode','rd','funct3','rs1','rs2','funct7','parity');
 xlabel('Average Number of Valid (Filtered) Candidate Messages', 'FontSize', 12, 'FontName', 'Arial');
 ylabel('Average Rate of Recovery', 'FontSize', 12, 'FontName', 'Arial');
-title(['Rate of Heuristic Recovery for ' code_type ' -- ' benchmark ' -- ' policy], 'FontSize', 12, 'FontName', 'Arial');
+title(['Rate of Heuristic Recovery for ' code_type ' (' num2str(n) ',' num2str(k) ') -- ' benchmark ' -- ' policy], 'FontSize', 12, 'FontName', 'Arial');
 
 print(gcf, '-depsc2', [output_directory filesep architecture '-' benchmark '-inst-heuristic-recovery.eps']);
 close(gcf);
@@ -49,7 +49,7 @@ ylim([0 n]);
 
 xlabel('Index of 1st bit in error', 'FontSize', 12, 'FontName', 'Arial');
 ylabel('Index of 2nd bit in error', 'FontSize', 12, 'FontName', 'Arial');
-title(['Rate of Heuristic Recovery for ' code_type ' -- ' benchmark ' -- ' policy], 'FontSize', 12, 'FontName', 'Arial');
+title(['Rate of Heuristic Recovery for ' code_type ' (' num2str(n) ',' num2str(k) ') -- ' benchmark ' -- ' policy], 'FontSize', 12, 'FontName', 'Arial');
 
 print(gcf, '-depsc2', [output_directory filesep architecture '-' benchmark '-inst-heuristic-recovery-heatmap.eps']);
 close(gcf);
