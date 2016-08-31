@@ -32,7 +32,7 @@ if size(message,2) ~= k
     return;
 end
 
-% FIXME? Will this code work with k >= 64?
+% FIXME: would this fail for k > 64? Appears that it is fine.
 codeword = mod(message*G,2);
 codeword = dec2bin(codeword)';
 
