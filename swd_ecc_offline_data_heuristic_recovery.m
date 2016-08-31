@@ -11,18 +11,19 @@ function swd_ecc_offline_data_heuristic_recovery(architecture, benchmark, n, k, 
 % These X codewords are "candidates" for the original encoded message.
 % The function then tries to determine which of
 % the X candidate messages was the most likely one to recover.
+% TODO: support ChipKill
 %
 % Input arguments:
-%   architecture --     String: '[mips|alpha|rv64g]'
+%   architecture --     String: '[rv64g]'
 %   benchmark --        String
-%   n --                String: '[39|72]'
+%   n --                String: '[39|45|72|79]'
 %   k --                String: '[32|64]'
 %   num_words --        String: '[1|2|3|...]'
 %   words_per_block --  String: '[1|2|3|...]'
 %   input_filename --   String
 %   output_filename --  String
 %   n_threads --        String: '[1|2|3|...]'
-%   code_type --        String: '[hsiao1970|davydov1991]'
+%   code_type --        String: '[hsiao|davydov1991|bose1960]'
 %   policy --           String: '[baseline-pick-random|hamming-pick-random|longest-run-pick-random|delta-pick-random]'
 %   verbose_recovery -- String: '[0|1]'
 %

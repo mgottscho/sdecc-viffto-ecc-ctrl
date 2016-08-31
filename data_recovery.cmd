@@ -18,7 +18,7 @@
 #  program output  = Specified by user program
 #  Resources requested
 #
-#$ -l h_data=5000M,h_rt=1:00:00
+#$ -l h_data=5000M,h_rt=00:20:00
 #
 #  Name of application for log
 #$ -v QQAPP=mcc

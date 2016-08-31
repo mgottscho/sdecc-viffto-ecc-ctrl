@@ -34,14 +34,14 @@ for pos=1:n
    %% Attempt to decode
    if strcmp(code_type, 'hsiao1970') == 1 || strcmp(code_type, 'davydov1991') == 1 % SECDED version
         [decoded_message, num_error_bits] = secded_decoder(trial_string, H, code_type);
-   elseif strcmp(code_type, 'bosei1960') == 1 % DECTED version
+   elseif strcmp(code_type, 'bose1960') == 1 % DECTED version
         [decoded_message, num_error_bits] = dected_decoder(trial_string, H);
    else
        display(['FATAL! Unsupported code type: ' code_type]);
        return;
    end
 
-   if num_error_bits == 1           
+   if sum(size(strfind(decoded_message,'X'))) == 0
        % This is a candidate codeword.
        candidate_correct_messages(x,:) = decoded_message;
        x = x+1;

@@ -48,7 +48,7 @@ end
 
 rng('shuffle'); % Seed RNG based on current time
 
-% init some return values
+%% Init some return values
 recovered_message = repmat('X',1,k);
 suggest_to_crash = 0;
 recovered_successfully = 0;
@@ -150,7 +150,7 @@ if verbose == 1 && status ~= 0
     display('WARNING: Input message is not a legal instruction!');
 end
 
-%% Flip 1 bit at a time on the corrupted codeword, and attempt decoding on each. We should find several bit positions that decode successfully with just a single-bit error.
+%% Flip bits on the corrupted codeword, and attempt decoding on each. We should find several bit flip combinations that decode successfully
 if verbose == 1
     display('Computing candidate codewords...');
 end

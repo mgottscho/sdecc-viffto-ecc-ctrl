@@ -15,13 +15,14 @@ fi
 ########################## FEEL FREE TO CHANGE THESE OPTIONS ##################################
 ISA=rv64g    # Set the target ISA; benchmarks must be disassembled for this as well
 SPEC_BENCHMARKS="400.perlbench 401.bzip2 403.gcc 410.bwaves 416.gamess 429.mcf 433.milc 434.zeusmp 435.gromacs 436.cactusADM 437.leslie3d 444.namd 445.gobmk 447.dealII 450.soplex 453.povray 454.calculix 456.hmmer 458.sjeng 459.GemsFDTD 462.libquantum 464.h264ref 465.tonto 470.lbm 471.omnetpp 473.astar 481.wrf 482.sphinx3 483.xalancbmk"
-N=39
+N=45
 K=32
 NUM_INST=1000
-NUM_THREADS=$(cat /proc/cpuinfo | grep ^processor | wc -l ) 
-CODE_TYPE=davydov1991
+#NUM_THREADS=$(cat /proc/cpuinfo | grep ^processor | wc -l ) 
+NUM_THREADS=1
+CODE_TYPE=bose1960
 POLICY=filter-frequency-sort-pick-longest-pad
-VERBOSE_RECOVERY=0
+VERBOSE_RECOVERY=1
 
 INPUT_TYPE=static
 INPUT_DIRECTORY=$MWG_DATA_PATH/swd_ecc_data/$ISA/disassembly/linux-gnu # For static
