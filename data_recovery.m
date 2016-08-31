@@ -286,14 +286,10 @@ if verbose == 1
 end
 
 recovered_message = candidate_correct_messages(target_message_index,:);
+
 %% Compute whether we got the correct answer or not for this data/error pattern pairing
-if recovered_message == original_message % Success!
-    recovered_successfully = 1;
-    suggest_to_crash = 0; % TODO: implement crash policy
-else % Failed to correct error -- corrupted recovery
-    recovered_successfully = 0;
-    suggest_to_crash = 0; % TODO: implement crash policy
-end
+recovered_successfully = (strcmp(recovered_message, original_message) == 1);
+suggest_to_crash = 0; % TODO: implement crash policy
 
 if verbose == 1
     recovered_successfully
