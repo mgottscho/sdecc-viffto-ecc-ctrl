@@ -135,17 +135,36 @@ for i=1:num_words
     end
 end
 
-%% Construct a matrix containing all possible 2-bit error patterns as bit-strings.
+%% Construct a matrix containing all possible (t+1)-bit error patterns as bit-strings.
 display('Constructing error-pattern matrix...');
-num_error_patterns = nchoosek(n,2);
-error_patterns = repmat('0',num_error_patterns,n);
-num_error = 1;
-for i=1:n-1
-    for j=i+1:n
-        error_patterns(num_error, i) = '1';
-        error_patterns(num_error, j) = '1';
-        num_error = num_error + 1;
+if strcmp(code_type,'hsiao1970') == 1 || strcmp(code_type,'davydov1991') == 1 % SECDED
+    num_error_patterns = nchoosek(n,2);
+    error_patterns = repmat('0',num_error_patterns,n);
+    num_error = 1;
+    for i=1:n-1
+        for j=i+1:n
+            error_patterns(num_error, i) = '1';
+            error_patterns(num_error, j) = '1';
+            num_error = num_error + 1;
+        end
     end
+elseif strcmp(code_type,'bose1960') == 1 % DECTED
+    num_error_patterns = nchoosek(n,3);
+    error_patterns = repmat('0',num_error_patterns,n);
+    num_error = 1;
+    for i=1:n-2
+        for j=i+1:n-1
+            for l=j+1:n
+                error_patterns(num_error, i) = '1';
+                error_patterns(num_error, j) = '1';
+                error_patterns(num_error, l) = '1';
+                num_error = num_error + 1;
+            end
+        end
+    end
+else
+    display(['FATAL! Unsupported code type: ' code_type]);
+    return;
 end
 
 results_candidate_messages = NaN(num_words,num_error_patterns); % Init
@@ -175,7 +194,7 @@ parfor i=1:num_words % Parallelize loop across separate threads, since this coul
         serialized_cacheline_bin = [serialized_cacheline_bin ',' cacheline_bin{1,x}];
     end
     
-    %% Iterate over all possible 2-bit error patterns.
+    %% Iterate over all possible error patterns.
     for j=1:num_error_patterns
         error = error_patterns(j,:);
 
