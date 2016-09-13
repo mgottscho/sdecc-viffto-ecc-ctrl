@@ -51,7 +51,7 @@ if n==45
 %% (79,64) DECTED code
 elseif n==79
 %     %First create (63,51,t=2) BCH code:
-%     g = bchgenpoly(127,113); % FIXME: Mark does not have bchgenpoly() since it needs Communication Systems Toolbox
+%     g = bchgenpoly(127,113); % bchgenpoly() needs Communication Systems Toolbox
 %     %This comes from inspecting the above result
 %     g = [1 0 0 0 0 1 1 0 1 1 1 0 1 1 1];
 %     [parmat,genmat,k] = cyclgen(127,g);

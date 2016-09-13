@@ -1,5 +1,5 @@
 function analyze_static_rv64g_program_statistics(benchmark, k, input_filename, output_filename)
-% Analyze relevant statistics about instructions in a rv64g compiled program binary image. The input file should be of the form: TODO
+% Analyze relevant statistics about instructions in a rv64g compiled program binary image.
 %
 % Input arguments:
 %   benchmark --        String

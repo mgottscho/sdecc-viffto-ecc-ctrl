@@ -32,7 +32,7 @@ if size(message,2) ~= k
     return;
 end
 
-% FIXME: would this fail for k > 64? Appears that it is fine.
+% At first glance, it seems this would this fail for k > 64 on 64-bit machine. However, it appears to be fine because dec2bin operates on each element of the codeword vector, not the whole thing. And each entry is either 0 or 1.
 codeword = mod(message*G,2);
 codeword = dec2bin(codeword)';
 

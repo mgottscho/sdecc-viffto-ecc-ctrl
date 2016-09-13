@@ -6,7 +6,9 @@ function [ G, H ] = getChipkill( n )
 %Computers 1982.  We start with the matrix in Fig. 4 which is the "optimal"
 %S4EC-D4ED in terms on 1's in H (reduces implementation logic).
 %Then we convert it to systematic form. 
-
+% 
+% Author: Clayton Schoeny
+% Email: cschoeny@gmail.com
 
 % so far we only support the (144,128) codes:
 if n ~= 144
