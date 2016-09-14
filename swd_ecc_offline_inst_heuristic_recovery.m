@@ -1,4 +1,4 @@
-function swd_ecc_offline_inst_heuristic_recovery(architecture, benchmark, n, k, num_inst, input_filename, output_filename, n_threads, code_type, policy, mnemonic_hotness_filename, rd_hotness_filename, verbose_recovery)
+function swd_ecc_offline_inst_heuristic_recovery(architecture, benchmark, n, k, num_messages, input_filename, output_filename, n_threads, code_type, policy, mnemonic_hotness_filename, rd_hotness_filename, verbose_recovery)
 % This function evaluates heuristic recovery from corrupted instructions in an offline manner.
 %
 % It iterates over a series of instructions that are statically extracted from a compiled program.
@@ -12,18 +12,17 @@ function swd_ecc_offline_inst_heuristic_recovery(architecture, benchmark, n, k, 
 % These X codewords are "candidates" for the original encoded message.
 % The function then uses the instruction decoder to determine which of
 % the X candidate messages are valid instructions.
-% TODO: support ChipKill
 %
 % Input arguments:
 %   architecture --     String: '[rv64g]'
 %   benchmark --        String
-%   n --                String: '[39|45|72|79]'
-%   k --                String: '[32|64]'
-%   num_inst --         String: '[1|2|3|...]'
+%   n --                String: '[39|45|72|79|144]'
+%   k --                String: '[32|64|128]'
+%   num_messages --     String: '[1|2|3|...]'
 %   input_filename --   String
 %   output_filename --  String
 %   n_threads --        String: '[1|2|3|...]'
-%   code_type --        String: '[hsiao|davydov1991|bose1960]'
+%   code_type --        String: '[hsiao|davydov1991|bose1960|fujiwara1982]'
 %   policy --           String: '[baseline-pick-random | filter-rank-pick-random | filter-rank-sort-pick-first | filter-rank-rank-sort-pick-first | filter-frequency-pick-random | filter-frequency-sort-pick-first | filter-frequency-sort-pick-longest-pad]'
 %   mnemonic_hotness_filename -- String: full path to CSV file containing the relative frequency of each instruction to use for ranking
 %   rd_hotness_filename -- String: full path to CSV file containing the relative frequency of each destination register address to use for ranking
@@ -39,7 +38,7 @@ architecture
 benchmark
 n = str2num(n)
 k = str2num(k)
-num_inst = str2num(num_inst)
+num_messages = str2num(num_messages)
 input_filename
 output_filename
 n_threads = str2num(n_threads)
@@ -65,11 +64,12 @@ if wc_return_code ~= 0
     return;
 end
 total_num_inst = str2num(strtok(wc_output));
-display(['Number of randomly-sampled instructions to test SWD-ECC: ' num2str(num_inst) '. Total instructions in trace: ' num2str(total_num_inst) '.']);
+num_packed_inst = k/32; % We assume 32-bits per instruction. For k as a multiple of 32, we have packed instructions per message. FIXME: this is only true for RV64G
+display(['Number of randomly-sampled messages to test SWD-ECC: ' num2str(num_messages) '. Total instructions in trace: ' num2str(total_num_inst) '. Since k = ' num2str(k) ', we have ' num2str(num_packed_inst) ' packed instructions per ECC message.']);
 
 %% Randomly choose instructions from the trace, and load them
 rng('shuffle'); % Seed RNG based on current time
-sampled_inst_indices = sortrows(randperm(total_num_inst, num_inst)'); % Increasing order of indices. This does not affect experiment correctness.
+sampled_message_indices = sortrows(randperm(total_num_inst-(num_packed_inst-1), num_messages)'); % Increasing order of indices. This does not affect experiment correctness.
 
 fid = fopen(input_filename);
 if fid == -1
@@ -79,23 +79,10 @@ end
 
 % Loop over each line in the file and read it.
 % Only save data from the line if it matches one of our sampled indices.
-sampled_trace_raw = cell(num_inst,1);
-j = 1;
-for i=1:total_num_inst
-    line = fgets(fid);
-    line = line(1:end-1); % Throw away newline character
-    if strcmp(line,'') == 1 || j > size(sampled_inst_indices,1)
-        break;
-    end
-    if i == sampled_inst_indices(j)
-        sampled_trace_raw{j,1} = line;
-        j = j+1;
-    end
-end
-fclose(fid);
-
+% In the case of packed instructions per message, multiple instructions will be parsed and concatenated into one entry of the sampled trace.
+%
 %% Parse the raw trace depending on its format.
-% If it is hexadecimal instructions in big-endian format, one instruction per line of the form
+% If it is hexadecimal instructions in big-endian format, one (set of packed) instructions per line of the form
 % 00000000
 % deadbeef
 % 01234567
@@ -112,45 +99,100 @@ fclose(fid);
 % NOTE: we only expect instruction cache lines to be in this file!
 % NOTE: addresses and decimal values in these traces are in BIG-ENDIAN
 % format.
-parsed_sampled_trace_raw = cell(1,1);
-sampled_trace_inst_disassembly = cell(1,1);
+line = fgets(fid);
+line = line(1:end-1); % Throw away newline character
+if size(strfind(line, ',')) ~= 0 % Dynamic trace mode
+    trace_mode = 'dynamic';
+    display('Detected dynamic trace, parsing...');
+else
+    trace_mode = 'static';
+    display('Detected static trace, parsing...');
+end
+fclose(fid);
+fid = fopen(input_filename);
+if fid == -1
+    display(['FATAL! Could not open file ' input_filename '.']);
+    return;
+end
+
+num_messages_in_cacheline = 512 / k;
+sampled_trace_raw = cell(num_messages,1);
+j = 1;
+for i=1:total_num_inst
+    line = fgets(fid);
+    line = line(1:end-1); % Throw away newline character
+    if strcmp(line,'') == 1 || j > size(sampled_message_indices,1)
+        break;
+    end
+    if i == sampled_message_indices(j)
+        if strcmp(trace_mode, 'static') == 1 % Static trace mode
+            packed_message = line;
+            for packed_inst=2:num_packed_inst
+                line = fgets(fid);
+                line = line(1:end-1); % Throw away newline character
+                packed_message = [packed_message line];
+            end
+        elseif strcmp(trace_mode, 'dynamic') == 1 % Dynamic trace mode
+            for x=1:9 % 9 iterations because payload is 9th entry in a row of the above format
+                [token,remain] = strtok(remain,',');
+            end
+            [payload_token, payload_remain] = strtok(token,'x'); % Find the part of "PAYLOAD 0xDEADBEEF" after the "0x" part.
+            payload = payload_remain(2:end);
+            % Now we have target instruction of interest, but have to find its packed message representation.
+            [token, remain] = strtok(remain,','); % Throw away blockpos
+            cacheline = repmat('X',1,128);
+            for x=1:8 % 8 iterations, one per word in cacheline. Assume 64 bits per word. This is 128 hex symbols per cacheline
+                [token, remain] = strtok(remain,',');
+                [word_token, word_remain] = strtok(token,'x'); % Find the part of "0x000000000DEADBEEF" after the "0x" part.
+                cacheline(1,(x-1)*16+1:(x-1)*16+16) = word_remain(2:end);
+            end
+
+            % Find starting hexpos of payload in cacheline
+            payload_start_hexpos = strfind(cacheline,payload);
+            payload_start_hexpos = payload_start_hexpos(1); % If multiple payloads appear, choose the first one FIXME
+            payload_offset_in_message = mod(payload_start_hexpos,k/4);
+            packed_message = cacheline(1,payload_start_hexpos-payload_offset_in_message+1:payload_start_hexpos-payload_offset_in_message+k/4);
+
+            for packed_inst=1:num_packed_inst
+                packed_message((packed_inst-1)*8+1:(packed_inst-1)*8+8) = reverse_byte_order((packed_inst-1)*8+1:(packed_inst-1)*8+8); % Put the packed instruction in big-endian format.
+            end
+        else
+            display(['FATAL! Unsupported trace mode: ' trace_mode]);
+            return;
+        end
+        sampled_trace_raw{j,1} = packed_message;
+        j = j+1;
+    end
+end
+fclose(fid);
+
+sampled_trace_packed_inst_disassembly = cell(1,num_packed_inst);
 x = 1;
-for i=1:num_inst
-   remain = sampled_trace_raw{i,1};
-   if size(strfind(remain, ',')) ~= 0 % Dynamic trace mode
-       display('Detected dynamic trace, parsing...');
-       for j=1:9 % 9 iterations because payload is 9th entry in a row of the above format
-           [token,remain] = strtok(remain,',');
-       end
-       [token, remain] = strtok(token,'x'); % Find the part of "PAYLOAD 0xDEADBEEF" after the "0x" part.
-       inst_hex = reverse_byte_order(remain(2:end)); % Put the instruction in big-endian format.
-   else
-       display('Detected static trace, parsing...');
-       inst_hex = remain;
+for i=1:num_messages
+   packed_message = sampled_trace_raw{i,1};
+   for packed_inst=1:num_packed_inst
+       %% Disassemble each instruction that we sampled.
+       inst_hex = packed_message((packed_inst-1)*8+1:(packed_inst-1)*8+8);
+
+       [legal, mnemonic, codec, rd, rs1, rs2, rs3, imm, arg] = parse_rv64g_decoder_output(inst_hex);
+       map = containers.Map();
+       map('legal') = legal; 
+       map('mnemonic') = mnemonic; 
+       map('codec') = codec; 
+       map('rd') = rd; 
+       map('rs1') = rs1; 
+       map('rs2') = rs2; 
+       map('rs3') = rs3; 
+       map('imm') = imm; 
+       map('arg') = arg; 
+
+       sampled_trace_packed_inst_disassembly{x,packed_inst} = map;
    end
-
-   %% Disassemble each instruction that we sampled.
-   [legal, mnemonic, codec, rd, rs1, rs2, rs3, imm, arg] = parse_rv64g_decoder_output(inst_hex);
-   map = containers.Map();
-   map('legal') = legal; 
-   map('mnemonic') = mnemonic; 
-   map('codec') = codec; 
-   map('rd') = rd; 
-   map('rs1') = rs1; 
-   map('rs2') = rs2; 
-   map('rs3') = rs3; 
-   map('imm') = imm; 
-   map('arg') = arg; 
-
-   sampled_trace_inst_disassembly{x,1} = map;
-   parsed_sampled_trace_raw{x,1} = inst_hex;
    x = x+1;
 end
 
-sampled_trace_hex = char(parsed_sampled_trace_raw);
+sampled_trace_hex = char(sampled_trace_raw);
 sampled_trace_bin = dec2bin(hex2dec(sampled_trace_hex),k);
-
-%sampled_trace_hex = char(sampled_trace_raw);
 
 %% Construct a matrix containing all possible (t+1)-bit error patterns as bit-strings.
 display('Constructing error-pattern matrix...');
@@ -179,6 +221,21 @@ elseif strcmp(code_type,'bose1960') == 1 % DECTED
             end
         end
     end
+elseif strcmp(code_type,'fujiwara1982') == 1 % ChipKill
+    num_error_patterns = nchoosek(n/4,2) * 15^2;
+    error_patterns = repmat('0',num_error_patterns,n);
+    sym_error_patterns = dec2bin(1:15);
+    num_error = 1;
+    for sym1=1:n/4-1
+        for sym2=sym1:n/4
+            for sym1_error_index=1:size(sym_error_patterns,1)
+                for sym2_error_index=1:size(sym_error_patterns,1)
+                    error_patterns(num_error,(sym1-1)*4+1:(sym1-1)*4+4) = sym_error_patterns(sym1_error_index,:);
+                    error_patterns(num_error,(sym2-1)*4+1:(sym2-1)*4+4) = sym_error_patterns(sym2_error_index,:);
+                end
+            end
+        end
+    end
 else
     display(['FATAL! Unsupported code type: ' code_type]);
     return;
@@ -198,7 +255,7 @@ mycluster = parcluster('local');
 mycluster.NumWorkers = n_threads;
 mypool = parpool(mycluster,n_threads);
 
-parfor i=1:num_inst % Parallelize loop across separate threads, since this could take a long time. Each instruction is a totally independent procedure to perform.
+parfor i=1:num_messages % Parallelize loop across separate threads, since this could take a long time. Each instruction is a totally independent procedure to perform.
     %% Get the "message," which is the original instruction, i.e., the ground truth from input file.
     message_hex = sampled_trace_hex(i,:);
     message_bin = sampled_trace_bin(i,:);
@@ -209,7 +266,7 @@ parfor i=1:num_inst % Parallelize loop across separate threads, since this could
        display(['WARNING: Found illegal input instruction: ' message_hex '. This should not happen. However, we will try heuristic recovery anyway.']);
     end
 
-    %% Iterate over all possible 2-bit error patterns.
+    %% Iterate over all possible detected-but-uncorrectable error patterns.
     for j=1:num_error_patterns
         error = error_patterns(j,:);
         [original_codeword, received_string, num_candidate_messages, num_valid_messages, recovered_message, suggest_to_crash, recovered_successfully] = inst_recovery('rv64g', num2str(n), num2str(k), message_bin, error, code_type, policy, mnemonic_hotness_filename, rd_hotness_filename, verbose_recovery);

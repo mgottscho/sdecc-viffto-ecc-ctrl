@@ -4,15 +4,14 @@ function [original_codeword, received_string, num_candidate_messages, num_valid_
 % To compute candidate codewords, we flip a single bit one at a time and decode using specified ECC decoder.
 % We should obtain a set of unique candidate codewords.
 % Based on the policy, we then try to recover the most likely corresponding instruction-message.
-% TODO: support ChipKill.
 %
 % Input arguments:
 %   architecture --     String: '[rv64g]'
-%   n --                String: '[39|45|72|79]'
-%   k --                String: '[32|64]'
-%   original_message -- Binary String of length k bits/chars
+%   n --                String: '[39|45|72|79|144]'
+%   k --                String: '[32|64|128]'
+%   original_message -- Binary String of length k bits/chars. Note that k might not be 32 which is the instruction size! We will treat original_message as being a set of packed 32-bit instructions.
 %   error_pattern --    Binary String of length n bits/chars
-%   code_type --        String: '[hsiao1970|davydov1991|bose1960]'
+%   code_type --        String: '[hsiao1970|davydov1991|bose1960|fujiwara1982]'
 %   policy --           String: '[baseline-pick-random | filter-rank-pick-random | filter-rank-sort-pick-first | filter-rank-rank-sort-pick-first | filter-frequency-pick-random | filter-frequency-sort-pick-first | filter-frequency-sort-pick-longest-pad]'
 %   mnemonic_hotness_filename -- String: full path to CSV file containing the relative frequency of each instruction to use for ranking
 %   rd_hotness_filename -- String: full path to CSV file containing the relative frequency of each destination register address to use for ranking
@@ -66,6 +65,8 @@ if strcmp(code_type, 'hsiao1970') == 1 || strcmp(code_type, 'davydov1991') == 1 
     [G,H] = getSECDEDCodes(n,code_type);
 elseif strcmp(code_type, 'bose1960') == 1 % DECTED
     [G,H] = getDECTEDCodes(n);
+elseif strcmp(code_type, 'fujiwara1982') == 1 % ChipKill
+    [G,H] = getChipkillCodes(n);
 else
     display(['FATAL! Unsupported code type: ' code_type]);
 end
@@ -121,10 +122,16 @@ if strcmp(code_type, 'hsiao1970') == 1 || strcmp(code_type, 'davydov1991') == 1 
     [recovered_message, num_error_bits] = secded_decoder(received_string, H, code_type);
 elseif strcmp(code_type, 'bose1960') == 1 % DECTED
     [recovered_message, num_error_bits] = dected_decoder(received_string, H);
+elseif strcmp(code_type, 'fujiwara1982') == 1 % ChipKill
+    [recovered_message, num_error_bits, num_error_symbols] = chipkill_decoder(received_string, H);
 end % didn't check bad code type error condition because we should have caught it earlier anyway
 
 if verbose == 1
     display(['Sanity check: ECC decoder determined that there are ' num2str(num_error_bits) ' bits in error. The input error pattern had ' num2str(sum(error_pattern=='1')) ' bits flipped.']);
+
+    if strcmp(code_type, 'fujiwara1982') == 1 % ChipKill
+        display(['This is a ChipKill code with symbol size of 4 bits. The decoder found ' num2str(num_error_symbols) ' symbols in error.']);
+    end
 end
 
 %% If the ECC decoder returned the correct message, we are done.
@@ -166,6 +173,11 @@ if verbose == 1
     candidate_correct_messages
 end
 
+num_packed_inst = k/32; % Assume 32 bits per instruction. Then if k is a multiple of 32 we have packed instructions. FIXME: only valid for RV64G
+if verbose == 1
+    num_packed_inst
+end
+
 %% Policies
 bailout = 0;
 if strcmp(policy, 'baseline-pick-random') == 1
@@ -179,36 +191,52 @@ if strcmp(policy, 'baseline-pick-random') == 1
     target_inst_index = target_inst_indices(randi(size(target_inst_indices,1),1));
 
 elseif strcmp(policy, 'filter-rank-pick-random') == 1 || strcmp(policy, 'filter-rank-sort-pick-first') == 1 || strcmp(policy, 'filter-rank-rank-sort-pick-first') == 1 || strcmp(policy, 'filter-frequency-pick-random') == 1 || strcmp(policy, 'filter-frequency-sort-pick-first') == 1 || strcmp(policy, 'filter-frequency-sort-pick-longest-pad') == 1
-    % RECOVERY STEP 1: FILTER. Check each of the candidate codewords to see which are valid instructions
+    % RECOVERY STEP 1: FILTER. Check each of the candidate codewords to see which are (sets of) valid instructions
     if verbose == 1
-        display('RECOVERY STEP 1: FILTER. Filtering candidate codewords for instruction legality...');
+        display('RECOVERY STEP 1: FILTER. Filtering candidate codewords for (sets of) instruction legality...');
     end
     num_candidate_messages = size(candidate_correct_messages,1);
     num_valid_messages = 0;
     candidate_valid_messages = repmat('0',1,k); % Init
-    valid_messages_mnemonic = cell(1,1);
-    valid_messages_rd = cell(1,1);
+    valid_messages_mnemonic = cell(1,num_packed_inst);
+    valid_messages_rd = cell(1,num_packed_inst);
     for x=1:num_candidate_messages
         % Convert message to hex string representation
         message = candidate_correct_messages(x,:);
         message_hex = dec2hex(bin2dec(message),8);
         
-        % Test the candidate message to see if it is a valid instruction and extract disassembly of the message hex
-        [status, decoderOutput] = MyRv64gDecoder(message_hex);
-        % Read disassembly of instruction from string spit back by the instruction decoder
-        candidate_message_disassembly = textscan(decoderOutput, '%s', 'Delimiter', ':');
-        candidate_message_disassembly = candidate_message_disassembly{1};
-        candidate_message_disassembly = reshape(candidate_message_disassembly, 2, size(candidate_message_disassembly,1)/2)';
+        % For each instruction packed in the candidate message, test to see if it is a valid instruction and extract disassembly of its hex representation
+        all_packed_inst_valid = 1;
+        candidate_message_packed_inst_disassemblies = cell(k/32),1);
+        for packed_inst=1:num_packed_inst
+            inst_hex = message_hex((packed_inst-1)*32+1:(packed_inst-1)*32+32);
+            [status, decoderOutput] = MyRv64gDecoder(inst_hex);
+
+            % Read disassembly of instruction from string spit back by the instruction decoder
+            candidate_message_packed_inst_disassembly = textscan(decoderOutput, '%s', 'Delimiter', ':');
+            candidate_message_packed_inst_disassembly = candidate_message_packed_inst_disassembly{1};
+            candidate_message_packed_inst_disassembly = reshape(candidate_message_packed_inst_disassembly, 2, size(candidate_message_packed_inst_disassembly,1)/2)';
+            candidate_message_packed_inst_disassemblies{packed_inst} = candidate_message_packed_inst_disassembly;
+
+            if status ~= 0
+                all_packed_inst_valid = 0;
+                break;
+            end
+        end
         
-        if status == 0 % It is valid! Track it. Otherwise, ignore.
+        if all_packed_inst_valid == 1 % All packed instructions are valid! Track message. Otherwise, ignore.
            num_valid_messages = num_valid_messages+1;
            candidate_valid_messages(num_valid_messages,:) = message;
 
            % Store disassembly in the list
-           mnemonic = candidate_message_disassembly{4,2};
-           rd = candidate_message_disassembly{6,2};
-           valid_messages_mnemonic{num_valid_messages,1} = mnemonic;
-           valid_messages_rd{num_valid_messages,1} = rd;
+           for packed_inst=1:num_packed_inst
+               candidate_message_packed_inst_disassembly = candidate_message_packed_inst_disassemblies{packed_inst};
+               mnemonic = candidate_message_packed_inst_disassembly{4,2};
+               rd = candidate_message_packed_inst_disassembly{6,2};
+
+               valid_messages_mnemonic{num_valid_messages,packed_inst} = mnemonic;
+               valid_messages_rd{num_valid_messages,packed_inst} = rd;
+           end
 
            if verbose == 1
                display(['Index ' num2str(num_valid_messages) ' valid candidate message: ' message]);
@@ -218,26 +246,30 @@ elseif strcmp(policy, 'filter-rank-pick-random') == 1 || strcmp(policy, 'filter-
         end
 
         if verbose == 1
-            candidate_message_disassembly
+            candidate_message_packed_inst_disassembly
         end
     end
 
     if strcmp(policy, 'filter-rank-pick-random') == 1 || strcmp(policy, 'filter-rank-sort-pick-first') == 1 || strcmp(policy, 'filter-rank-rank-sort-pick-first') == 1
-        % RECOVERY STEP 2: RANK. Sort valid messages in order of their relative frequency as determined by the input file that we read.
+        % RECOVERY STEP 2: RANK. Sort valid messages in order of their relative frequency as determined by the input file that we read. In the case of packed instructions per message, then we use the geometric mean of each packed inst's frequencies.
         if verbose == 1
-            display('RECOVERY STEP 2: RANK. Sort valid messages in order of their relative frequency of mnemonic as determined by input tables...');
+            display('RECOVERY STEP 2: RANK. Sort valid messages in order of their geometric mean of relative frequency of packed mnemonics as determined by input tables...');
         end
         highest_rel_freq_mnemonic = 0;
         target_mnemonic = '';
         for x=1:num_valid_messages
-            mnemonic = valid_messages_mnemonic{x,1};
-            if instruction_mnemonic_hotness.isKey(mnemonic)
-                rel_freq_mnemonic = instruction_mnemonic_hotness(mnemonic);
-            else % This could happen legally
-                rel_freq_mnemonic = 0;
+            rel_freq_mnemonic = 1;
+            mnemonic = valid_messages_mnemonic(x,:); % Potentially packed mnemonics
+            for packed_inst=1:num_packed_inst
+                if instruction_mnemonic_hotness.isKey(mnemonic{packed_inst})
+                    rel_freq_mnemonic = instruction_mnemonic_hotness(mnemonic{packed_inst}) * rel_freq_mnemonic;
+                else % This could happen legally
+                    rel_freq_mnemonic = 0;
+                end
             end
-            
-            % Find highest frequency mneumonic
+            rel_freq_mnemonic = nthroot(rel_freq_mnemonic,num_packed_inst);
+                
+            % Find highest frequency mnemonic. In case of packed instructions, we concatenate the mnemonics separated by the '&&' symbol.
             if rel_freq_mnemonic >= highest_rel_freq_mnemonic
                highest_rel_freq_mnemonic = rel_freq_mnemonic;
                target_mnemonic = mnemonic;
@@ -245,16 +277,27 @@ elseif strcmp(policy, 'filter-rank-pick-random') == 1 || strcmp(policy, 'filter-
         end
 
         if verbose == 1
-            target_mnemonic
+            target_mnemonic_stringized = target_mnemonic{1};
+            for packed_inst=2:num_packed_inst
+                target_mnemonic_stringized = [target_mnemonic_stringized ' && ' target_mnemonic{packed_inst}];
+            end
+            target_mnemonic_stringized
             highest_rel_freq_mnemonic
         end
 
-        % Find indices matching highest frequency mneumonic
+        % Find indices matching highest frequency (set of) mnemonics
         mnemonic_inst_indices = zeros(1,1);
         y=1;
         for x=1:num_valid_messages
-            mnemonic = valid_messages_mnemonic{x,1};
-            if strcmp(mnemonic,target_mnemonic) == 1
+            mnemonic = valid_messages_mnemonic(x,:);
+            full_match = 1;
+            for packed_inst=1:num_packed_inst
+                if strcmp(mnemonic{packed_inst},target_mnemonic{packed_inst}) ~= 1
+                    full_match = 0;
+                    break;
+                end
+            end
+            if full_match == 1
                 mnemonic_inst_indices(y,1) = x;
                 y = y+1;
             end
@@ -266,19 +309,23 @@ elseif strcmp(policy, 'filter-rank-pick-random') == 1 || strcmp(policy, 'filter-
     if strcmp(policy,'filter-rank-rank-sort-pick-first') == 1 % match
         % RECOVERY STEP 3: FILTER. Select only the valid messages with the most common mnemonic.
         if verbose == 1
-            display('RECOVERY STEP 3: RANK. Out of the highest-ranked mnemonic candidates, rank again by the most common destination register address...');
+            display('RECOVERY STEP 3: RANK. Out of the highest-ranked mnemonic candidates, rank again by the most common (sets of) destination register addresses...');
         end
         target_inst_indices = zeros(1,1);
         highest_rel_freq_rd = 0;
         target_rd = '';
         for y=1:size(mnemonic_inst_indices,1)
-           rd = valid_messages_rd{mnemonic_inst_indices(y,1),1};
-
-           if instruction_rd_hotness.isKey(rd)
-               rel_freq_rd = instruction_rd_hotness(rd);
-           else % This can happen when rd is not used in an instr (NA)
-               rel_freq_rd = 0;
+           rd = valid_messages_rd(mnemonic_inst_indices(y,1),:); % Potentially sets of rds for packed instructions in a message
+           rel_freq_rd = 1;
+           for packed_inst=1:num_packed_inst
+               if instruction_rd_hotness.isKey(rd{packed_inst})
+                   rel_freq_rd = instruction_rd_hotness(rd{packed_inst}) * rel_freq_rd;
+               else % This can happen when rd is not used in an instr (NA)
+                   rel_freq_rd = 0;
+               end
            end
+
+           rel_freq_rd = nthroot(rel_freq_rd,num_packed_inst);
 
            % Find highest frequency rd
            if rel_freq_rd > highest_rel_freq_rd
@@ -288,14 +335,25 @@ elseif strcmp(policy, 'filter-rank-pick-random') == 1 || strcmp(policy, 'filter-
         end
 
         if verbose == 1
-            target_rd
+            target_rd_stringized = target_rd{1};
+            for packed_inst=2:num_packed_inst
+                target_rd_stringized = [target_rd_stringized ' && ' target_rd{packed_inst}];
+            end
+            target_rd_stringized
             highest_rel_freq_rd
         end
 
         z=1;
         for y=1:size(mnemonic_inst_indices,1)
-           rd = valid_messages_rd{mnemonic_inst_indices(y,1),1};
-           if strcmp(rd,target_rd) == 1
+           rd = valid_messages_rd(mnemonic_inst_indices(y,1),:);
+           full_match = 1;
+           for packed_inst=1:num_packed_inst
+               if strcmp(rd{packed_inst},target_rd(packed_inst}) ~= 1
+                   full_match = 0;
+                   break;
+               end
+           end
+           if full_match == 1
                target_inst_indices(z,1) = mnemonic_inst_indices(y,1);
                z = z+1;
            end
@@ -312,13 +370,15 @@ elseif strcmp(policy, 'filter-rank-pick-random') == 1 || strcmp(policy, 'filter-
         end
 
         %num_matching_message_mnemonics = containers.Map();
-        rel_freq_mnemonics = zeros(num_valid_messages,1);
+        rel_freq_mnemonics = zeros(num_valid_messages,num_packed_inst);
         for x=1:num_valid_messages
-            mnemonic = valid_messages_mnemonic{x,1};
-            if instruction_mnemonic_hotness.isKey(mnemonic)
-                rel_freq_mnemonics(x) = instruction_mnemonic_hotness(mnemonic);
-            else % This could happen legally
-                rel_freq_mnemonics(x) = 0;
+            mnemonic = valid_messages_mnemonic(x,:);
+            for packed_inst=1:num_packed_inst
+                if instruction_mnemonic_hotness.isKey(mnemonic{packed_inst})
+                    rel_freq_mnemonics(x,packed_inst) = instruction_mnemonic_hotness(mnemonic{packed_inst});
+                else % This could happen legally
+                    rel_freq_mnemonics(x,packed_inst) = 0;
+                end
             end
             
             % Get number of valid messages with this mnemonic
@@ -332,7 +392,7 @@ elseif strcmp(policy, 'filter-rank-pick-random') == 1 || strcmp(policy, 'filter-
         % Compute probability of each message according to their groups
         valid_messages_probabilities = zeros(num_valid_messages,1);
         for x=1:num_valid_messages
-            valid_messages_probabilities(x,1) = rel_freq_mnemonics(x,1) / sum(rel_freq_mnemonics);%* (1 / num_matching_message_mnemonics(valid_messages_mnemonic{x,1}));
+            valid_messages_probabilities(x,1) = prod(rel_freq_mnemonics(x,:)) / sum(prod(rel_freq_mnemonics'));%* (1 / num_matching_message_mnemonics(valid_messages_mnemonic{x,1}));
         end
 
         if verbose == 1
@@ -351,7 +411,7 @@ elseif strcmp(policy, 'filter-rank-pick-random') == 1 || strcmp(policy, 'filter-
         target_inst_indices = zeros(1,1);
         y = 1;
         for x=1:num_valid_messages
-            if valid_messages_probabilities(x,1) == highest_prob_mnemonic
+            if valid_messages_probabilities(x,1) >= highest_prob_mnemonic-1e-12 && valid_messages_probabilities(x,1) <= highest_prob_mnemonic+1e-12
                 target_inst_indices(y,1) = x;
                 y = y+1;
             end
@@ -411,29 +471,32 @@ elseif strcmp(policy, 'filter-rank-pick-random') == 1 || strcmp(policy, 'filter-
 
         if strcmp(policy, 'filter-frequency-sort-pick-longest-pad') == 1
             if verbose == 1
-                display('LAST STEP: CHOOSE TARGET. Pick the target that has the longest run of leading 0s or 1s (longest pad). In a tie, pick first in sorted order. We recommend crashing if Pr{guessing correctly} < 0.5');
+                display('LAST STEP: CHOOSE TARGET. Pick the target that has the longest average (over packed instructions) run of leading 0s or 1s (longest pad). In a tie, pick first in sorted order. We recommend crashing if Pr{guessing correctly} < 0.5');
             end
             
             y = 1;
-            pad_lengths = zeros(size(target_inst_indices,1),1);
+            pad_lengths = zeros(size(target_inst_indices,1),num_packed_inst);
             for x=1:size(target_inst_indices,1)
-                pad_lengths(x) = compute_pad_length(candidate_valid_messages(target_inst_indices(x),:));
+                for packed_inst=1:num_packed_inst
+                    pad_lengths(x,packed_inst) = compute_pad_length(candidate_valid_messages(target_inst_indices(x),(packed_inst-1)*32+1:(packed_inst-1)*32+32)); % assume instructions are 32 bits. FIXME: only valid for RV64G
+                end
             end
-            max_pad_length = max(pad_lengths);
+            max_avg_pad_length = max(mean(pad_lengths'));
 
             if verbose == 1
                 pad_lengths
+                max_avg_pad_length
             end
 
-            max_pad_length_indices = 0;
+            max_avg_pad_length_indices = 0;
             y = 1;
             for x=1:size(target_inst_indices,1)
-                if pad_lengths(x) == max_pad_length
-                    max_pad_length_indices(y) = x;
+                if mean(pad_lengths(x,:)) == max_avg_pad_length
+                    max_avg_pad_length_indices(y) = x;
                     y = y+1;
                 end
             end
-            target_inst_index = max_pad_length_indices(1);
+            target_inst_index = max_avg_pad_length_indices(1);
             if valid_messages_probabilities(target_inst_index) < 0.5
                 suggest_to_crash = 1;
             end
