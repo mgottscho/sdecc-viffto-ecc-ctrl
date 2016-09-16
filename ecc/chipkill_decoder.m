@@ -118,9 +118,9 @@ function [ decoded_message, num_error_bits, num_error_symbols ] = chipkill_decod
 
    %If we get this far, that means we have detected the error, so we assume
    %there were 2 symbol errors (it is possible that there were more errors, but the important thing is that we have detected uncorrectable errors).
-   % We also don't know how many bits in error. So we assume max bits in error
+   % We also don't know how many bits in error. So we assume NaN bits in error. FIXME: is this correct?
    num_error_symbols = 2;
-   num_error_bits = symbol_size*num_error_symbols;
+   num_error_bits = NaN;
 
 end
 

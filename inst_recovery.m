@@ -123,7 +123,7 @@ if strcmp(code_type, 'hsiao1970') == 1 || strcmp(code_type, 'davydov1991') == 1 
 elseif strcmp(code_type, 'bose1960') == 1 % DECTED
     [recovered_message, num_error_bits] = dected_decoder(received_string, H);
 elseif strcmp(code_type, 'fujiwara1982') == 1 % ChipKill
-    [recovered_message, num_error_bits, num_error_symbols] = chipkill_decoder(received_string, H);
+    [recovered_message, num_error_bits, num_error_symbols] = chipkill_decoder(received_string, H, 4);
 end % didn't check bad code type error condition because we should have caught it earlier anyway
 
 if verbose == 1
@@ -151,7 +151,7 @@ if verbose == 1
 end
 
 %% Warn if input message is actually illegal
-original_message_hex = dec2hex(bin2dec(original_message),8);
+original_message_hex = my_bin2hex(original_message);
 [status, decoderOutput] = MyRv64gDecoder(original_message_hex);
 if verbose == 1 && status ~= 0
     display('WARNING: Input message is not a legal instruction!');
@@ -203,13 +203,13 @@ elseif strcmp(policy, 'filter-rank-pick-random') == 1 || strcmp(policy, 'filter-
     for x=1:num_candidate_messages
         % Convert message to hex string representation
         message = candidate_correct_messages(x,:);
-        message_hex = dec2hex(bin2dec(message),8);
+        message_hex = my_bin2hex(message);
         
         % For each instruction packed in the candidate message, test to see if it is a valid instruction and extract disassembly of its hex representation
         all_packed_inst_valid = 1;
-        candidate_message_packed_inst_disassemblies = cell(k/32),1);
+        candidate_message_packed_inst_disassemblies = cell((k/32),1);
         for packed_inst=1:num_packed_inst
-            inst_hex = message_hex((packed_inst-1)*32+1:(packed_inst-1)*32+32);
+            inst_hex = message_hex((packed_inst-1)*8+1:(packed_inst-1)*8+8);
             [status, decoderOutput] = MyRv64gDecoder(inst_hex);
 
             % Read disassembly of instruction from string spit back by the instruction decoder
@@ -220,7 +220,6 @@ elseif strcmp(policy, 'filter-rank-pick-random') == 1 || strcmp(policy, 'filter-
 
             if status ~= 0
                 all_packed_inst_valid = 0;
-                break;
             end
         end
         
@@ -246,7 +245,10 @@ elseif strcmp(policy, 'filter-rank-pick-random') == 1 || strcmp(policy, 'filter-
         end
 
         if verbose == 1
-            candidate_message_packed_inst_disassembly
+            for packed_inst=1:num_packed_inst
+                packed_inst
+                candidate_message_packed_inst_disassemblies{packed_inst}
+            end
         end
     end
 
@@ -348,7 +350,7 @@ elseif strcmp(policy, 'filter-rank-pick-random') == 1 || strcmp(policy, 'filter-
            rd = valid_messages_rd(mnemonic_inst_indices(y,1),:);
            full_match = 1;
            for packed_inst=1:num_packed_inst
-               if strcmp(rd{packed_inst},target_rd(packed_inst}) ~= 1
+               if strcmp(rd{packed_inst},target_rd{packed_inst}) ~= 1
                    full_match = 0;
                    break;
                end
