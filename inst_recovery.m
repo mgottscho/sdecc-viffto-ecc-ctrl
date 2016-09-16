@@ -483,7 +483,11 @@ elseif strcmp(policy, 'filter-rank-pick-random') == 1 || strcmp(policy, 'filter-
                     pad_lengths(x,packed_inst) = compute_pad_length(candidate_valid_messages(target_inst_indices(x),(packed_inst-1)*32+1:(packed_inst-1)*32+32)); % assume instructions are 32 bits. FIXME: only valid for RV64G
                 end
             end
-            max_avg_pad_length = max(mean(pad_lengths'));
+            if num_packed_inst > 1
+                max_avg_pad_length = max(mean(pad_lengths'));
+            else
+                max_avg_pad_length = max(pad_lengths);
+            end
 
             if verbose == 1
                 pad_lengths

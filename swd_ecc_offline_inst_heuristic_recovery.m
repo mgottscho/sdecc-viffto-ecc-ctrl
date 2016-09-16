@@ -46,7 +46,7 @@ code_type
 policy
 mnemonic_hotness_filename
 rd_hotness_filename
-verbose_recovery
+verbose_recovery = str2num(verbose_recovery)
 
 if ~isdeployed
     addpath ecc common rv64g % Add sub-folders to MATLAB search paths for calling other functions we wrote
@@ -68,9 +68,6 @@ num_packed_inst = k/32; % We assume 32-bits per instruction. For k as a multiple
 display(['Number of randomly-sampled messages to test SWD-ECC: ' num2str(num_messages) '. Total instructions in trace: ' num2str(total_num_inst) '. Since k = ' num2str(k) ', we have ' num2str(num_packed_inst) ' packed instructions per ECC message.']);
 
 %% Randomly choose instructions from the trace, and load them
-rng('shuffle'); % Seed RNG based on current time
-sampled_message_indices = sortrows(randperm(total_num_inst-(num_packed_inst-1), num_messages)'); % Increasing order of indices. This does not affect experiment correctness.
-
 fid = fopen(input_filename);
 if fid == -1
     display(['FATAL! Could not open file ' input_filename '.']);
@@ -99,13 +96,15 @@ end
 % NOTE: we only expect instruction cache lines to be in this file!
 % NOTE: addresses and decimal values in these traces are in BIG-ENDIAN
 % format.
-line = fgets(fid);
-line = line(1:end-1); % Throw away newline character
+rng('shuffle'); % Seed RNG based on current time
+line = fgetl(fid);
 if size(strfind(line, ',')) ~= 0 % Dynamic trace mode
     trace_mode = 'dynamic';
+    sampled_message_indices = sortrows(randperm(total_num_inst, num_messages)'); % Increasing order of indices. This does not affect experiment correctness.
     display('Detected dynamic trace, parsing...');
 else
     trace_mode = 'static';
+    sampled_message_indices = sortrows(randperm(floor(total_num_inst/num_packed_inst), num_messages)' * num_packed_inst); % Increasing order of indices. This does not affect experiment correctness.
     display('Detected static trace, parsing...');
 end
 fclose(fid);
@@ -119,8 +118,7 @@ num_messages_in_cacheline = 512 / k;
 sampled_trace_raw = cell(num_messages,1);
 j = 1;
 for i=1:total_num_inst
-    line = fgets(fid);
-    line = line(1:end-1); % Throw away newline character
+    line = fgetl(fid);
     if strcmp(line,'') == 1 || j > size(sampled_message_indices,1)
         break;
     end
@@ -128,8 +126,7 @@ for i=1:total_num_inst
         if strcmp(trace_mode, 'static') == 1 % Static trace mode
             packed_message = line;
             for packed_inst=2:num_packed_inst
-                line = fgets(fid);
-                line = line(1:end-1); % Throw away newline character
+                line = fgetl(fid);
                 packed_message = [packed_message line];
             end
         elseif strcmp(trace_mode, 'dynamic') == 1 % Dynamic trace mode
@@ -161,6 +158,11 @@ for i=1:total_num_inst
             return;
         end
         sampled_trace_raw{j,1} = packed_message;
+
+        if verbose_recovery == 1
+            sampled_trace_raw{j,1}
+        end
+
         j = j+1;
     end
 end
@@ -193,6 +195,10 @@ end
 
 sampled_trace_hex = char(sampled_trace_raw);
 sampled_trace_bin = dec2bin(hex2dec(sampled_trace_hex),k);
+
+if verbose_recovery == 1
+    sampled_trace_hex
+end
 
 %% Construct a matrix containing all possible (t+1)-bit error patterns as bit-strings.
 display('Constructing error-pattern matrix...');
@@ -243,11 +249,11 @@ end
 
 display('Evaluating SWD-ECC...');
 
-results_candidate_messages = NaN(num_inst,num_error_patterns); % Init
-results_valid_messages = NaN(num_inst,num_error_patterns); % Init
-success = NaN(num_inst, num_error_patterns); % Init
-could_have_crashed = NaN(num_inst, num_error_patterns); % Init
-success_with_crash_option = NaN(num_inst, num_error_patterns); % Init
+results_candidate_messages = NaN(num_messages,num_error_patterns); % Init
+results_valid_messages = NaN(num_messages,num_error_patterns); % Init
+success = NaN(num_messages, num_error_patterns); % Init
+could_have_crashed = NaN(num_messages, num_error_patterns); % Init
+success_with_crash_option = NaN(num_messages, num_error_patterns); % Init
 
 %% Set up parallel computing
 pctconfig('preservejobs', true);
@@ -269,7 +275,7 @@ parfor i=1:num_messages % Parallelize loop across separate threads, since this c
     %% Iterate over all possible detected-but-uncorrectable error patterns.
     for j=1:num_error_patterns
         error = error_patterns(j,:);
-        [original_codeword, received_string, num_candidate_messages, num_valid_messages, recovered_message, suggest_to_crash, recovered_successfully] = inst_recovery('rv64g', num2str(n), num2str(k), message_bin, error, code_type, policy, mnemonic_hotness_filename, rd_hotness_filename, verbose_recovery);
+        [original_codeword, received_string, num_candidate_messages, num_valid_messages, recovered_message, suggest_to_crash, recovered_successfully] = inst_recovery('rv64g', num2str(n), num2str(k), message_bin, error, code_type, policy, mnemonic_hotness_filename, rd_hotness_filename, num2str(verbose_recovery));
 
         %% Store results for this instruction/error pattern pair
         results_candidate_messages(i,j) = num_candidate_messages;
