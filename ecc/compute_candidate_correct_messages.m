@@ -58,7 +58,6 @@ elseif strcmp(code_type, 'fujiwara1982') == 1 % ChipKill
 
             % Attempt to decode
             [decoded_message, num_error_bits, num_error_symbols] = chipkill_decoder(trial_string, H, 4);
-            decoded_message
        
             if sum(size(strfind(decoded_message,'X'))) == 0
                 % This is a candidate codeword.

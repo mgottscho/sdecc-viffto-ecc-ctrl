@@ -46,7 +46,7 @@ function [ decoded_message, num_error_bits, num_error_symbols ] = chipkill_decod
    end
 
    %% If we get this far, then there are errors. First we check to see if we can correct any single symbol errors. If not, then we know we detect the error
-   err = zeros(1,n);
+   error = repmat('0',1,n);
 
    %Single symbol error case
    %Need to go through All possible single, double, triple, and quadruple
@@ -57,8 +57,8 @@ function [ decoded_message, num_error_bits, num_error_symbols ] = chipkill_decod
        if nnz(mod(H(:,a)+s,2))==0 % Column of H at bit position a matches syndrome. This means there is one bit error.
            num_error_symbols = 1;
            num_error_bits = 1;
-           err(a)=1;
-           decoded_codeword = mod(received_codeword+err,2);
+           error(a)='1';
+           decoded_codeword = my_bitxor(received_codeword,error);
            decoded_message = decoded_codeword(1:k);
            return;
        end
@@ -71,10 +71,10 @@ function [ decoded_message, num_error_bits, num_error_symbols ] = chipkill_decod
                if nnz(mod(H(:,a)+H(:,b)+s,2))==0 % sum of columns a and b in H are syndrome, meaning we found double-bit error within a symbol.
                    num_error_symbols = 1;
                    num_error_bits = 2;
-                   err(a)=1;
-                   err(b)=1;
-                   decoded_codeword = mod(received_codeword+err,2);
-                   decoded_message = decoded_codeword(1:128);
+                   error(a)='1';
+                   error(b)='1';
+                   decoded_codeword = my_bitxor(received_codeword,error);
+                   decoded_message = decoded_codeword(1:k);
                    return
                end
            end
@@ -89,11 +89,11 @@ function [ decoded_message, num_error_bits, num_error_symbols ] = chipkill_decod
                    if nnz(mod(H(:,a)+H(:,b)+H(:,c)+s,2))==0 % sum of columns a, b, and c in H are syndrome, meaning we found triple-bit error within a symbol.
                        num_error_symbols = 1;
                        num_error_bits = 3;
-                       err(a)=1;
-                       err(b)=1;
-                       err(c)=1;
-                       decoded_codeword = mod(received_codeword+err,2);
-                       decoded_message = decoded_codeword(1:128);
+                       error(a)='1';
+                       error(b)='1';
+                       error(c)='1';
+                       decoded_codeword = my_bitxor(received_codeword,error);
+                       decoded_message = decoded_codeword(1:k);
                        return
                    end
                end
@@ -106,12 +106,12 @@ function [ decoded_message, num_error_bits, num_error_symbols ] = chipkill_decod
        if nnz(mod(H(:,1+symbol_size*(symbol-1))+H(:,2+symbol_size*(symbol-1))+H(:,3+symbol_size*(symbol-1))+H(:,4+symbol_size*(symbol-1))+s,2))==0 % Only one way this happens for symbol size of 4 bits: all four columns within a symbol of H sum to syndrome.
            num_error_symbols = 1;
            num_error_bits = 4;
-           err(1+symbol_size*(symbol-1))=1;
-           err(2+symbol_size*(symbol-1))=1;
-           err(3+symbol_size*(symbol-1))=1;
-           err(4+symbol_size*(symbol-1))=1;
-           decoded_codeword = mod(received_codeword+err,2);
-           decoded_message = decoded_codeword(1:128);
+           error(1+symbol_size*(symbol-1))='1';
+           error(2+symbol_size*(symbol-1))='1';
+           error(3+symbol_size*(symbol-1))='1';
+           error(4+symbol_size*(symbol-1))='1';
+           decoded_codeword = my_bitxor(received_codeword,error);
+           decoded_message = decoded_codeword(1:k);
            return
        end
    end

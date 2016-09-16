@@ -10,7 +10,7 @@ CODE_TYPE=fujiwara1982
 POLICY=filter-frequency-sort-pick-longest-pad
 MNEMONIC_HOTNESS_FILENAME=$MWG_DATA_PATH/swd_ecc_data/rv64g/program-statistics/static/rv64g-mnemonic-hotness-export.csv
 RD_HOTNESS_FILENAME=$MWG_DATA_PATH/swd_ecc_data/rv64g/program-statistics/static/rv64g-rd-hotness-export.csv
-VERBOSE=1
+VERBOSE=0
 
 if [[ "$MWG_MACHINE_NAME" == "hoffman" ]]; then
     MY_PRELOAD=$GCC5/lib64/libstdc++.so.6
