@@ -1,4 +1,4 @@
-function swd_ecc_offline_data_heuristic_recovery(architecture, benchmark, n, k, num_words, words_per_block, input_filename, output_filename, n_threads, code_type, policy, verbose_recovery)
+function swd_ecc_offline_data_heuristic_recovery(architecture, benchmark, n, k, num_words, num_sampled_error_patterns, words_per_block, input_filename, output_filename, n_threads, code_type, policy, verbose_recovery)
 % This function iterates over a series of data cache lines that are statically extracted
 % from a compiled program that was executed and produced a dynamic memory trace.
 % We choose a cache line and word within a cache line randomly.
@@ -11,19 +11,19 @@ function swd_ecc_offline_data_heuristic_recovery(architecture, benchmark, n, k, 
 % These X codewords are "candidates" for the original encoded message.
 % The function then tries to determine which of
 % the X candidate messages was the most likely one to recover.
-% TODO: support ChipKill
 %
 % Input arguments:
 %   architecture --     String: '[rv64g]'
 %   benchmark --        String
-%   n --                String: '[39|45|72|79]'
-%   k --                String: '[32|64]'
+%   n --                String: '[39|45|72|79|144]'
+%   k --                String: '[32|64|128]'
 %   num_words --        String: '[1|2|3|...]'
+%   num_sampled_error_patterns -- String: '[1|2|3|...|number of possible ways for given code to have DUE|-1 for all possible (automatic)]'
 %   words_per_block --  String: '[1|2|3|...]'
 %   input_filename --   String
 %   output_filename --  String
 %   n_threads --        String: '[1|2|3|...]'
-%   code_type --        String: '[hsiao|davydov1991|bose1960]'
+%   code_type --        String: '[hsiao|davydov1991|bose1960|fujiwara1982]'
 %   policy --           String: '[baseline-pick-random|hamming-pick-random|longest-run-pick-random|delta-pick-random]'
 %   verbose_recovery -- String: '[0|1]'
 %
@@ -38,6 +38,7 @@ benchmark
 n = str2num(n)
 k = str2num(k)
 num_words = str2num(num_words)
+num_sampled_error_patterns = str2num(num_sampled_error_patterns)
 words_per_block = str2num(words_per_block)
 input_filename
 output_filename
@@ -82,7 +83,7 @@ end
 sampled_trace_raw = cell(num_words,1);
 j = 1;
 for i=1:total_num_cachelines
-    line = fgets(fid);
+    line = fgetl(fid);
     if strcmp(line,'') == 1 || j > size(sampled_cacheline_indices,1)
         break;
     end
@@ -128,9 +129,13 @@ for i=1:num_words
     [sampled_trace_payload_size{i,1}, remain] = strtok(remain,',');
     [sampled_trace_payload{i,1}, remain] = strtok(remain,',');
     [sampled_trace_demand_blockpos{i,1}, remain] = strtok(remain,',');
+    cacheline_stream_hex = repmat('X',1,128);
+    for j=1:8
+        [chunk, remain] = strtok(remain,',');
+        cacheline_stream_hex((j-1)*16+1:(j-1)*16+16) = chunk(3:end);
+    end
     for j=1:words_per_block
-        [block, remain] = strtok(remain,',');
-        sampled_trace_cachelines_hex{i,j} = block(3:end);
+        sampled_trace_cachelines_hex{i,j} = cacheline_stream_hex((j-1)*(k/4)+1:(j-1)*(k/4)+16);
         sampled_trace_cachelines_bin{i,j} = my_hex2bin(sampled_trace_cachelines_hex{i,j});
     end
 end
@@ -162,9 +167,33 @@ elseif strcmp(code_type,'bose1960') == 1 % DECTED
             end
         end
     end
+elseif strcmp(code_type,'fujiwara1982') == 1 % ChipKill
+    num_error_patterns = nchoosek(n/4,2) * 15^2;
+    error_patterns = repmat('0',num_error_patterns,n);
+    sym_error_patterns = dec2bin(1:15);
+    num_error = 1;
+    for sym1=1:n/4-1
+        for sym2=sym1:n/4
+            for sym1_error_index=1:size(sym_error_patterns,1)
+                for sym2_error_index=1:size(sym_error_patterns,1)
+                    error_patterns(num_error,(sym1-1)*4+1:(sym1-1)*4+4) = sym_error_patterns(sym1_error_index,:);
+                    error_patterns(num_error,(sym2-1)*4+1:(sym2-1)*4+4) = sym_error_patterns(sym2_error_index,:);
+                    num_error = num_error+1;
+                end
+            end
+        end
+    end
 else
     display(['FATAL! Unsupported code type: ' code_type]);
     return;
+end
+
+if num_sampled_error_patterns < 0 || num_sampled_error_patterns > num_error_patterns
+    num_sampled_error_patterns = num_error_patterns;
+end
+
+if verbose_recovery == 1
+    num_sampled_error_patterns
 end
 
 results_candidate_messages = NaN(num_words,num_error_patterns); % Init
@@ -194,9 +223,11 @@ parfor i=1:num_words % Parallelize loop across separate threads, since this coul
         serialized_cacheline_bin = [serialized_cacheline_bin ',' cacheline_bin{1,x}];
     end
     
-    %% Iterate over all possible error patterns.
-    for j=1:num_error_patterns
-        error = error_patterns(j,:);
+    %% Iterate over sampled number of detected-but-uncorrectable error patterns.
+    sampled_error_pattern_indices = sortrows(randperm(num_error_patterns, num_sampled_error_patterns)'); % Increasing order of indices. This does not affect experiment correctness.
+
+    for j=1:num_sampled_error_patterns
+        error = error_patterns(sampled_error_pattern_indices(j),:);
 
         %% Do heuristic recovery for this message/error pattern combo.
         [original_codeword, received_string, num_candidate_messages, recovered_message, suggest_to_crash, recovered_successfully] = data_recovery('rv64g', num2str(n), num2str(k), message_bin, error, code_type, policy, serialized_cacheline_bin, sampled_blockpos_indices(i), verbose_recovery);

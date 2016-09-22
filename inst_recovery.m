@@ -15,7 +15,7 @@ function [original_codeword, received_string, num_candidate_messages, num_valid_
 %   policy --           String: '[baseline-pick-random | filter-rank-pick-random | filter-rank-sort-pick-first | filter-rank-rank-sort-pick-first | filter-frequency-pick-random | filter-frequency-sort-pick-first | filter-frequency-sort-pick-longest-pad]'
 %   mnemonic_hotness_filename -- String: full path to CSV file containing the relative frequency of each instruction to use for ranking
 %   rd_hotness_filename -- String: full path to CSV file containing the relative frequency of each destination register address to use for ranking
-%   verbose -- 1 if you want console printouts of progress to stdout.
+%   verbose -- '1' if you want console printouts of progress to stdout.
 %
 % Returns:
 %   original_codeword -- n-bit encoded version of original_message

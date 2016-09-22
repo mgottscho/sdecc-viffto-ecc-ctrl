@@ -7,15 +7,13 @@ function [original_codeword, received_string, num_candidate_messages, recovered_
 %
 % Note that all data words should be in their NATIVE ENDIANNESS for absolute correctness. This is because the data type of a value stored in memory is generally not equal to the message size k as used by the ECC encoder/decoder.
 %
-% TODO: support ChipKill
-%
 % Input arguments:
 %   architecture --     String: '[rv64g]'
-%   n --                String: '[39|45|72|79]'
-%   k --                String: '[32|64]'
+%   n --                String: '[39|45|72|79|144]'
+%   k --                String: '[32|64|128]'
 %   original_message -- Binary String of length k bits/chars
 %   error_pattern --    Binary String of length n bits/chars
-%   code_type --        String: '[hsiao1970|davydov1991|bose1960]'
+%   code_type --        String: '[hsiao1970|davydov1991|bose1960|fujiwara1982]'
 %   policy --           String: '[hamming-pick-random|longest-run-pick-random|delta-pick-random]'
 %   cacheline_bin --    String: Set of words_per_block k-bit binary strings, e.g. '0001010101....00001,0000000000.....00000,...,111101010...00101'. words_per_block is inferred by the number of binary strings that are delimited by commas.
 %   message_blockpos -- String: '[0-(words_per_block-1)]' denoting the position of the message under test within the cacheline. This message should match original_message argument above.
@@ -53,7 +51,10 @@ end
 rng('shuffle'); % Seed RNG based on current time
 
 %% Init some return values
-num_candidate_messages = 0;
+original_codeword = repmat('X',1,n);
+received_string = repmat('X',1,n);
+num_candidate_messages = -1;
+num_valid_messages = -1;
 recovered_message = repmat('X',1,k);
 suggest_to_crash = 0;
 recovered_successfully = 0;
@@ -71,6 +72,8 @@ if strcmp(code_type, 'hsiao1970') == 1 || strcmp(code_type, 'davydov1991') == 1 
     [G,H] = getSECDEDCodes(n,code_type);
 elseif strcmp(code_type, 'bose1960') == 1 % DECTED
     [G,H] = getDECTEDCodes(n);
+elseif strcmp(code_type, 'fujiwara1982') == 1 % ChipKill
+    [G,H] = getChipkillCodes(n);
 else
     display(['FATAL! Unsupported code type: ' code_type]);
 end
@@ -132,10 +135,16 @@ if strcmp(code_type, 'hsiao1970') == 1 || strcmp(code_type, 'davydov1991') == 1 
     [recovered_message, num_error_bits] = secded_decoder(received_string, H, code_type);
 elseif strcmp(code_type, 'bose1960') == 1 % DECTED
     [recovered_message, num_error_bits] = dected_decoder(received_string, H);
+elseif strcmp(code_type, 'fujiwara1982') == 1 % ChipKill
+    [recovered_message, num_error_bits, num_error_symbols] = chipkill_decoder(received_string, H, 4);
 end % didn't check bad code type error condition because we should have caught it earlier anyway
 
 if verbose == 1
     display(['Sanity check: ECC decoder determined that there are ' num2str(num_error_bits) ' bits in error. The input error pattern had ' num2str(sum(error_pattern=='1')) ' bits flipped.']);
+
+    if strcmp(code_type, 'fujiwara1982') == 1 % ChipKill
+        display(['This is a ChipKill code with symbol size of 4 bits. The decoder found ' num2str(num_error_symbols) ' symbols in error.']);
+    end
 end
 
 %% If the ECC decoder returned the correct message, we are done.
@@ -154,7 +163,7 @@ if verbose == 1
     display('Attempting heuristic recovery...');
 end
 
-%% Flip 1 bit at a time on the corrupted codeword, and attempt decoding on each. We should find several bit positions that decode successfully with just a single-bit error.
+%% Flip bits on the corrupted codeword, and attempt decoding on each. We should find several bit flip combinations that decode successfully
 if verbose == 1
     display('Computing candidate codewords...');
 end
