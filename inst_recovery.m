@@ -48,6 +48,10 @@ end
 rng('shuffle'); % Seed RNG based on current time
 
 %% Init some return values
+original_codeword = repmat('X',1,n);
+received_string = repmat('X',1,n);
+num_candidate_messages = -1;
+num_valid_messages = -1;
 recovered_message = repmat('X',1,k);
 suggest_to_crash = 0;
 recovered_successfully = 0;

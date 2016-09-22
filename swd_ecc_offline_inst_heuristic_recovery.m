@@ -1,4 +1,4 @@
-function swd_ecc_offline_inst_heuristic_recovery(architecture, benchmark, n, k, num_messages, input_filename, output_filename, n_threads, code_type, policy, mnemonic_hotness_filename, rd_hotness_filename, verbose_recovery)
+function swd_ecc_offline_inst_heuristic_recovery(architecture, benchmark, n, k, num_messages, num_sampled_error_patterns, input_filename, output_filename, n_threads, code_type, policy, mnemonic_hotness_filename, rd_hotness_filename, verbose_recovery)
 % This function evaluates heuristic recovery from corrupted instructions in an offline manner.
 %
 % It iterates over a series of instructions that are statically extracted from a compiled program.
@@ -19,6 +19,7 @@ function swd_ecc_offline_inst_heuristic_recovery(architecture, benchmark, n, k, 
 %   n --                String: '[39|45|72|79|144]'
 %   k --                String: '[32|64|128]'
 %   num_messages --     String: '[1|2|3|...]'
+%   num_sampled_error_patterns -- String: '[1|2|3|...|number of possible ways for given code to have DUE|-1 for all possible (automatic)]'
 %   input_filename --   String
 %   output_filename --  String
 %   n_threads --        String: '[1|2|3|...]'
@@ -39,6 +40,7 @@ benchmark
 n = str2num(n)
 k = str2num(k)
 num_messages = str2num(num_messages)
+num_sampled_error_patterns = str2num(num_sampled_error_patterns)
 input_filename
 output_filename
 n_threads = str2num(n_threads)
@@ -116,20 +118,35 @@ end
 
 num_messages_in_cacheline = 512 / k;
 sampled_trace_raw = cell(num_messages,1);
+i = 1;
 j = 1;
-for i=1:total_num_inst
+while i <= total_num_inst && j <= num_messages
     line = fgetl(fid);
-    if strcmp(line,'') == 1 || j > size(sampled_message_indices,1)
+    if line == -1
+        display(['Premature end-of-file. i == ' num2str(i) ', j == ' num2str(j) '.']);
+        break;
+    elseif strcmp(line, '') == 1
+        display(['Error reading file. i == ' num2str(i) ', j == ' num2str(j) '.']);
         break;
     end
+    i = i+1;
     if i == sampled_message_indices(j)
         if strcmp(trace_mode, 'static') == 1 % Static trace mode
             packed_message = line;
             for packed_inst=2:num_packed_inst
                 line = fgetl(fid);
+                if line == -1
+                    display(['Premature end-of-file. i == ' num2str(i) ', j == ' num2str(j) '.']);
+                    break;
+                elseif strcmp(line, '') == 1
+                    display(['Error reading file. i == ' num2str(i) ', j == ' num2str(j) '.']);
+                    break;
+                end
+                i = i+1;
                 packed_message = [packed_message line];
             end
         elseif strcmp(trace_mode, 'dynamic') == 1 % Dynamic trace mode
+            remain = line;
             for x=1:9 % 9 iterations because payload is 9th entry in a row of the above format
                 [token,remain] = strtok(remain,',');
             end
@@ -157,6 +174,7 @@ for i=1:total_num_inst
             display(['FATAL! Unsupported trace mode: ' trace_mode]);
             return;
         end
+
         sampled_trace_raw{j,1} = packed_message;
 
         if verbose_recovery == 1
@@ -167,6 +185,11 @@ for i=1:total_num_inst
     end
 end
 fclose(fid);
+
+if verbose_recovery == 1
+    display(['Number of messages in sampled_trace_raw: ' num2str(size(sampled_trace_raw,1)) ', num_messages: ' num2str(num_messages)]);
+    sampled_message_indices
+end
 
 sampled_trace_packed_inst_disassembly = cell(1,num_packed_inst);
 x = 1;
@@ -194,7 +217,10 @@ for i=1:num_messages
 end
 
 sampled_trace_hex = char(sampled_trace_raw);
-sampled_trace_bin = dec2bin(hex2dec(sampled_trace_hex),k);
+sampled_trace_bin = repmat('X',num_messages,k);
+for i=1:num_messages
+    sampled_trace_bin(i,:) = my_hex2bin(sampled_trace_hex(i,:));
+end
 
 if verbose_recovery == 1
     sampled_trace_hex
@@ -238,6 +264,7 @@ elseif strcmp(code_type,'fujiwara1982') == 1 % ChipKill
                 for sym2_error_index=1:size(sym_error_patterns,1)
                     error_patterns(num_error,(sym1-1)*4+1:(sym1-1)*4+4) = sym_error_patterns(sym1_error_index,:);
                     error_patterns(num_error,(sym2-1)*4+1:(sym2-1)*4+4) = sym_error_patterns(sym2_error_index,:);
+                    num_error = num_error+1;
                 end
             end
         end
@@ -245,6 +272,14 @@ elseif strcmp(code_type,'fujiwara1982') == 1 % ChipKill
 else
     display(['FATAL! Unsupported code type: ' code_type]);
     return;
+end
+
+if num_sampled_error_patterns < 0 || num_sampled_error_patterns > num_error_patterns
+    num_sampled_error_patterns = num_error_patterns;
+end
+
+if verbose_recovery == 1
+    num_sampled_error_patterns
 end
 
 display('Evaluating SWD-ECC...');
@@ -265,16 +300,18 @@ parfor i=1:num_messages % Parallelize loop across separate threads, since this c
     %% Get the "message," which is the original instruction, i.e., the ground truth from input file.
     message_hex = sampled_trace_hex(i,:);
     message_bin = sampled_trace_bin(i,:);
-    [legal, mnemonic, codec, rd, rs1, rs2, rs3, imm, arg] = parse_rv64g_decoder_output(message_hex);
+    %[legal, mnemonic, codec, rd, rs1, rs2, rs3, imm, arg] = parse_rv64g_decoder_output(message_hex);
     
     %% Check that the message is actually a valid instruction to begin with.
-    if legal == 0 
-       display(['WARNING: Found illegal input instruction: ' message_hex '. This should not happen. However, we will try heuristic recovery anyway.']);
-    end
+    %if legal == 0 
+    %   display(['WARNING: Found illegal input instruction: ' message_hex '. This should not happen. However, we will try heuristic recovery anyway.']);
+    %end
 
-    %% Iterate over all possible detected-but-uncorrectable error patterns.
-    for j=1:num_error_patterns
-        error = error_patterns(j,:);
+    %% Iterate over sampled number of detected-but-uncorrectable error patterns.
+    sampled_error_pattern_indices = sortrows(randperm(num_error_patterns, num_sampled_error_patterns)'); % Increasing order of indices. This does not affect experiment correctness.
+
+    for j=1:num_sampled_error_patterns
+        error = error_patterns(sampled_error_pattern_indices(j),:);
         [original_codeword, received_string, num_candidate_messages, num_valid_messages, recovered_message, suggest_to_crash, recovered_successfully] = inst_recovery('rv64g', num2str(n), num2str(k), message_bin, error, code_type, policy, mnemonic_hotness_filename, rd_hotness_filename, num2str(verbose_recovery));
 
         %% Store results for this instruction/error pattern pair
@@ -292,7 +329,7 @@ parfor i=1:num_messages % Parallelize loop across separate threads, since this c
     % Progress indicator.
     % This will not show accurate progress if the loop is parallelized
     % across threads with parfor, since they can execute out-of-order
-    display(['Completed inst # ' num2str(i) ' is index ' num2str(sampled_inst_indices(i)) ' in the program. hex: ' message_hex '. legal = ' num2str(legal) ', mnemonic = ' mnemonic ', codec = ' codec ',rd = ' rd ', rs1 = ' rs1 ', rs2 = ' rs2 ', rs3 = ' rs3 ', imm = ' imm ', arg = ' arg]);
+    display(['Completed message # ' num2str(i) ' is index ' num2str(sampled_message_indices(i)) ' in the program. hex: ' message_hex '.']); %legal = ' num2str(legal) ', mnemonic = ' mnemonic ', codec = ' codec ',rd = ' rd ', rs1 = ' rs1 ', rs2 = ' rs2 ', rs3 = ' rs3 ', imm = ' imm ', arg = ' arg]);
     %'. avg_success = ' num2str(sum(success(i,:))) ', avg_could_have_crashed = ' num2str(sum(could_have_crashed(i,:))) ', avg_success_with_crash_option = ' num2str(sum(success_with_crash_option(i,:)))]);
 end
 
