@@ -47,6 +47,8 @@ code_type
 policy
 verbose_recovery
 
+rng('shuffle'); % Seed RNG based on current time
+
 r = n-k;
 
 if ~isdeployed
@@ -201,6 +203,13 @@ success = NaN(num_words, num_sampled_error_patterns); % Init
 could_have_crashed = NaN(num_words, num_sampled_error_patterns); % Init
 success_with_crash_option = NaN(num_words, num_sampled_error_patterns); % Init
 
+%% Randomly generate sampled error pattern indices
+sampled_error_pattern_indices = sortrows(randperm(num_error_patterns, num_sampled_error_patterns)'); % Increasing order of indices. This does not affect experiment correctness.
+
+if verbose_recovery == 1
+    sampled_error_pattern_indices
+end
+
 display('Evaluating SWD-ECC...');
 
 %% Set up parallel computing
@@ -224,8 +233,6 @@ parfor i=1:num_words % Parallelize loop across separate threads, since this coul
     end
     
     %% Iterate over sampled number of detected-but-uncorrectable error patterns.
-    sampled_error_pattern_indices = sortrows(randperm(num_error_patterns, num_sampled_error_patterns)'); % Increasing order of indices. This does not affect experiment correctness.
-
     for j=1:num_sampled_error_patterns
         error = error_patterns(sampled_error_pattern_indices(j),:);
 

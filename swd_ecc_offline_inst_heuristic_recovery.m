@@ -50,6 +50,8 @@ mnemonic_hotness_filename
 rd_hotness_filename
 verbose_recovery = str2num(verbose_recovery)
 
+rng('shuffle'); % Seed RNG based on current time
+
 if ~isdeployed
     addpath ecc common rv64g % Add sub-folders to MATLAB search paths for calling other functions we wrote
 end
@@ -281,6 +283,13 @@ end
 if verbose_recovery == 1
     num_sampled_error_patterns
 end
+    
+%% Randomly generate sampled error pattern indices
+sampled_error_pattern_indices = sortrows(randperm(num_error_patterns, num_sampled_error_patterns)'); % Increasing order of indices. This does not affect experiment correctness.
+
+if verbose_recovery == 1
+    sampled_error_pattern_indices
+end
 
 display('Evaluating SWD-ECC...');
 
@@ -289,6 +298,7 @@ results_valid_messages = NaN(num_messages,num_sampled_error_patterns); % Init
 success = NaN(num_messages, num_sampled_error_patterns); % Init
 could_have_crashed = NaN(num_messages, num_sampled_error_patterns); % Init
 success_with_crash_option = NaN(num_messages, num_sampled_error_patterns); % Init
+    
 
 %% Set up parallel computing
 pctconfig('preservejobs', true);
@@ -308,7 +318,6 @@ parfor i=1:num_messages % Parallelize loop across separate threads, since this c
     %end
 
     %% Iterate over sampled number of detected-but-uncorrectable error patterns.
-    sampled_error_pattern_indices = sortrows(randperm(num_error_patterns, num_sampled_error_patterns)'); % Increasing order of indices. This does not affect experiment correctness.
 
     for j=1:num_sampled_error_patterns
         error = error_patterns(sampled_error_pattern_indices(j),:);
