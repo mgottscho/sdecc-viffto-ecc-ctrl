@@ -284,11 +284,11 @@ end
 
 display('Evaluating SWD-ECC...');
 
-results_candidate_messages = NaN(num_messages,num_error_patterns); % Init
-results_valid_messages = NaN(num_messages,num_error_patterns); % Init
-success = NaN(num_messages, num_error_patterns); % Init
-could_have_crashed = NaN(num_messages, num_error_patterns); % Init
-success_with_crash_option = NaN(num_messages, num_error_patterns); % Init
+results_candidate_messages = NaN(num_messages,num_sampled_error_patterns); % Init
+results_valid_messages = NaN(num_messages,num_sampled_error_patterns); % Init
+success = NaN(num_messages, num_sampled_error_patterns); % Init
+could_have_crashed = NaN(num_messages, num_sampled_error_patterns); % Init
+success_with_crash_option = NaN(num_messages, num_sampled_error_patterns); % Init
 
 %% Set up parallel computing
 pctconfig('preservejobs', true);

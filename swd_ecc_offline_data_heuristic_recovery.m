@@ -196,10 +196,10 @@ if verbose_recovery == 1
     num_sampled_error_patterns
 end
 
-results_candidate_messages = NaN(num_words,num_error_patterns); % Init
-success = NaN(num_words, num_error_patterns); % Init
-could_have_crashed = NaN(num_words, num_error_patterns); % Init
-success_with_crash_option = NaN(num_words, num_error_patterns); % Init
+results_candidate_messages = NaN(num_words,num_sampled_error_patterns); % Init
+success = NaN(num_words, num_sampled_error_patterns); % Init
+could_have_crashed = NaN(num_words, num_sampled_error_patterns); % Init
+success_with_crash_option = NaN(num_words, num_sampled_error_patterns); % Init
 
 display('Evaluating SWD-ECC...');
 
