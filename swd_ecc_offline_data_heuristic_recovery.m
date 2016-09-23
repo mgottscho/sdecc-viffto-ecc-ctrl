@@ -135,7 +135,7 @@ for i=1:num_words
         cacheline_stream_hex((j-1)*16+1:(j-1)*16+16) = chunk(3:end);
     end
     for j=1:words_per_block
-        sampled_trace_cachelines_hex{i,j} = cacheline_stream_hex((j-1)*(k/4)+1:(j-1)*(k/4)+16);
+        sampled_trace_cachelines_hex{i,j} = cacheline_stream_hex((j-1)*(k/4)+1:(j-1)*(k/4)+(k/4));
         sampled_trace_cachelines_bin{i,j} = my_hex2bin(sampled_trace_cachelines_hex{i,j});
     end
 end
