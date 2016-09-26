@@ -170,7 +170,7 @@ while i <= total_num_inst && j <= num_messages
             packed_message = cacheline(1,payload_start_hexpos-payload_offset_in_message+1:payload_start_hexpos-payload_offset_in_message+k/4);
 
             for packed_inst=1:num_packed_inst
-                packed_message((packed_inst-1)*8+1:(packed_inst-1)*8+8) = reverse_byte_order((packed_inst-1)*8+1:(packed_inst-1)*8+8); % Put the packed instruction in big-endian format.
+                packed_message((packed_inst-1)*8+1:(packed_inst-1)*8+8) = reverse_byte_order(packed_message((packed_inst-1)*8+1:(packed_inst-1)*8+8)); % Put the packed instruction in big-endian format.
             end
         else
             display(['FATAL! Unsupported trace mode: ' trace_mode]);

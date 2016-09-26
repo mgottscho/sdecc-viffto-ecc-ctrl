@@ -15,7 +15,7 @@ fi
 ########################## FEEL FREE TO CHANGE THESE OPTIONS ##################################
 ISA=rv64g    # Set the target ISA; benchmarks must be disassembled for this as well
 
-INPUT_TYPE=static
+INPUT_TYPE=dynamic-static-side-info
 MNEMONIC_HOTNESS_FILENAME=$MWG_DATA_PATH/swd_ecc_data/$ISA/program-statistics/$INPUT_TYPE/$ISA-mnemonic-hotness-export.csv
 RD_HOTNESS_FILENAME=$MWG_DATA_PATH/swd_ecc_data/$ISA/program-statistics/$INPUT_TYPE/$ISA-rd-hotness-export.csv
 if [[ "$INPUT_TYPE" == "static" ]]; then # Static evaluation
