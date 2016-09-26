@@ -43,18 +43,19 @@ VERBOSE_RECOVERY=0
 
 OUTPUT_DIRECTORY=$MWG_DATA_PATH/swd_ecc_data/$ISA/data-recovery/offline-$INPUT_TYPE/$CODE_TYPE/$POLICY
 
-if [[ "$MWG_MACHINE_NAME" == "hoffman" ]]; then
-    NUM_THREADS=16 # Override above.
-    # qsub options used:
-    # -V: export environment variables from this calling script to each job
-    # -N: name the job. I made these so that each job will be uniquely identified by its benchmark running as well as the output file string ID
-    # -l: resource allocation flags for maximum time requested as well as maximum memory requested.
-    # -M: cluster username(s) to email with updates on job status
-    # -m: mailing rules for job status. b = begin, e = end, a = abort, s = suspended, n = never
-    MAX_TIME_PER_RUN=23:00:00 	# Maximum time of each script that will be invoked, HH:MM:SS. If this is exceeded, job will be killed.
-    MAX_MEM_PER_RUN="$((600 * $NUM_THREADS))M" # Maximum memory needed per script that will be invoked. If this is exceeded, job will be killed.
-    MAILING_LIST=mgottsch 		# List of users to email with status updates, separated by commas
-fi
+#if [[ "$MWG_MACHINE_NAME" == "hoffman" ]]; then
+#    NUM_THREADS=16 # Override above.
+#    # qsub options used:
+#    # -V: export environment variables from this calling script to each job
+#    # -N: name the job. I made these so that each job will be uniquely identified by its benchmark running as well as the output file string ID
+#    # -l: resource allocation flags for maximum time requested as well as maximum memory requested.
+#    # -M: cluster username(s) to email with updates on job status
+#    # -m: mailing rules for job status. b = begin, e = end, a = abort, s = suspended, n = never
+#    MAX_TIME_PER_RUN=18:00:00 	# Maximum time of each script that will be invoked, HH:MM:SS. If this is exceeded, job will be killed.
+#    MAX_MEM_PER_RUN="$((600 * $NUM_THREADS))M" # Maximum memory needed per script that will be invoked. If this is exceeded, job will be killed.
+#    MAX_MEM_PER_RUN="16G" # Maximum memory needed per script that will be invoked. If this is exceeded, job will be killed.
+#    MAILING_LIST=mgottsch 		# List of users to email with status updates, separated by commas
+#fi
 
 ###############################################################################################
 
@@ -77,15 +78,15 @@ for SPEC_BENCHMARK in $SPEC_BENCHMARKS; do
     JOB_STDOUT=$OUTPUT_DIRECTORY/${ISA}-${SPEC_BENCHMARK}-data-heuristic-recovery.stdout
     JOB_STDERR=$OUTPUT_DIRECTORY/${ISA}-${SPEC_BENCHMARK}-data-heuristic-recovery.stderr
 
-    if [[ "$MWG_MACHINE_NAME" == "hoffman" ]]; then
-        JOB_NAME="swdecc_datarecov_${SPEC_BENCHMARK}"
-        qsub -V -N $JOB_NAME -l h_data=$MAX_MEM_PER_RUN,time=$MAX_TIME_PER_RUN,highp -M $MAILING_LIST -o $JOB_STDOUT -e $JOB_STDERR -m as -pe shared $NUM_THREADS swd_ecc_offline_data_heuristic_recovery_wrapper.sh $PWD $ISA $SPEC_BENCHMARK $N $K $NUM_WORDS $NUM_SAMPLED_ERROR_PATTERNS $WORDS_PER_BLOCK $INPUT_FILE $OUTPUT_FILE $NUM_THREADS $CODE_TYPE $POLICY $VERBOSE_RECOVERY
-    elif [[ "$MWG_MACHINE_NAME" == "nanocad-server-testbed" ]]; then
+#    if [[ "$MWG_MACHINE_NAME" == "hoffman" ]]; then
+#        JOB_NAME="swdecc_datarecov_${SPEC_BENCHMARK}"
+#        qsub -V -N $JOB_NAME -l h_data=$MAX_MEM_PER_RUN,time=$MAX_TIME_PER_RUN,highp -M $MAILING_LIST -o $JOB_STDOUT -e $JOB_STDERR -m as -pe shared $NUM_THREADS swd_ecc_offline_data_heuristic_recovery_wrapper.sh $PWD $ISA $SPEC_BENCHMARK $N $K $NUM_WORDS $NUM_SAMPLED_ERROR_PATTERNS $WORDS_PER_BLOCK $INPUT_FILE $OUTPUT_FILE $NUM_THREADS $CODE_TYPE $POLICY $VERBOSE_RECOVERY
+#    elif [[ "$MWG_MACHINE_NAME" == "nanocad-server-testbed" ]]; then
         ./swd_ecc_offline_data_heuristic_recovery_wrapper.sh $PWD $ISA $SPEC_BENCHMARK $N $K $NUM_WORDS $NUM_SAMPLED_ERROR_PATTERNS $WORDS_PER_BLOCK $INPUT_FILE $OUTPUT_FILE $NUM_THREADS $CODE_TYPE $POLICY $VERBOSE_RECOVERY > $JOB_STDOUT 2> $JOB_STDERR
-    fi
+#    fi
 done
 
-if [[ "$MWG_MACHINE_NAME" == "hoffman" ]]; then
-    echo "Done submitting jobs."
-    echo "Use qstat to track job status and qdel to kill jobs."
-fi
+#if [[ "$MWG_MACHINE_NAME" == "hoffman" ]]; then
+#    echo "Done submitting jobs."
+#    echo "Use qstat to track job status and qdel to kill jobs."
+#fi
