@@ -2,15 +2,19 @@
 % Author: Mark Gottscho <mgottscho@ucla.edu>
 
 %%%%%%%% CHANGE ME AS NEEDED %%%%%%%%%%%%
-input_directory = '/Users/Mark/Dropbox/SoftwareDefinedECC/data/rv64g/heuristic-recovery/data/hsiao-code/offline-dynamic-random-sampling/2016-8-31 rv64g 1000words baseline-pick-random';
+input_directory = '/Users/Mark/Dropbox/SoftwareDefinedECC/data/rv64g/data-recovery/offline-dynamic/fujiwara1982/144,128/hamming-pick-random';
 output_directory = input_directory;
 num_words = 1000;
 %num_error_patterns = 741; % For (39,32) SECDED
-num_error_patterns = 2556; % For (72,64) SECDED
+%num_error_patterns = 2556; % For (72,64) SECDED
+%num_error_patterns = 14190; % For (45,32) DECTED
+%num_error_patterns = 79079; % For (79,64) DECTED
+%num_error_patterns = 141750; % For (144,128) ChipKill
+num_error_patterns = 1000; % sampled
 architecture = 'rv64g';
 %code_type = 'hsiao1970 (39,32) SECDED';
-code_type = 'hsiao1970';
-policy = 'Baseline-Pick-Random';
+code_type = 'fujiwara1982';
+policy = 'Hamming-Pick-Random';
 
 %% Read in names of benchmarks to process
 dir_contents = dir(input_directory);

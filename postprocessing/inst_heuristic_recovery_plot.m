@@ -30,26 +30,28 @@ title(['Rate of Heuristic Recovery for ' code_type ' (' num2str(n) ',' num2str(k
 print(gcf, '-depsc2', [output_directory filesep architecture '-' benchmark '-inst-heuristic-recovery.eps']);
 close(gcf);
 
-z=1;
-success_2d = NaN(n+1,n+1);
-mean_success = mean(success);
-for err_bitpos_1=1:n-1
-    for err_bitpos_2=err_bitpos_1+1:n
-        success_2d(err_bitpos_1,err_bitpos_2) = mean_success(z);
-        z=z+1;
+if strcmp(code_type,'hsiao1970') == 1 || strcmp(code_type,'davydov1991') == 1
+    z=1;
+    success_2d = NaN(n+1,n+1);
+    mean_success = mean(success);
+    for err_bitpos_1=1:n-1
+        for err_bitpos_2=err_bitpos_1+1:n
+            success_2d(err_bitpos_1,err_bitpos_2) = mean_success(z);
+            z=z+1;
+        end
     end
+    success_2d(end,:) = NaN;
+    success_2d(:,end) = NaN;
+
+    figure;
+    pcolor(success_2d);
+    xlim([0 n]);
+    ylim([0 n]);
+
+    xlabel('Index of 1st bit in error', 'FontSize', 12, 'FontName', 'Arial');
+    ylabel('Index of 2nd bit in error', 'FontSize', 12, 'FontName', 'Arial');
+    title(['Rate of Heuristic Recovery for ' code_type ' (' num2str(n) ',' num2str(k) ') -- ' benchmark ' -- ' policy], 'FontSize', 12, 'FontName', 'Arial');
+
+    print(gcf, '-depsc2', [output_directory filesep architecture '-' benchmark '-inst-heuristic-recovery-heatmap.eps']);
+    close(gcf);
 end
-success_2d(end,:) = NaN;
-success_2d(:,end) = NaN;
-
-figure;
-pcolor(success_2d);
-xlim([0 n]);
-ylim([0 n]);
-
-xlabel('Index of 1st bit in error', 'FontSize', 12, 'FontName', 'Arial');
-ylabel('Index of 2nd bit in error', 'FontSize', 12, 'FontName', 'Arial');
-title(['Rate of Heuristic Recovery for ' code_type ' (' num2str(n) ',' num2str(k) ') -- ' benchmark ' -- ' policy], 'FontSize', 12, 'FontName', 'Arial');
-
-print(gcf, '-depsc2', [output_directory filesep architecture '-' benchmark '-inst-heuristic-recovery-heatmap.eps']);
-close(gcf);
