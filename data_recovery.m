@@ -14,7 +14,7 @@ function [original_codeword, received_string, num_candidate_messages, recovered_
 %   original_message -- Binary String of length k bits/chars
 %   error_pattern --    Binary String of length n bits/chars
 %   code_type --        String: '[hsiao1970|davydov1991|bose1960|fujiwara1982]'
-%   policy --           String: '[hamming-pick-random|longest-run-pick-random|delta-pick-random]'
+%   policy --           String: '[hamming-pick-random|longest-run-pick-random|delta-pick-random|dbx-pick-random]'
 %   cacheline_bin --    String: Set of words_per_block k-bit binary strings, e.g. '0001010101....00001,0000000000.....00000,...,111101010...00101'. words_per_block is inferred by the number of binary strings that are delimited by commas.
 %   message_blockpos -- String: '[0-(words_per_block-1)]' denoting the position of the message under test within the cacheline. This message should match original_message argument above.
 %   verbose -- '1' if you want console printouts of progress to stdout.
@@ -246,7 +246,27 @@ elseif strcmp(policy, 'delta-pick-random') == 1
         score = sum(deltas.^2); % Sum of squares of abs-deltas. Score is now a double.
         candidate_correct_message_scores(x) = score; % Each score is a double.
     end
-%elseif strcmp(policy, 'dbxw') == 1 % TODO: implement me!
+elseif strcmp(policy, 'dbx-pick-random') == 1 
+    % DBX sparsity metric
+    % For each candidate message, compute the DBX transform of the cacheline using the given candidate-correct message. 
+    % The score is the proportion of 1s in the matrix.
+    % The score can take a range of [0,1]. Lower scores are better.
+    if verbose == 1
+        display('RECOVERY STEP 1: Compute scores of all candidate-correct messages by performing the Delta-Bitplane-XOR (DBX) transform of the entire cacheline using the given candidate-correct message. Lower scores are better. Scores are the proportion of 1s in the DBX output matrix.')
+    end
+    for x=1:size(candidate_correct_messages,1)
+        cacheline_with_candidate_message = cell2mat(parsed_cacheline_bin);
+        cacheline_with_candidate_message(message_blockpos,:) = candidate_correct_messages(x,:);
+        [DBX_bin, delta_bin] = dbx_transform(cacheline_with_candidate_message);
+
+        if verbose == 1
+            delta_bin
+            DBX_bin
+        end
+
+        score = nnz(DBX_bin) / prod(size(DBX_bin));
+        candidate_correct_message_scores(x) = score;
+    end
 else % error
     display(['FATAL! Unknown policy: ' policy]);
     return;
