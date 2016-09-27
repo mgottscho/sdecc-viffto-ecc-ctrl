@@ -49,10 +49,10 @@ for blockpos=2:N
         delta_dec{blockpos,1}=cacheline_dec{blockpos-1}-cacheline_dec{blockpos}-1;
         %Now convert to 64-bit binary and flip all the bits
         delta_bin{blockpos,1}=ldec2bin(delta_dec{blockpos});
-        delta_bin{blockpos,1} = [repmat('0',1,k-length(delta_bin{blockpos,1})) delta_bin{blockpos,1}];
-        delta_bin{blockpos,1}=my_bitxor(delta_bin{blockpos},repmat('1',1,k));
+        delta_bin{blockpos,1} = [repmat('0',1,(k+1)-length(delta_bin{blockpos,1})) delta_bin{blockpos,1}];
+        delta_bin{blockpos,1}=my_bitxor(delta_bin{blockpos},repmat('1',1,k+1));
         %Now add the 1 in front
-        delta_bin{blockpos,1}=['1' delta_bin{blockpos}];
+        %delta_bin{blockpos,1}=['1' delta_bin{blockpos}];
     end
 end
 

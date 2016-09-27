@@ -303,10 +303,10 @@ target_message_score = min_score;
 target_message_index = NaN;
 if strcmp(policy, 'baseline-pick-random') == 1
     target_message_index = randi(size(candidate_correct_messages,1),1);
-elseif strcmp(policy, 'hamming-pick-random') == 1 || strcmp(policy, 'longest-run-pick-random') == 1 || strcmp(policy, 'delta-pick-random') == 1
+elseif strcmp(policy, 'hamming-pick-random') == 1 || strcmp(policy, 'longest-run-pick-random') == 1 || strcmp(policy, 'delta-pick-random') == 1 || strcmp(policy, 'dbx-pick-random') == 1
     target_message_index = min_score_indices(randi(size(min_score_indices,1),1));
 else
-    print(['FATAL! Unknown policy: ' policy]);
+    display(['FATAL! Unknown policy: ' policy]);
     return;
 end
 
