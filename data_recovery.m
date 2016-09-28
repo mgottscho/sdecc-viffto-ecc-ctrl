@@ -264,7 +264,7 @@ elseif strcmp(policy, 'dbx-pick-random') == 1
             DBX_bin
         end
 
-        score = nnz(DBX_bin) / prod(size(DBX_bin));
+        score = sum(sum(DBX_bin=='1')) / prod(size(DBX_bin));
         candidate_correct_message_scores(x) = score;
     end
 else % error
