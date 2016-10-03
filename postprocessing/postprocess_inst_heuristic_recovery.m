@@ -2,18 +2,18 @@
 % Author: Mark Gottscho <mgottscho@ucla.edu>
 
 %%%%%%%% CHANGE ME AS NEEDED %%%%%%%%%%%%
-input_directory = '/Users/Mark/Dropbox/SoftwareDefinedECC/data/rv64g/inst-recovery/offline-dynamic-static-side-info/fujiwara1982/144,128/filter-frequency-sort-pick-longest-pad';
+input_directory = '/Users/Mark/Dropbox/SoftwareDefinedECC/data/rv64g/inst-recovery/offline-dynamic-static-side-info/hsiao1970/39,32/filter-frequency-sort-pick-longest-pad/2016-8-26';
 output_directory = input_directory;
-inst_fields_file = '/Users/Mark/Dropbox/SoftwareDefinedECC/data/rv64g/rv64g_inst_field_bitmasks.mat';
+inst_fields_file = '/Users/Mark/Dropbox/SoftwareDefinedECC/data/rv64g/rv64g_inst_field_bitmasks_revised.mat';
 num_inst = 1000;
-%num_error_patterns = 741; % For (39,32) SECDED
+num_error_patterns = 741; % For (39,32) SECDED
 %num_error_patterns = 2556; % For (72,64) SECDED
 %num_error_patterns = 14190; % For (45,32) DECTED
 %num_error_patterns = 79079; % For (79,64) DECTED
 %num_error_patterns = 141750; % For (144,128) ChipKill
-num_error_patterns = 1000; % sampled
+%num_error_patterns = 1000; % sampled
 architecture = 'rv64g';
-code_type = 'fujiwara1982';
+code_type = 'hsiao1970';
 policy = 'Filter-Frequency-Sort-Pick-Longest-Pad';
 
 %% Read in names of benchmarks to process
@@ -48,11 +48,13 @@ load(inst_fields_file);
 
 for bench=1:num_benchmarks
     benchmark = benchmark_names{bench};
-    load([input_directory filesep architecture '-' benchmark '-inst-heuristic-recovery.mat'], 'results_valid_messages', 'success', 'could_have_crashed', 'success_with_crash_option', 'n', 'k');
+    load([input_directory filesep architecture '-' benchmark '-inst-heuristic-recovery.mat'], 'results_candidate_messages', 'results_valid_messages', 'success', 'could_have_crashed', 'success_with_crash_option', 'error_patterns', 'n', 'k');
     benchmark_successes(:,:,bench) = success;
     benchmark_could_have_crashed(:,:,bench) = could_have_crashed;
     benchmark_success_with_crash_option(:,:,bench) = success_with_crash_option;
-    inst_heuristic_recovery_plot;
+    if strcmp(code_type, 'hsiao1970') == 1 || strcmp(code_type, 'davydov1991') == 1 % SECDED only for these plots. Make sure number of error patterns is fully sampled
+        inst_heuristic_recovery_plot;
+    end
 end
 
 figure;
