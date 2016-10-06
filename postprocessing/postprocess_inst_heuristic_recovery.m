@@ -2,7 +2,7 @@
 % Author: Mark Gottscho <mgottscho@ucla.edu>
 
 %%%%%%%% CHANGE ME AS NEEDED %%%%%%%%%%%%
-input_directory = '/Users/Mark/Dropbox/SoftwareDefinedECC/data/rv64g/inst-recovery/offline-dynamic-static-side-info/hsiao1970/39,32/filter-frequency-sort-pick-longest-pad/2016-8-26';
+input_directory = '/Users/Mark/Dropbox/SoftwareDefinedECC/data/rv64g/inst-recovery/offline-dynamic-perfect/davydov1991/39,32/filter-frequency-sort-pick-longest-pad/2016-10-5';
 output_directory = input_directory;
 inst_fields_file = '/Users/Mark/Dropbox/SoftwareDefinedECC/data/rv64g/rv64g_inst_field_bitmasks_revised.mat';
 num_inst = 1000;
@@ -13,7 +13,7 @@ num_error_patterns = 741; % For (39,32) SECDED
 %num_error_patterns = 141750; % For (144,128) ChipKill
 %num_error_patterns = 1000; % sampled
 architecture = 'rv64g';
-code_type = 'hsiao1970';
+code_type = 'davydov1991';
 policy = 'Filter-Frequency-Sort-Pick-Longest-Pad';
 
 %% Read in names of benchmarks to process

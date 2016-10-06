@@ -10,6 +10,9 @@ end
 
 figure;
 pcolor(flipud(cc_2d));
+%mymap = flipud(colorcube(max(max(results_candidate_messages))+1));
+%mymap = mymap(2:end,:);
+%colormap(mymap);
 xlim([2 n+1]);
 set(gca,'XTick',[2 [5:5:n+1]]);
 set(gca,'XAxisLocation','top');
@@ -27,4 +30,4 @@ set(gca,'YTickLabel',yticklabel);
 set(gca,'TickLength',[0 0]);
 ylabel('Index of 1st bit in error', 'FontSize', 12, 'FontName', 'Arial');
 xlabel('Index of 2nd bit in error', 'FontSize', 12, 'FontName', 'Arial');
-title(['Number of Candidate Codewords for ' code_type ' (' num2str(n) ',' num2str(k) ')'], 'FontSize', 12, 'FontName', 'Arial');
+%title(['Number of Candidate Codewords for ' code_type ' (' num2str(n) ',' num2str(k) ')'], 'FontSize', 12, 'FontName', 'Arial');

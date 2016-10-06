@@ -2,7 +2,7 @@
 % Author: Mark Gottscho <mgottscho@ucla.edu>
 
 %%%%%%%% CHANGE ME AS NEEDED %%%%%%%%%%%%
-input_directory = '/Users/Mark/Dropbox/SoftwareDefinedECC/data/rv64g/program-statistics/2016-8-11 dynamic';
+input_directory = '/Users/Mark/Dropbox/SoftwareDefinedECC/data/rv64g/program-statistics/2016-9-1 dynamic';
 output_directory = [input_directory filesep 'postprocessed'];
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
