@@ -15,7 +15,7 @@ fi
 ########################## FEEL FREE TO CHANGE THESE OPTIONS ##################################
 ISA=rv64g    # Set the target ISA; benchmarks must be disassembled for this as well
 
-INPUT_TYPE=dynamic-perfect
+INPUT_TYPE=baseline
 if [[ "$INPUT_TYPE" == "static" ]]; then # Static evaluation
     SPEC_BENCHMARKS="400.perlbench 401.bzip2 403.gcc 410.bwaves 416.gamess 429.mcf 433.milc 434.zeusmp 435.gromacs 436.cactusADM 437.leslie3d 444.namd 445.gobmk 447.dealII 450.soplex 453.povray 454.calculix 456.hmmer 458.sjeng 459.GemsFDTD 462.libquantum 464.h264ref 465.tonto 470.lbm 471.omnetpp 473.astar 481.wrf 482.sphinx3 483.xalancbmk" # Static -- all are working
     INPUT_DIRECTORY=$MWG_DATA_PATH/swd_ecc_data/$ISA/disassembly/linux-gnu # For static
@@ -48,6 +48,11 @@ elif [[ "$INPUT_TYPE" == "dynamic-perfect" ]]; then # Dynamic
     INPUT_DIRECTORY=$MWG_DATA_PATH/swd_ecc_data/$ISA/spike # For dynamic
     MNEMONIC_HOTNESS_PREFIX=$MWG_DATA_PATH/swd_ecc_data/$ISA/program-statistics/dynamic/$ISA-mnemonic-hotness-dyn
     RD_HOTNESS_FILENAME=$MWG_DATA_PATH/swd_ecc_data/$ISA/program-statistics/dynamic/$ISA-rd-hotness-dyn-all.csv # Don't use rd, this is placeholder
+elif [[ "$INPUT_TYPE" == "baseline" ]]; then # Baseline, all are equally likely frequencies
+    SPEC_BENCHMARKS="400.perlbench 401.bzip2 403.gcc 410.bwaves 435.gromacs 436.cactusADM 444.namd 447.dealII 450.soplex 453.povray 454.calculix 456.hmmer 458.sjeng 459.GemsFDTD 462.libquantum 464.h264ref 465.tonto 470.lbm 471.omnetpp 473.astar" # Dynamic -- working
+    INPUT_DIRECTORY=$MWG_DATA_PATH/swd_ecc_data/$ISA/spike # For dynamic
+    MNEMONIC_HOTNESS_FILENAME=$MWG_DATA_PATH/swd_ecc_data/$ISA/program-statistics/dynamic/$ISA-mnemonic-hotness-dyn-baseline.csv
+    RD_HOTNESS_FILENAME=$MWG_DATA_PATH/swd_ecc_data/$ISA/program-statistics/dynamic/$ISA-rd-hotness-dyn-baseline.csv
 
 else
     echo "ERROR, bad INPUT_TYPE: $INPUT_TYPE"
@@ -128,6 +133,8 @@ else
             INPUT_FILE="$INPUT_DIRECTORY/spike_mem_data_trace_${SPEC_BENCHMARK}.txt.inst"
             MNEMONIC_HOTNESS_FILENAME="${MNEMONIC_HOTNESS_PREFIX}-${SPEC_BENCHMARK}.csv"
             # Don't use rd in any policy for this case. FIXME
+        elif [[ "$INPUT_TYPE" == "baseline" ]]; then 
+            INPUT_FILE="$INPUT_DIRECTORY/spike_mem_data_trace_${SPEC_BENCHMARK}.txt.inst"
         fi
 
         OUTPUT_FILE="$OUTPUT_DIRECTORY/${ISA}-${SPEC_BENCHMARK}-inst-heuristic-recovery.mat"
