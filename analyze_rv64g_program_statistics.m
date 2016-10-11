@@ -57,10 +57,26 @@ if fid == -1
     return;
 end
 
+rng('shuffle'); % Seed RNG based on current time
+line = fgetl(fid);
+if size(strfind(line, ',')) ~= 0 % Dynamic trace mode
+    trace_mode = 'dynamic';
+    display('Detected dynamic trace, parsing...');
+else
+    trace_mode = 'static';
+    display('Detected static trace, parsing...');
+end
+fclose(fid);
+
+fid = fopen(input_filename);
+if fid == -1
+    display(['FATAL! Could not open file ' input_filename '.']);
+    return;
+end
+
 for i=1:total_num_inst
     %% Read line from file
-    line = fgets(fid);
-    line = line(1:end-1); % Throw away newline character
+    line = fgetl(fid);
 
     %% Parse the line depending on its format to get the instruction of interest.
     % If it is hexadecimal instructions in big-endian format, one instruction per line of the form
@@ -83,7 +99,7 @@ for i=1:total_num_inst
     % NOTE: addresses and decimal values in these traces are in BIG-ENDIAN
     % format.
     remain = line;
-    if size(strfind(remain, ',')) ~= 0 % Dynamic trace mode
+    if strcmp(trace_mode, 'dynamic') == 1 % Dynamic trace mode
         for j=1:9 % 9 iterations because payload is 9th entry in a row of the above format
             [token,remain] = strtok(remain,',');
         end
@@ -94,7 +110,7 @@ for i=1:total_num_inst
     end
 
     %% Decode the instruction
-    message_bin = dec2bin(hex2dec(message_hex),k);
+    message_bin = my_hex2bin(message_hex);
     [legal, mnemonic, codec, rd, rs1, rs2, rs3, imm, arg] = parse_rv64g_decoder_output(message_hex);
     
     if legal == 0 % Illegal instruction
@@ -268,7 +284,7 @@ if fid == -1
 end
 for i=1:total_num_inst
     %% Read line from file
-    line = fgets(fid);
+    line = fgetl(fid);
 
     %% Parse the line depending on its format to get the instruction of interest.
     % If it is hexadecimal instructions in big-endian format, one instruction per line of the form
@@ -278,7 +294,6 @@ for i=1:total_num_inst
     % 0000abcd
     % ...
     % then we do this.
-    %message_hex = char(line);
 
     % If it is in CSV format, as output by our memdatatrace version of RISCV Spike simulator of the form
     % STEP,OPERATION,MEM_ACCESS_SEQ_NUM,VADDR,PADDR,USER_PERM,SUPER_PERM,ACCESS_SIZE,PAYLOAD,CACHE_BLOCKPOS,CACHE_BLOCK0,CACHE_BLOCK1,...,
@@ -292,11 +307,15 @@ for i=1:total_num_inst
     % NOTE: addresses and decimal values in these traces are in BIG-ENDIAN
     % format.
     remain = line;
-    for j=1:9 % 9 iterations because payload is 9th entry in a row of the above format
-        [token,remain] = strtok(remain,',');
+    if strcmp(trace_mode, 'dynamic') == 1 % Dynamic trace mode
+        for j=1:9 % 9 iterations because payload is 9th entry in a row of the above format
+            [token,remain] = strtok(remain,',');
+        end
+        [token, remain] = strtok(token,'x'); % Find the part of "PAYLOAD 0xDEADBEEF" after the "0x" part.
+        message_hex = reverse_byte_order(remain(2:end)); % Put the instruction in big-endian format.
+    else
+        message_hex = remain;
     end
-    [token, remain] = strtok(token,'x'); % Find the part of "PAYLOAD 0xDEADBEEF" after the "0x" part.
-    message_hex = reverse_byte_order(remain(2:end)); % Put the instruction in big-endian format.
 
     [legal, mnemonic, codec, rd, rs1, rs2, rs3, imm, arg] = parse_rv64g_decoder_output(message_hex);
     if legal == 1
