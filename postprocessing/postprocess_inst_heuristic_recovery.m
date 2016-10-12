@@ -2,7 +2,7 @@
 % Author: Mark Gottscho <mgottscho@ucla.edu>
 
 %%%%%%%% CHANGE ME AS NEEDED %%%%%%%%%%%%
-input_directory = '/Users/Mark/Dropbox/SoftwareDefinedECC/data/rv64g/inst-recovery/offline-dynamic-baseline/davydov1991/39,32/filter-frequency-sort-pick-longest-pad/2016-10-11';
+input_directory = '/Users/Mark/Dropbox/SoftwareDefinedECC/data/rv64g/inst-recovery/offline-dynamic-baseline/davydov1991/39,32/baseline-pick-random/2016-10-11';
 output_directory = input_directory;
 inst_fields_file = '/Users/Mark/Dropbox/SoftwareDefinedECC/data/rv64g/rv64g_inst_field_bitmasks_revised.mat';
 num_inst = 1000;
@@ -14,7 +14,7 @@ num_error_patterns = 741; % For (39,32) SECDED
 %num_error_patterns = 1000; % sampled
 architecture = 'rv64g';
 code_type = 'davydov1991';
-policy = 'Filter-Frequency-Sort-Pick-Longest-Pad';
+policy = 'Baseline-Pick-Random';
 
 %% Read in names of benchmarks to process
 dir_contents = dir(input_directory);
@@ -62,7 +62,7 @@ figure;
 hold on;
 mycolors = copper(num_benchmarks);
 for bench=1:num_benchmarks
-    plot(mean(benchmark_successes(:,:,bench),1), 'Color', mycolors(bench,:));
+   plot(mean(benchmark_successes(:,:,bench),1), 'Color', mycolors(bench,:));
 end
 legend(benchmark_names, 'FontSize', 10, 'FontName', 'Arial');
 xlabel('Error Pattern ID', 'FontSize', 12, 'FontName', 'Arial');

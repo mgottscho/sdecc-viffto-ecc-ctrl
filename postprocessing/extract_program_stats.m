@@ -21,6 +21,7 @@ joint_mnemonic_rd_count = overall_joint_mnemonic_rd_count(benchmark);
 %% Loop over results from all benchmarks. We do this to make sure we include keys that were not present in the benchmark under test.
 for i=1:size(benchmarks,1)
     bm = benchmarks{i};
+    bm
     
     % mnemonics
     mnemonics_per_benchmark = overall_instruction_mnemonic_count(bm);
@@ -31,7 +32,7 @@ for i=1:size(benchmarks,1)
             mnemonic_count(mnemonic) = 0;
         end
     end
-    
+        
     % codecs
     codecs_per_benchmark = overall_instruction_codec_count(bm);
     codecs_per_benchmark = codecs_per_benchmark.keys();
@@ -91,7 +92,7 @@ for i=1:size(benchmarks,1)
             imm_count(imm) = 0;
         end
     end
-    
+        
     % args
     args_per_benchmark = overall_instruction_arg_count(bm);
     args_per_benchmark = args_per_benchmark.keys();
@@ -130,97 +131,98 @@ tmp = mnemonic_count;
 mnemonic_count = cell(size(tmp.keys(),2),2);
 mnemonic_count(:,1) = tmp.keys()';
 mnemonic_count(:,2) = tmp.values()';
-
-% codec
-tmp = codec_count;
-codec_count = cell(size(tmp.keys(),2),2);
-codec_count(:,1) = tmp.keys()';
-codec_count(:,2) = tmp.values()';
-
-% rd
-tmp = rd_count;
-rd_count = cell(size(tmp.keys(),2),2);
-rd_count(:,1) = tmp.keys()';
-rd_count(:,2) = tmp.values()';
-
-% rs1
-tmp = rs1_count;
-rs1_count = cell(size(tmp.keys(),2),2);
-rs1_count(:,1) = tmp.keys()';
-rs1_count(:,2) = tmp.values()';
-
-% rs2
-tmp = rs2_count;
-rs2_count = cell(size(tmp.keys(),2),2);
-rs2_count(:,1) = tmp.keys()';
-rs2_count(:,2) = tmp.values()';
-
-% rs3
-tmp = rs3_count;
-rs3_count = cell(size(tmp.keys(),2),2);
-rs3_count(:,1) = tmp.keys()';
-rs3_count(:,2) = tmp.values()';
-
-% imm
-tmp = imm_count;
-imm_count = cell(size(tmp.keys(),2),2);
-imm_count(:,1) = tmp.keys()';
-imm_count(:,2) = tmp.values()';
-
-% arg
-tmp = arg_count;
-arg_count = cell(size(tmp.keys(),2),2);
-arg_count(:,1) = tmp.keys()';
-arg_count(:,2) = tmp.values()';
-
-% overall_reg
-tmp = overall_reg_count;
-overall_reg_count = cell(size(tmp.keys(),2),2);
-overall_reg_count(:,1) = tmp.keys()';
-overall_reg_count(:,2) = tmp.values()';
-
-%% joint_mnemonic_rd
-rowmap = joint_mnemonic_rd_count;
-mnemonics = rowmap.keys()';
-tmp = rowmap.values();
-rds = tmp{1}.keys();
-joint_mnemonic_rd_count_matrix = cell(size(mnemonics,1)+1,size(rds,2)+1);
-joint_mnemonic_rd_count_matrix(2:end,1) = mnemonics;
-joint_mnemonic_rd_count_matrix(1,2:end) = rds;
-for i=2:size(joint_mnemonic_rd_count_matrix,1)
-    colmap = rowmap(mnemonics{i-1});
-    for j=2:size(joint_mnemonic_rd_count_matrix,2)
-        if colmap == 0
-            joint_mnemonic_rd_count_matrix{i,j} = 0; 
-        else
-            entry = colmap(rds{j-1});
-            joint_mnemonic_rd_count_matrix{i,j} = entry;
-        end
-    end
-end
-
-% plot normalized
-%total = sum(sum(cell2mat(joint_mnemonic_rd_count_matrix(2:end,2:end))));
-figure;
-surf(cell2mat(joint_mnemonic_rd_count_matrix(2:end,2:end)));
-xlabel('Destination Register');
-set(gca,'XTick',[1:2:size(rds,2)]','XTickLabel',rds(1,1:2:end)');
-ylabel('Mnemonic');
-set(gca,'YTick',[1:5:size(mnemonics,1)]','YTickLabel',mnemonics(1:5:end)');
-zlabel('Count');
-title(['Joint Relative Frequency of Mnemonic-Destination Register Pairs: ' architecture ', ' benchmark]);
-savefig(gcf, [output_directory filesep architecture '-' benchmark '-joint-mnemonic-rd-freq.fig']);
-close(gcf);
+% 
+% % codec
+% tmp = codec_count;
+% codec_count = cell(size(tmp.keys(),2),2);
+% codec_count(:,1) = tmp.keys()';
+% codec_count(:,2) = tmp.values()';
+% 
+% % rd
+% tmp = rd_count;
+% rd_count = cell(size(tmp.keys(),2),2);
+% rd_count(:,1) = tmp.keys()';
+% rd_count(:,2) = tmp.values()';
+% 
+% % rs1
+% tmp = rs1_count;
+% rs1_count = cell(size(tmp.keys(),2),2);
+% rs1_count(:,1) = tmp.keys()';
+% rs1_count(:,2) = tmp.values()';
+% 
+% % rs2
+% tmp = rs2_count;
+% rs2_count = cell(size(tmp.keys(),2),2);
+% rs2_count(:,1) = tmp.keys()';
+% rs2_count(:,2) = tmp.values()';
+% 
+% % rs3
+% tmp = rs3_count;
+% rs3_count = cell(size(tmp.keys(),2),2);
+% rs3_count(:,1) = tmp.keys()';
+% rs3_count(:,2) = tmp.values()';
+% 
+% % imm
+% tmp = imm_count;
+% imm_count = cell(size(tmp.keys(),2),2);
+% imm_count(:,1) = tmp.keys()';
+% imm_count(:,2) = tmp.values()';
+% 
+% % arg
+% tmp = arg_count;
+% arg_count = cell(size(tmp.keys(),2),2);
+% arg_count(:,1) = tmp.keys()';
+% arg_count(:,2) = tmp.values()';
+% 
+% % overall_reg
+% tmp = overall_reg_count;
+% overall_reg_count = cell(size(tmp.keys(),2),2);
+% overall_reg_count(:,1) = tmp.keys()';
+% overall_reg_count(:,2) = tmp.values()';
+% 
+% %% joint_mnemonic_rd
+% rowmap = joint_mnemonic_rd_count;
+% mnemonics = rowmap.keys()';
+% tmp = rowmap.values();
+% rds = tmp{1}.keys();
+% joint_mnemonic_rd_count_matrix = cell(size(mnemonics,1)+1,size(rds,2)+1);
+% joint_mnemonic_rd_count_matrix(2:end,1) = mnemonics;
+% joint_mnemonic_rd_count_matrix(1,2:end) = rds;
+% for i=2:size(joint_mnemonic_rd_count_matrix,1)
+%     colmap = rowmap(mnemonics{i-1});
+%     for j=2:size(joint_mnemonic_rd_count_matrix,2)
+%         if colmap == 0
+%             joint_mnemonic_rd_count_matrix{i,j} = 0; 
+%         else
+%             entry = colmap(rds{j-1});
+%             joint_mnemonic_rd_count_matrix{i,j} = entry;
+%         end
+%     end
+% end
+% 
+% % plot normalized
+% %total = sum(sum(cell2mat(joint_mnemonic_rd_count_matrix(2:end,2:end))));
+% figure;
+% surf(cell2mat(joint_mnemonic_rd_count_matrix(2:end,2:end)));
+% xlabel('Destination Register');
+% set(gca,'XTick',[1:2:size(rds,2)]','XTickLabel',rds(1,1:2:end)');
+% ylabel('Mnemonic');
+% set(gca,'YTick',[1:5:size(mnemonics,1)]','YTickLabel',mnemonics(1:5:end)');
+% zlabel('Count');
+% title(['Joint Relative Frequency of Mnemonic-Destination Register Pairs: ' architecture ', ' benchmark]);
+% savefig(gcf, [output_directory filesep architecture '-' benchmark '-joint-mnemonic-rd-freq.fig']);
+% close(gcf);
 
 %% Save progress
 save([output_directory filesep architecture '-' benchmark '-program-statistics-tabular.mat'],...
-    'mnemonic_count',...
-    'codec_count',...
-    'rd_count',...
-    'rs1_count',...
-    'rs2_count',...
-    'rs3_count',...
-    'imm_count',...
-    'arg_count',...
-    'overall_reg_count',...
-    'joint_mnemonic_rd_count_matrix');
+    'mnemonic_count');
+% ,...
+%     'codec_count',...
+%     'rd_count',...
+%     'rs1_count',...
+%     'rs2_count',...
+%     'rs3_count',...
+%     'imm_count',...
+%     'arg_count',...
+%     'overall_reg_count',...
+%    'joint_mnemonic_rd_count_matrix');
