@@ -1,4 +1,4 @@
-function [legal, mnemonic, codec, rd, rs1, rs2, rs3, imm, arg] = parse_rv64g_decoder_output(message_hex)
+function [disassembly, legal, mnemonic, codec, rd, rs1, rs2, rs3, imm, arg] = parse_rv64g_decoder_output(message_hex)
 % Parse the output of the RV64G instruction decoder into a set of semantic
 % strings.
 %
@@ -6,6 +6,7 @@ function [legal, mnemonic, codec, rd, rs1, rs2, rs3, imm, arg] = parse_rv64g_dec
 %   message_hex -- String of hexadecimal characters
 %
 % Returns:
+%   disassembly -- Cell array of strings showing parsed disassembly
 %   legal -- Boolean: True if the message was a legal RV64G instruction.
 %   mnemonic -- String: The semantic interpretation of an instruction's
 %       operation, if legal, otherwise 'NA'

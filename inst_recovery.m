@@ -156,8 +156,8 @@ end
 
 %% Warn if input message is actually illegal
 original_message_hex = my_bin2hex(original_message);
-[status, decoderOutput] = MyRv64gDecoder(original_message_hex);
-if verbose == 1 && status ~= 0
+[tmp, legal] = parse_rv64g_decoder_output(original_message_hex);
+if verbose == 1 && legal ~= 0
     display('WARNING: Input message is not a legal instruction!');
 end
 
@@ -214,15 +214,16 @@ elseif strcmp(policy, 'filter-rank-pick-random') == 1 || strcmp(policy, 'filter-
         candidate_message_packed_inst_disassemblies = cell((k/32),1);
         for packed_inst=1:num_packed_inst
             inst_hex = message_hex((packed_inst-1)*8+1:(packed_inst-1)*8+8);
-            [status, decoderOutput] = MyRv64gDecoder(inst_hex);
+            %[status, decoderOutput] = MyRv64gDecoder(inst_hex);
+            [candidate_message_packed_inst_disassembly, legal] = parse_rv64g_decoder_output(inst_hex);
 
             % Read disassembly of instruction from string spit back by the instruction decoder
-            candidate_message_packed_inst_disassembly = textscan(decoderOutput, '%s', 'Delimiter', ':');
-            candidate_message_packed_inst_disassembly = candidate_message_packed_inst_disassembly{1};
-            candidate_message_packed_inst_disassembly = reshape(candidate_message_packed_inst_disassembly, 2, size(candidate_message_packed_inst_disassembly,1)/2)';
+            %candidate_message_packed_inst_disassembly = textscan(decoderOutput, '%s', 'Delimiter', ':');
+            %candidate_message_packed_inst_disassembly = candidate_message_packed_inst_disassembly{1};
+            %candidate_message_packed_inst_disassembly = reshape(candidate_message_packed_inst_disassembly, 2, size(candidate_message_packed_inst_disassembly,1)/2)';
             candidate_message_packed_inst_disassemblies{packed_inst} = candidate_message_packed_inst_disassembly;
 
-            if status ~= 0
+            if legal ~= 1
                 all_packed_inst_valid = 0;
             end
         end
@@ -233,9 +234,12 @@ elseif strcmp(policy, 'filter-rank-pick-random') == 1 || strcmp(policy, 'filter-
 
            % Store disassembly in the list
            for packed_inst=1:num_packed_inst
-               candidate_message_packed_inst_disassembly = candidate_message_packed_inst_disassemblies{packed_inst};
-               mnemonic = candidate_message_packed_inst_disassembly{4,2};
-               rd = candidate_message_packed_inst_disassembly{6,2};
+               inst_hex = message_hex((packed_inst-1)*8+1:(packed_inst-1)*8+8);
+               [candidate_message_packed_inst_disassembly, legal, mnemonic, codec, rd, rs1, rs2, rs3, imm, arg] = parse_rv64g_decoder_output(inst_hex);
+
+               %candidate_message_packed_inst_disassembly = candidate_message_packed_inst_disassemblies{packed_inst};
+               %mnemonic = candidate_message_packed_inst_disassembly{4,2};
+               %rd = candidate_message_packed_inst_disassembly{6,2};
 
                valid_messages_mnemonic{num_valid_messages,packed_inst} = mnemonic;
                valid_messages_rd{num_valid_messages,packed_inst} = rd;
@@ -334,7 +338,7 @@ elseif strcmp(policy, 'filter-rank-pick-random') == 1 || strcmp(policy, 'filter-
            rel_freq_rd = nthroot(rel_freq_rd,num_packed_inst);
 
            % Find highest frequency rd
-           if rel_freq_rd > highest_rel_freq_rd
+           if rel_freq_rd >= highest_rel_freq_rd
               highest_rel_freq_rd = rel_freq_rd;
               target_rd = rd;
            end

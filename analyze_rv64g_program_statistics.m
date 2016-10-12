@@ -111,7 +111,7 @@ for i=1:total_num_inst
 
     %% Decode the instruction
     message_bin = my_hex2bin(message_hex);
-    [legal, mnemonic, codec, rd, rs1, rs2, rs3, imm, arg] = parse_rv64g_decoder_output(message_hex);
+    [disassembly, legal, mnemonic, codec, rd, rs1, rs2, rs3, imm, arg] = parse_rv64g_decoder_output(message_hex);
     
     if legal == 0 % Illegal instruction
        display(['Found illegal instruction: ' message_hex '. Ignoring.']);
@@ -317,7 +317,7 @@ for i=1:total_num_inst
         message_hex = remain;
     end
 
-    [legal, mnemonic, codec, rd, rs1, rs2, rs3, imm, arg] = parse_rv64g_decoder_output(message_hex);
+    [disassembly, legal, mnemonic, codec, rd, rs1, rs2, rs3, imm, arg] = parse_rv64g_decoder_output(message_hex);
     if legal == 1
         inner_map = joint_mnemonic_rd_count(mnemonic);
         if inner_map.isKey(rd) % Account for NA cases

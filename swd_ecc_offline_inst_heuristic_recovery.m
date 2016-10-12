@@ -201,7 +201,7 @@ for i=1:num_messages
        %% Disassemble each instruction that we sampled.
        inst_hex = packed_message((packed_inst-1)*8+1:(packed_inst-1)*8+8);
 
-       [legal, mnemonic, codec, rd, rs1, rs2, rs3, imm, arg] = parse_rv64g_decoder_output(inst_hex);
+       [disassembly, legal, mnemonic, codec, rd, rs1, rs2, rs3, imm, arg] = parse_rv64g_decoder_output(inst_hex);
        map = containers.Map();
        map('legal') = legal; 
        map('mnemonic') = mnemonic; 
