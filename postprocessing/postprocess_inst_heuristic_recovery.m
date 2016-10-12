@@ -2,7 +2,7 @@
 % Author: Mark Gottscho <mgottscho@ucla.edu>
 
 %%%%%%%% CHANGE ME AS NEEDED %%%%%%%%%%%%
-input_directory = '/Users/Mark/Dropbox/SoftwareDefinedECC/data/rv64g/inst-recovery/offline-dynamic-perfect/davydov1991/39,32/filter-frequency-sort-pick-longest-pad/2016-10-5';
+input_directory = '/Users/Mark/Dropbox/SoftwareDefinedECC/data/rv64g/inst-recovery/offline-dynamic-baseline/davydov1991/39,32/filter-frequency-sort-pick-longest-pad/2016-10-11';
 output_directory = input_directory;
 inst_fields_file = '/Users/Mark/Dropbox/SoftwareDefinedECC/data/rv64g/rv64g_inst_field_bitmasks_revised.mat';
 num_inst = 1000;
@@ -38,6 +38,7 @@ for i=1:size(dir_contents,1)
     benchmark_names{j,1} = benchmark_name;
     j = j+1;
 end
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 num_benchmarks = size(benchmark_names,1);
@@ -78,6 +79,8 @@ ylabel('Benchmark', 'FontSize', 12, 'FontName', 'Arial');
 set(gca,'YTick', 1:size(benchmark_names,1));
 set(gca,'YTickLabel', benchmark_names, 'FontSize', 12, 'FontName', 'Arial');
 xlim([0 1]);
+%ylim([0 22]);
+%set(gca,'YDir','reverse');
 xlabel('Average Rate of Heuristic Recovery', 'FontSize', 12, 'FontName', 'Arial');
 title(['Overall Average Rate of Heuristic Recovery for ' code_type ' (' num2str(n) ',' num2str(k) ') ' architecture ': ' policy ' Policy'],  'FontSize', 12, 'FontName', 'Arial');
 print(gcf, '-depsc2', [output_directory filesep 'overall_recovery_avg.eps']);

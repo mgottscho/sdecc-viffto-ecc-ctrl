@@ -2,7 +2,7 @@
 % Author: Mark Gottscho <mgottscho@ucla.edu>
 
 %%%%%%%% CHANGE ME AS NEEDED %%%%%%%%%%%%
-input_directory = '/Users/Mark/Dropbox/SoftwareDefinedECC/data/rv64g/program-statistics/2016-9-1 dynamic';
+input_directory = '/Users/Mark/Dropbox/SoftwareDefinedECC/data/rv64g/program-statistics/2016-10-11 static';
 output_directory = [input_directory filesep 'postprocessed'];
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -13,6 +13,11 @@ benchmark_filenames = cell(1,1);
 benchmarks = cell(1,1);
 for i=1:size(dir_contents,1)
     if dir_contents(i).isdir || strcmp(dir_contents(i).name, '.') == 1 || strcmp(dir_contents(i).name, '..') == 1 || strcmp(dir_contents(i).name, '.DS_Store') == 1
+        continue;
+    end
+    
+    % Skip all files except those containing '.mat'
+    if dir_contents(i).isdir || size(strfind(dir_contents(i).name,'.mat'),1) <= 0
         continue;
     end
     
