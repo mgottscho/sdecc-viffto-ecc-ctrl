@@ -12,7 +12,24 @@ function [original_codeword, received_string, num_candidate_messages, num_valid_
 %   original_message -- Binary String of length k bits/chars. Note that k might not be 32 which is the instruction size! We will treat original_message as being a set of packed 32-bit instructions.
 %   error_pattern --    Binary String of length n bits/chars
 %   code_type --        String: '[hsiao1970|davydov1991|bose1960|fujiwara1982]'
-%   policy --           String: '[baseline-pick-random | filter-rank-pick-random | filter-rank-sort-pick-first | filter-rank-rank-sort-pick-first | filter-frequency-pick-random | filter-frequency-sort-pick-first | filter-frequency-sort-pick-longest-pad]'
+%   policy --           String: '[  baseline-pick-random 
+%                                 | filter-pick-random
+%                                 | filter-rank-pick-random
+%                                 | filter-rank-sort-pick-first
+%                                 | filter-rank-sort-pick-longest-pad -- TODO (low priority)
+%                                 | filter-frequency-pick-random
+%                                 | filter-frequency-sort-pick-first
+%                                 | filter-frequency-sort-pick-longest-pad
+%                                 | filter-rank-rank-pick-random -- TODO (low priority)
+%                                 | filter-rank-rank-sort-pick-first
+%                                 | filter-rank-rank-sort-pick-longest-pad -- TODO (low priority)
+%                                 | filter-frequency-frequency-pick-random -- TODO (low priority)
+%                                 | filter-frequency-frequency-sort-pick-first -- TODO (low priority)
+%                                 | filter-frequency-frequency-sort-pick-longest-pad -- TODO (low priority)
+%                                 | filter-joint-frequency-pick-random -- TODO (low priority)
+%                                 | filter-joint-frequency-sort-pick-first -- TODO (low priority)
+%                                 | filter-joint-frequency-sort-pick-longest-pad -- TODO (HIGH priority)
+%                                ]'
 %   mnemonic_hotness_filename -- String: full path to CSV file containing the relative frequency of each instruction to use for ranking
 %   rd_hotness_filename -- String: full path to CSV file containing the relative frequency of each destination register address to use for ranking
 %   verbose -- '1' if you want console printouts of progress to stdout.
@@ -194,7 +211,13 @@ if strcmp(policy, 'baseline-pick-random') == 1
     target_inst_indices = (1:size(candidate_correct_messages,1))';
     target_inst_index = target_inst_indices(randi(size(target_inst_indices,1),1));
 
-elseif strcmp(policy, 'filter-rank-pick-random') == 1 || strcmp(policy, 'filter-rank-sort-pick-first') == 1 || strcmp(policy, 'filter-rank-rank-sort-pick-first') == 1 || strcmp(policy, 'filter-frequency-pick-random') == 1 || strcmp(policy, 'filter-frequency-sort-pick-first') == 1 || strcmp(policy, 'filter-frequency-sort-pick-longest-pad') == 1
+elseif strcmp(policy, 'filter-rank-pick-random') == 1 ...
+    || strcmp(policy, 'filter-pick-random') == 1 ...
+    || strcmp(policy, 'filter-rank-sort-pick-first') == 1 ...
+    || strcmp(policy, 'filter-rank-rank-sort-pick-first') == 1 ...
+    || strcmp(policy, 'filter-frequency-pick-random') == 1 ...
+    || strcmp(policy, 'filter-frequency-sort-pick-first') == 1 ...
+    || strcmp(policy, 'filter-frequency-sort-pick-longest-pad') == 1
     % RECOVERY STEP 1: FILTER. Check each of the candidate codewords to see which are (sets of) valid instructions
     if verbose == 1
         display('RECOVERY STEP 1: FILTER. Filtering candidate codewords for (sets of) instruction legality...');
@@ -260,7 +283,14 @@ elseif strcmp(policy, 'filter-rank-pick-random') == 1 || strcmp(policy, 'filter-
         end
     end
 
-    if strcmp(policy, 'filter-rank-pick-random') == 1 || strcmp(policy, 'filter-rank-sort-pick-first') == 1 || strcmp(policy, 'filter-rank-rank-sort-pick-first') == 1
+    if strcmp(policy, 'filter-pick-random') == 1
+        target_inst_indices = (1:size(candidate_valid_messages,1))';
+        target_inst_index = target_inst_indices(randi(size(target_inst_indices,1),1));
+    end
+
+    if strcmp(policy, 'filter-rank-pick-random') == 1 ...
+        || strcmp(policy, 'filter-rank-sort-pick-first') == 1 ...
+        || strcmp(policy, 'filter-rank-rank-sort-pick-first') == 1
         % RECOVERY STEP 2: RANK. Sort valid messages in order of their relative frequency as determined by the input file that we read. In the case of packed instructions per message, then we use the geometric mean of each packed inst's frequencies.
         if verbose == 1
             display('RECOVERY STEP 2: RANK. Sort valid messages in order of their geometric mean of relative frequency of packed mnemonics as determined by input tables...');
@@ -374,7 +404,9 @@ elseif strcmp(policy, 'filter-rank-pick-random') == 1 || strcmp(policy, 'filter-
         end
     end
 
-    if strcmp(policy, 'filter-frequency-pick-random') == 1 || strcmp(policy, 'filter-frequency-sort-pick-first') == 1 || strcmp(policy, 'filter-frequency-sort-pick-longest-pad') == 1
+    if strcmp(policy, 'filter-frequency-pick-random') == 1 ...
+        || strcmp(policy, 'filter-frequency-sort-pick-first') == 1 ...
+        || strcmp(policy, 'filter-frequency-sort-pick-longest-pad') == 1
         if verbose == 1
             display('RECOVERY STEP 2: FREQUENCY. Estimate the probability of each valid message being individually correct.');
         end
@@ -445,7 +477,9 @@ elseif strcmp(policy, 'filter-rank-pick-random') == 1 || strcmp(policy, 'filter-
             end
         end
     else % Have several recovery targets
-        if strcmp(policy, 'filter-rank-pick-random') == 1 || strcmp(policy, 'filter-frequency-pick-random') == 1
+        if strcmp(policy, 'filter-pick-random') == 1 ...
+            || strcmp(policy, 'filter-rank-pick-random') == 1 ...
+            || strcmp(policy, 'filter-frequency-pick-random') == 1
             if verbose == 1
                 display('LAST STEP: CHOOSE TARGET. Pick randomly. We recommend crashing if there are more than 2 equivalent targets here.');
             end
@@ -456,7 +490,8 @@ elseif strcmp(policy, 'filter-rank-pick-random') == 1 || strcmp(policy, 'filter-
             target_inst_index = target_inst_indices(randi(size(target_inst_indices,1),1));
         end
 
-        if strcmp(policy, 'filter-rank-sort-pick-first') == 1 || strcmp(policy, 'filter-rank-rank-sort-pick-first') == 1
+        if strcmp(policy, 'filter-rank-sort-pick-first') == 1 ...
+            || strcmp(policy, 'filter-rank-rank-sort-pick-first') == 1
             if verbose == 1
                 display('LAST STEP: CHOOSE TARGET. Pick the first in the sorted list of equivalent targets. We recommend crashing if there are more than 2 equivalent targets here.');
             end

@@ -24,7 +24,24 @@ function swd_ecc_offline_inst_heuristic_recovery(architecture, benchmark, n, k, 
 %   output_filename --  String
 %   n_threads --        String: '[1|2|3|...]'
 %   code_type --        String: '[hsiao|davydov1991|bose1960|fujiwara1982]'
-%   policy --           String: '[baseline-pick-random | filter-rank-pick-random | filter-rank-sort-pick-first | filter-rank-rank-sort-pick-first | filter-frequency-pick-random | filter-frequency-sort-pick-first | filter-frequency-sort-pick-longest-pad]'
+%   policy --           String: '[  baseline-pick-random 
+%                                 | filter-pick-random
+%                                 | filter-rank-pick-random
+%                                 | filter-rank-sort-pick-first
+%                                 | filter-rank-sort-pick-longest-pad -- TODO (low priority)
+%                                 | filter-frequency-pick-random
+%                                 | filter-frequency-sort-pick-first
+%                                 | filter-frequency-sort-pick-longest-pad
+%                                 | filter-rank-rank-pick-random -- TODO (low priority)
+%                                 | filter-rank-rank-sort-pick-first
+%                                 | filter-rank-rank-sort-pick-longest-pad -- TODO (low priority)
+%                                 | filter-frequency-frequency-pick-random -- TODO (low priority)
+%                                 | filter-frequency-frequency-sort-pick-first -- TODO (low priority)
+%                                 | filter-frequency-frequency-sort-pick-longest-pad -- TODO (low priority)
+%                                 | filter-joint-frequency-pick-random -- TODO (low priority)
+%                                 | filter-joint-frequency-sort-pick-first -- TODO (low priority)
+%                                 | filter-joint-frequency-sort-pick-longest-pad -- TODO (HIGH priority)
+%                                ]'
 %   mnemonic_hotness_filename -- String: full path to CSV file containing the relative frequency of each instruction to use for ranking
 %   rd_hotness_filename -- String: full path to CSV file containing the relative frequency of each destination register address to use for ranking
 %   verbose_recovery -- String: '[0|1]'
