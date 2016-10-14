@@ -2,7 +2,7 @@
 % Author: Mark Gottscho <mgottscho@ucla.edu>
 
 %%%%%%%% CHANGE ME AS NEEDED %%%%%%%%%%%%
-input_directory = '/Users/Mark/Dropbox/SoftwareDefinedECC/data/rv64g/program-statistics/2016-10-11 static';
+input_directory = 'D:\Dropbox\SoftwareDefinedECC\data\rv64g\program-statistics\2016-10-13 dynamic';
 output_directory = [input_directory filesep 'postprocessed'];
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -42,6 +42,7 @@ overall_instruction_imm_count = containers.Map(); % Init
 overall_instruction_arg_count = containers.Map(); % Init
 overall_instruction_overall_reg_count = containers.Map(); % Init
 overall_joint_mnemonic_rd_count = containers.Map(); % Init
+overall_joint_mnemonic_reg_count = containers.Map(); % Init
 
 
 for i=1:size(benchmarks,1)
@@ -59,6 +60,7 @@ for i=1:size(benchmarks,1)
     overall_instruction_arg_count(benchmark) = instruction_arg_count;
     overall_instruction_overall_reg_count(benchmark) = instruction_overall_reg_count;
     overall_joint_mnemonic_rd_count(benchmark) = joint_mnemonic_rd_count;
+    overall_joint_mnemonic_reg_count(benchmark) = joint_mnemonic_reg_count;
 
     display(['Finished ' benchmark]);
 end
@@ -76,6 +78,7 @@ save([output_directory filesep 'overall_program_results.mat'],...
     'overall_instruction_arg_count',...
     'overall_instruction_overall_reg_count',...
     'overall_joint_mnemonic_rd_count',...
+    'overall_joint_mnemonic_reg_count',...
     'benchmarks',...
     'architecture');
 
