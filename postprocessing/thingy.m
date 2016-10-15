@@ -3,16 +3,31 @@ joint_mnemonic_reg_freq_matrix(:,1) = joint_mnemonic_reg_count_matrix(:,1);
 joint_mnemonic_reg_freq_matrix(1,:) = joint_mnemonic_reg_count_matrix(1,:);
 for r=2:125
     for c=2:66
-        joint_mnemonic_reg_freq_matrix{r,c} = 1;
+         joint_mnemonic_reg_freq_matrix{r,c} = 0; % Arith mean
+        %joint_mnemonic_reg_freq_matrix{r,c} = 1; % Geo mean
+        %joint_mnemonic_reg_freq_matrix{r,c} = 0; % Harmonic mean
     end
 end
 for i=1:size(benchmarks,1)
     benchmark = benchmarks{i};
-    load([input_directory filesep benchmark_filenames{i}]);
+    load([output_directory filesep 'rv64g-' benchmark '-program-statistics-tabular.mat']);
     total_per_bm = sum(sum(cell2mat(joint_mnemonic_reg_count_matrix(2:end,2:end))));
     for r=2:125
         for c=2:66
-            joint_mnemonic_reg_freq_matrix{r,c} = joint_mnemonic_reg_freq_matrix{r,c} * (joint_mnemonic_reg_count_matrix{r,c} / total_per_bm);
+            %% Geo mean
+            %joint_mnemonic_reg_freq_matrix{r,c} = nthroot((joint_mnemonic_reg_freq_matrix{r,c}^(i-1)) * (joint_mnemonic_reg_count_matrix{r,c} / total_per_bm),i);
+            %% Arith mean
+             if i == 1
+                 joint_mnemonic_reg_freq_matrix{r,c} = joint_mnemonic_reg_count_matrix{r,c} / total_per_bm;
+             else
+                 joint_mnemonic_reg_freq_matrix{r,c} = (joint_mnemonic_reg_freq_matrix{r,c} * (i-1) + (joint_mnemonic_reg_count_matrix{r,c} / total_per_bm)) / i;
+             end
+            %% Harmonic mean (ignore 0 entries) -- probably wrong
+            %if i == 1
+            %    joint_mnemonic_reg_freq_matrix{r,c} = 1/(1/joint_mnemonic_reg_count_matrix{r,c});
+            %elseif joint_mnemonic_reg_count_matrix{r,c} > 0
+            %    joint_mnemonic_reg_freq_matrix{r,c} = 1/(1/(joint_mnemonic_reg_freq_matrix{r,c}/(i-1)) + (1/(joint_mnemonic_reg_count_matrix{r,c}/total_per_bm)))*i;
+            %end
         end
     end
 end
