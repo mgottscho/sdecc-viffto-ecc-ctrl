@@ -28,7 +28,7 @@ function [original_codeword, received_string, num_candidate_messages, num_valid_
 %                                 | filter-frequency-frequency-sort-pick-longest-pad -- TODO (low priority)
 %                                 | filter-joint-frequency-pick-random -- TODO (low priority)
 %                                 | filter-joint-frequency-sort-pick-first -- TODO (low priority)
-%                                 | filter-joint-frequency-sort-pick-longest-pad -- TODO (HIGH priority)
+%                                 | filter-joint-frequency-sort-pick-longest-pad
 %                                ]'
 %   mnemonic_hotness_filename -- String: full path to CSV file containing the relative frequency of each instruction to use for ranking
 %   rd_hotness_filename -- String: full path to CSV file containing the relative frequency of each destination register address to use for ranking
@@ -102,10 +102,21 @@ fid = fopen(mnemonic_hotness_filename);
 instruction_mnemonic_hotness_file = textscan(fid, '%s', 'Delimiter', ',');
 fclose(fid);
 instruction_mnemonic_hotness_file = instruction_mnemonic_hotness_file{1};
-instruction_mnemonic_hotness_file = reshape(instruction_mnemonic_hotness_file, 2, size(instruction_mnemonic_hotness_file,1)/2)';
+%instruction_mnemonic_hotness_file = reshape(instruction_mnemonic_hotness_file, 2, size(instruction_mnemonic_hotness_file,1)/2)';
+instruction_mnemonic_hotness_file = reshape(instruction_mnemonic_hotness_file, 67, size(instruction_mnemonic_hotness_file,1)/67)'; % FIXME: 67 is hardcoded number of registers (64) + 'NA' + 'TOTAL' + mnemonic column
 instruction_mnemonic_hotness = containers.Map(); % Init
-for r=2:size(instruction_mnemonic_hotness_file,1)
-    instruction_mnemonic_hotness(instruction_mnemonic_hotness_file{r,1}) = str2double(instruction_mnemonic_hotness_file{r,2});
+if strcmp(policy, 'filter-joint-frequency-sort-pick-longest-pad') == 1
+    for r=2:size(instruction_mnemonic_hotness_file,1)
+        reg_in_mnemonic_hotness = containers.Map();
+        for c=3:size(instruction_mnemonic_hotness_file,2)
+            reg_in_mnemonic_hotness(instruction_mnemonic_hotness_file{1,c}) = str2double(instruction_mnemonic_hotness_file{r,c});
+        end
+        instruction_mnemonic_hotness(instruction_mnemonic_hotness_file{r,1}) = reg_in_mnemonic_hotness;
+    end
+else
+    for r=2:size(instruction_mnemonic_hotness_file,1)
+        instruction_mnemonic_hotness(instruction_mnemonic_hotness_file{r,1}) = str2double(instruction_mnemonic_hotness_file{r,2});
+    end
 end
 
 % rd frequency
@@ -217,7 +228,8 @@ elseif strcmp(policy, 'filter-rank-pick-random') == 1 ...
     || strcmp(policy, 'filter-rank-rank-sort-pick-first') == 1 ...
     || strcmp(policy, 'filter-frequency-pick-random') == 1 ...
     || strcmp(policy, 'filter-frequency-sort-pick-first') == 1 ...
-    || strcmp(policy, 'filter-frequency-sort-pick-longest-pad') == 1
+    || strcmp(policy, 'filter-frequency-sort-pick-longest-pad') == 1 ...
+    || strcmp(policy, 'filter-joint-frequency-sort-pick-longest-pad') == 1
     % RECOVERY STEP 1: FILTER. Check each of the candidate codewords to see which are (sets of) valid instructions
     if verbose == 1
         display('RECOVERY STEP 1: FILTER. Filtering candidate codewords for (sets of) instruction legality...');
@@ -227,6 +239,9 @@ elseif strcmp(policy, 'filter-rank-pick-random') == 1 ...
     candidate_valid_messages = repmat('0',1,k); % Init
     valid_messages_mnemonic = cell(1,num_packed_inst);
     valid_messages_rd = cell(1,num_packed_inst);
+    valid_messages_rs1 = cell(1,num_packed_inst);
+    valid_messages_rs2 = cell(1,num_packed_inst);
+    valid_messages_rs3 = cell(1,num_packed_inst);
     for x=1:num_candidate_messages
         % Convert message to hex string representation
         message = candidate_correct_messages(x,:);
@@ -237,13 +252,9 @@ elseif strcmp(policy, 'filter-rank-pick-random') == 1 ...
         candidate_message_packed_inst_disassemblies = cell((k/32),1);
         for packed_inst=1:num_packed_inst
             inst_hex = message_hex((packed_inst-1)*8+1:(packed_inst-1)*8+8);
-            %[status, decoderOutput] = MyRv64gDecoder(inst_hex);
             [candidate_message_packed_inst_disassembly, legal] = parse_rv64g_decoder_output(inst_hex);
 
             % Read disassembly of instruction from string spit back by the instruction decoder
-            %candidate_message_packed_inst_disassembly = textscan(decoderOutput, '%s', 'Delimiter', ':');
-            %candidate_message_packed_inst_disassembly = candidate_message_packed_inst_disassembly{1};
-            %candidate_message_packed_inst_disassembly = reshape(candidate_message_packed_inst_disassembly, 2, size(candidate_message_packed_inst_disassembly,1)/2)';
             candidate_message_packed_inst_disassemblies{packed_inst} = candidate_message_packed_inst_disassembly;
 
             if legal ~= 1
@@ -260,12 +271,12 @@ elseif strcmp(policy, 'filter-rank-pick-random') == 1 ...
                inst_hex = message_hex((packed_inst-1)*8+1:(packed_inst-1)*8+8);
                [candidate_message_packed_inst_disassembly, legal, mnemonic, codec, rd, rs1, rs2, rs3, imm, arg] = parse_rv64g_decoder_output(inst_hex);
 
-               %candidate_message_packed_inst_disassembly = candidate_message_packed_inst_disassemblies{packed_inst};
-               %mnemonic = candidate_message_packed_inst_disassembly{4,2};
-               %rd = candidate_message_packed_inst_disassembly{6,2};
 
                valid_messages_mnemonic{num_valid_messages,packed_inst} = mnemonic;
                valid_messages_rd{num_valid_messages,packed_inst} = rd;
+               valid_messages_rs1{num_valid_messages,packed_inst} = rs1;
+               valid_messages_rs2{num_valid_messages,packed_inst} = rs2;
+               valid_messages_rs3{num_valid_messages,packed_inst} = rs3;
            end
 
            if verbose == 1
@@ -286,8 +297,9 @@ elseif strcmp(policy, 'filter-rank-pick-random') == 1 ...
     if strcmp(policy, 'filter-pick-random') == 1
         target_inst_indices = (1:size(candidate_valid_messages,1))';
         target_inst_index = target_inst_indices(randi(size(target_inst_indices,1),1));
-    end
 
+    end
+    
     if strcmp(policy, 'filter-rank-pick-random') == 1 ...
         || strcmp(policy, 'filter-rank-sort-pick-first') == 1 ...
         || strcmp(policy, 'filter-rank-rank-sort-pick-first') == 1
@@ -411,7 +423,6 @@ elseif strcmp(policy, 'filter-rank-pick-random') == 1 ...
             display('RECOVERY STEP 2: FREQUENCY. Estimate the probability of each valid message being individually correct.');
         end
 
-        %num_matching_message_mnemonics = containers.Map();
         rel_freq_mnemonics = zeros(num_valid_messages,num_packed_inst);
         for x=1:num_valid_messages
             mnemonic = valid_messages_mnemonic(x,:);
@@ -422,19 +433,12 @@ elseif strcmp(policy, 'filter-rank-pick-random') == 1 ...
                     rel_freq_mnemonics(x,packed_inst) = 0;
                 end
             end
-            
-            % Get number of valid messages with this mnemonic
-            %if num_matching_message_mnemonics.isKey(mnemonic)
-            %    num_matching_message_mnemonics(mnemonic) = num_matching_message_mnemonics(mnemonic) + 1;
-            %else
-            %    num_matching_message_mnemonics(mnemonic) = 1;
-            %end
         end
 
         % Compute probability of each message according to their groups
         valid_messages_probabilities = zeros(num_valid_messages,1);
         for x=1:num_valid_messages
-            valid_messages_probabilities(x,1) = prod(rel_freq_mnemonics(x,:)) / sum(prod(rel_freq_mnemonics'));%* (1 / num_matching_message_mnemonics(valid_messages_mnemonic{x,1}));
+            valid_messages_probabilities(x,1) = prod(rel_freq_mnemonics(x,:)) / sum(prod(rel_freq_mnemonics'));
         end
 
         if verbose == 1
@@ -442,6 +446,64 @@ elseif strcmp(policy, 'filter-rank-pick-random') == 1 ...
             valid_messages_probabilities
         end
 
+        % Determine list of equivalent targets - find all candidates with the highest probability
+        highest_prob_mnemonic = 0;
+        for x=1:num_valid_messages
+            if valid_messages_probabilities(x,1) >= highest_prob_mnemonic
+               highest_prob_mnemonic = valid_messages_probabilities(x,1);
+            end
+        end
+
+        target_inst_indices = zeros(1,1);
+        y = 1;
+        for x=1:num_valid_messages
+            if valid_messages_probabilities(x,1) >= highest_prob_mnemonic-1e-12 && valid_messages_probabilities(x,1) <= highest_prob_mnemonic+1e-12
+                target_inst_indices(y,1) = x;
+                y = y+1;
+            end
+        end
+    end
+
+    if strcmp(policy, 'filter-joint-frequency-sort-pick-longest-pad') == 1
+        if verbose == 1
+            display('RECOVERY STEP 2: FREQUENCY. Estimate the probability of each valid message being individually correct using the joint relative frequencies of the mnemonic and register set.');
+        end
+
+        rel_joint_freq = zeros(num_valid_messages,num_packed_inst);
+        for x=1:num_valid_messages
+            mnemonic = valid_messages_mnemonic(x,:);
+            rd = valid_messages_rd(x,:);
+            rs1 = valid_messages_rs1(x,:);
+            rs2 = valid_messages_rs2(x,:);
+            rs3 = valid_messages_rs3(x,:);
+            for packed_inst=1:num_packed_inst
+                if instruction_mnemonic_hotness.isKey(mnemonic{packed_inst})
+                    reg_in_mnemonic_hotness = instruction_mnemonic_hotness(mnemonic{packed_inst});
+                    if ~reg_in_mnemonic_hotness.isKey(rd{packed_inst}) ...
+                    || ~reg_in_mnemonic_hotness.isKey(rs1{packed_inst}) ...
+                    || ~reg_in_mnemonic_hotness.isKey(rs2{packed_inst}) ...
+                    || ~reg_in_mnemonic_hotness.isKey(rs3{packed_inst})
+                        rel_joint_freq(x,packed_inst) = 0;
+                    else
+                        rel_joint_freq(x,packed_inst) = reg_in_mnemonic_hotness(rd{packed_inst}) * reg_in_mnemonic_hotness(rs1{packed_inst}) * reg_in_mnemonic_hotness(rs2{packed_inst}) * reg_in_mnemonic_hotness(rs3{packed_inst});
+                    end
+                else % This could happen legally
+                    rel_joint_freq(x,packed_inst) = 0;
+                end
+            end
+        end
+        
+        % Compute probability of each message according to their groups
+        valid_messages_probabilities = zeros(num_valid_messages,1);
+        for x=1:num_valid_messages
+            valid_messages_probabilities(x,1) = prod(rel_joint_freq(x,:)) / sum(prod(rel_joint_freq'));
+        end
+        
+        if verbose == 1
+            rel_joint_freq
+            valid_messages_probabilities
+        end
+        
         % Determine list of equivalent targets - find all candidates with the highest probability
         highest_prob_mnemonic = 0;
         for x=1:num_valid_messages
@@ -514,7 +576,8 @@ elseif strcmp(policy, 'filter-rank-pick-random') == 1 ...
             end
         end
 
-        if strcmp(policy, 'filter-frequency-sort-pick-longest-pad') == 1
+        if strcmp(policy, 'filter-frequency-sort-pick-longest-pad') == 1 ...
+           || strcmp(policy, 'filter-joint-frequency-sort-pick-longest-pad') == 1
             if verbose == 1
                 display('LAST STEP: CHOOSE TARGET. Pick the target that has the longest average (over packed instructions) run of leading 0s or 1s (longest pad). In a tie, pick first in sorted order. We recommend crashing if Pr{guessing correctly} < 0.5');
             end

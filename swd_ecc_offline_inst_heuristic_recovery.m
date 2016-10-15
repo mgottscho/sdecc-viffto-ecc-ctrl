@@ -40,7 +40,7 @@ function swd_ecc_offline_inst_heuristic_recovery(architecture, benchmark, n, k, 
 %                                 | filter-frequency-frequency-sort-pick-longest-pad -- TODO (low priority)
 %                                 | filter-joint-frequency-pick-random -- TODO (low priority)
 %                                 | filter-joint-frequency-sort-pick-first -- TODO (low priority)
-%                                 | filter-joint-frequency-sort-pick-longest-pad -- TODO (HIGH priority)
+%                                 | filter-joint-frequency-sort-pick-longest-pad
 %                                ]'
 %   mnemonic_hotness_filename -- String: full path to CSV file containing the relative frequency of each instruction to use for ranking
 %   rd_hotness_filename -- String: full path to CSV file containing the relative frequency of each destination register address to use for ranking
