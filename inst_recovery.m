@@ -437,9 +437,16 @@ elseif strcmp(policy, 'filter-rank-pick-random') == 1 ...
 
         % Compute probability of each message according to their groups
         valid_messages_probabilities = zeros(num_valid_messages,1);
-        for x=1:num_valid_messages
-            valid_messages_probabilities(x,1) = prod(rel_freq_mnemonics(x,:)) / sum(prod(rel_freq_mnemonics'));
+        if num_packed_inst == 1
+            for x=1:num_valid_messages
+                valid_messages_probabilities(x,1) = rel_freq_mnemonics(x) / sum(rel_freq_mnemonics);
+            end
+        else
+            for x=1:num_valid_messages
+                valid_messages_probabilities(x,1) = prod(rel_freq_mnemonics(x,:)) / sum(prod(rel_freq_mnemonics'));
+            end
         end
+
 
         if verbose == 1
             rel_freq_mnemonics
@@ -495,8 +502,14 @@ elseif strcmp(policy, 'filter-rank-pick-random') == 1 ...
         
         % Compute probability of each message according to their groups
         valid_messages_probabilities = zeros(num_valid_messages,1);
-        for x=1:num_valid_messages
-            valid_messages_probabilities(x,1) = prod(rel_joint_freq(x,:)) / sum(prod(rel_joint_freq'));
+        if num_packed_inst == 1
+            for x=1:num_valid_messages
+                valid_messages_probabilities(x,1) = rel_joint_freq(x) / sum(rel_joint_freq);
+            end
+        else
+            for x=1:num_valid_messages
+                valid_messages_probabilities(x,1) = prod(rel_joint_freq(x,:)) / sum(prod(rel_joint_freq'));
+            end
         end
         
         if verbose == 1
