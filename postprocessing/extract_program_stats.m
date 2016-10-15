@@ -22,7 +22,7 @@ joint_mnemonic_reg_count = overall_joint_mnemonic_reg_count(benchmark);
 
 %% Loop over results from all benchmarks. We do this to make sure we include keys that were not present in the benchmark under test.
 for i=1:size(benchmarks,1)
-    bm = benchmarks{i}
+    bm = benchmarks{i};
     
     % mnemonics
     mnemonics_per_benchmark = overall_instruction_mnemonic_count(bm);
@@ -115,39 +115,15 @@ for i=1:size(benchmarks,1)
     end
     
     % joint_mnemonic_rds
-    joint_mnemonic_rds_per_benchmark = overall_joint_mnemonic_rd_count(bm);
-    joint_mnemonic_rds_per_benchmark = joint_mnemonic_rds_per_benchmark.keys();
-    for j=1:size(joint_mnemonic_rds_per_benchmark,2)
-        joint_mnemonic_rd = joint_mnemonic_rds_per_benchmark{j};
-        if ~joint_mnemonic_rd_count.isKey(joint_mnemonic_rd)
-            joint_mnemonic_rd_count(joint_mnemonic_rd) = 0;
-        end
-    end
-    
-    % joint_mnemonic_regs
-    joint_mnemonic_regs_per_benchmark = overall_joint_mnemonic_reg_count(bm);
-    joint_mnemonic_regs_per_benchmark = joint_mnemonic_regs_per_benchmark.keys();
-    for j=1:size(joint_mnemonic_regs_per_benchmark,2)
-        joint_mnemonic_reg = joint_mnemonic_regs_per_benchmark{j};
-        if ~joint_mnemonic_reg_count.isKey(joint_mnemonic_reg)
-            joint_mnemonic_reg_count(joint_mnemonic_reg) = containers.Map();
-        end
-        tmp = joint_mnemonic_reg_count(joint_mnemonic_reg);
-        regs_per_benchmark = overall_joint_mnemonic_reg_count(bm);
-        regs_per_benchmark = regs_per_benchmark.values();
-        for k=1:size(regs_per_benchmark,2)
-            tmp2 = regs_per_benchmark{k};
-            registers_tmp = tmp2.keys();
-            for m=1:size(registers_tmp,2)
-                if ~tmp.isKey(registers_tmp{m})
-                    tmp(registers_tmp{m}) = 0;
-                end
-            end
-        end
-        joint_mnemonic_reg_count(joint_mnemonic_reg) = tmp;
-    end
+%     joint_mnemonic_rds_per_benchmark = overall_joint_mnemonic_rd_count(bm);
+%     joint_mnemonic_rds_per_benchmark = joint_mnemonic_rds_per_benchmark.keys();
+%     for j=1:size(joint_mnemonic_rds_per_benchmark,2)
+%         joint_mnemonic_rd = joint_mnemonic_rds_per_benchmark{j};
+%         if ~joint_mnemonic_rd_count.isKey(joint_mnemonic_rd)
+%             joint_mnemonic_rd_count(joint_mnemonic_rd) = 0;
+%         end
+%     end  
 end
-
 
 %% Export all these maps for the benchmark to arrays suitable for Excel or plotting here in Matlab
 
@@ -205,7 +181,43 @@ overall_reg_count = cell(size(tmp.keys(),2),2);
 overall_reg_count(:,1) = tmp.keys()';
 overall_reg_count(:,2) = tmp.values()';
 
-%% joint_mnemonic_rd
+% joint mnemonic-rd prep
+for i=1:size(mnemonic_count,1)
+    if ~joint_mnemonic_rd_count.isKey(mnemonic_count{i,1})
+        joint_mnemonic_rd_count(mnemonic_count{i,1}) = containers.Map();
+    end
+end
+
+for i=1:size(mnemonic_count,1)
+    colmap = joint_mnemonic_rd_count(mnemonic_count{i,1});
+    for j=1:size(rd_count,1)
+        if ~colmap.isKey(rd_count{j,1})
+            colmap(rd_count{j,1}) = 0;
+        end
+    end
+    joint_mnemonic_rd_count(mnemonic_count{i,1}) = colmap;
+end
+
+% joint mnemonic-reg prep
+for i=1:size(mnemonic_count,1)
+    if ~joint_mnemonic_reg_count.isKey(mnemonic_count{i,1})
+        joint_mnemonic_reg_count(mnemonic_count{i,1}) = containers.Map();
+    end
+end
+
+for i=1:size(mnemonic_count,1)
+    colmap = joint_mnemonic_reg_count(mnemonic_count{i,1});
+    for j=1:size(overall_reg_count,1)
+        if ~colmap.isKey(overall_reg_count{j,1})
+            colmap(overall_reg_count{j,1}) = 0;
+        end
+    end
+    joint_mnemonic_reg_count(mnemonic_count{i,1}) = colmap;
+end
+        
+
+
+%% joint_mnemonic_rd tabular
 rowmap = joint_mnemonic_rd_count;
 mnemonics = rowmap.keys()';
 tmp = rowmap.values();
@@ -225,7 +237,7 @@ for i=2:size(joint_mnemonic_rd_count_matrix,1)
     end
 end
 
-%% joint_mnemonic_regs
+%% joint_mnemonic_regs tabular
 rowmap = joint_mnemonic_reg_count;
 mnemonics = rowmap.keys()';
 tmp = rowmap.values();
