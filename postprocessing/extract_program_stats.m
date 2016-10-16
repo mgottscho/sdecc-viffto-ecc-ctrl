@@ -257,6 +257,17 @@ for i=2:size(joint_mnemonic_reg_count_matrix,1)
     end
 end
 
+% Change table to relative frequencies
+joint_mnemonic_reg_freq_matrix = cell(size(joint_mnemonic_reg_count_matrix));
+joint_mnemonic_reg_freq_matrix(:,1) = joint_mnemonic_reg_count_matrix(:,1);
+joint_mnemonic_reg_freq_matrix(1,:) = joint_mnemonic_reg_count_matrix(1,:);
+total_count = sum(sum(cell2mat(joint_mnemonic_reg_count_matrix(2:end,2:end))));
+for r=2:size(joint_mnemonic_reg_freq_matrix,1)
+    for c=2:size(joint_mnemonic_reg_freq_matrix,2)
+        joint_mnemonic_reg_freq_matrix{r,c} = joint_mnemonic_reg_count_matrix{r,c} / total_count;
+    end
+end
+
 % plot normalized
 total = sum(sum(cell2mat(joint_mnemonic_rd_count_matrix(2:end,2:end))));
 figure;
@@ -293,6 +304,7 @@ save([output_directory filesep architecture '-' benchmark '-program-statistics-t
     'arg_count',...
     'overall_reg_count',...
     'joint_mnemonic_rd_count_matrix',...
-    'joint_mnemonic_reg_count_matrix');
+    'joint_mnemonic_reg_count_matrix',...
+    'joint_mnemonic_reg_freq_matrix');
 
 display(['Done tabularizing ' benchmark]);
