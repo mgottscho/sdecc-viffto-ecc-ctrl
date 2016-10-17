@@ -12,38 +12,41 @@ function [out] = my_bitxor(bin1,bin2)
 % Email: mgottscho@ucla.edu
 
 %% Input dimension check
-if size(bin1) ~= size(bin2)
-    out = 'X';
-    return;
-end
+
+% commented out for speed
+%if size(bin1) ~= size(bin2)
+%    out = 'X';
+%    return;
+%end
 
 k = size(bin1,2);
 
 %% Check input validity to ensure each character is either '0' or '1' and no other value
-if (sum(bin1== '1')+sum(bin1== '0')) ~= size(bin1,2)
-    out = repmat('X',1,k);
-    return;
-end
 
-if (sum(bin2== '1')+sum(bin2== '0')) ~= size(bin2,2)
-    out = repmat('X',1,k);
-    return;
-end
+% commented out for speed
+%if (sum(bin1== '1')+sum(bin1== '0')) ~= size(bin1,2)
+%    out = repmat('X',1,k);
+%    return;
+%end
+%
+%if (sum(bin2== '1')+sum(bin2== '0')) ~= size(bin2,2)
+%    out = repmat('X',1,k);
+%    return;
+%end
 
 %% Truth table using characters as inputs
 out = bin1;
 for i=1:size(bin1,2)
-    if bin1(i) == '0' && bin2(i) == '0'
-        out(i) = '0';
-    elseif bin1(i) == '1' && bin2(i) == '0'
-        out(i) = '1';
-    elseif bin1(i) == '0' && bin2(i) == '1'
-        out(i) = '1';
-    elseif bin1(i) == '1' && bin2(i) == '1'
-        out(i) = '0';
-    else % Error
-        out = repmat('X',1,k);
-        return;
+    bit2 = bin2(i);
+    if bit2 == '1' % Since out already is bin1, we only need to check bit2.
+        if out(i) == '0'
+            out(i) = '1';
+        else
+            out(i) = '0';
+        end
+    %else % Error -- commented out for speed.
+    %    out = repmat('X',1,k);
+    %    return;
     end
 end
 

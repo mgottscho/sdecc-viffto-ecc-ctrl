@@ -62,9 +62,9 @@
   setenv LM_LICENSE_FILE /u/local/licenses/license.matlab
   set path = ( $path /sbin )
 #
-  echo mcc inst_recovery.m -m -R -singleCompThread -I common -I ecc -I rv64g
+  echo mcc inst_recovery.m -m -R -singleCompThread -g -I common -I ecc -I rv64g
 requeue:
-  /u/local/apps/matlab/8.6/bin/mcc inst_recovery.m -m -R -singleCompThread -I common -I ecc -I rv64g
+  /u/local/apps/matlab/8.6/bin/mcc inst_recovery.m -m -R -singleCompThread -g -I common -I ecc -I rv64g
   set rc = $status
 #
 # if( `grep -c 'Maximum number of users' /u/project/puneet/mgottsch/eccgrp-ecc-ctrl/inst_recovery.joblog.$JOB_ID` > 0 || `grep -c 'License checkout failed' /u/project/puneet/mgottsch/eccgrp-ecc-ctrl/inst_recovery.joblog.$JOB_ID` > 0 ) then

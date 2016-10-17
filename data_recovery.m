@@ -31,9 +31,9 @@ function [original_codeword, received_string, num_candidate_messages, recovered_
 % Author: Mark Gottscho
 % Email: mgottscho@ucla.edu
 
-n = str2num(n);
-k = str2num(k);
-verbose = str2num(verbose);
+n = str2double(n);
+k = str2double(k);
+verbose = str2double(verbose);
 
 if verbose == 1
     architecture
@@ -48,7 +48,7 @@ if verbose == 1
     verbose
 end
 
-rng('shuffle'); % Seed RNG based on current time
+%rng('shuffle'); % Seed RNG based on current time -- FIXME: commented out for speed. If we RNG in swd_ecc_offline_data_heuristic_recovery then we shouldn't need to do it again...
 
 %% Init some return values
 original_codeword = repmat('X',1,n);
@@ -199,7 +199,9 @@ elseif strcmp(policy, 'hamming-pick-random') == 1
         score = 0;
         for blockpos=1:words_per_block % For each message in the cacheline (need to skip the message under test)
             if blockpos ~= message_blockpos
-               score = score + my_hamming_dist(candidate_correct_messages(x,:),parsed_cacheline_bin{blockpos});
+               %score = score + my_hamming_dist(candidate_correct_messages(x,:),parsed_cacheline_bin{blockpos});
+               % my_hamming_dist() was very slow. here's a better version...
+               score = score + sum(candidate_correct_messages(x,:) ~= parsed_cacheline_bin{blockpos});
             end
         end
         score = score/(words_per_block-1);
@@ -278,21 +280,23 @@ end
 
 %% Now we have scores, let's rank and choose the best candidate message. LOWER SCORES ARE BETTER.
 % TODO: how to decide when to crash? need to quantify level of variation or distinguishability between candidates..
-min_score = Inf;
-for x=1:size(candidate_correct_message_scores,1) % For each candidate message score
-   if candidate_correct_message_scores(x) < min_score
-       min_score = candidate_correct_message_scores(x);
-   end
-end
+min_score = min(candidate_correct_message_scores);
+%min_score = Inf;
+%for x=1:size(candidate_correct_message_scores,1) % For each candidate message score
+%   if candidate_correct_message_scores(x) < min_score
+%       min_score = candidate_correct_message_scores(x);
+%   end
+%end
 
-min_score_indices = zeros(1,1);
-y = 1;
-for x=1:size(candidate_correct_message_scores,1) % For each candidate message score
-   if candidate_correct_message_scores(x) >= min_score-1e-4 && candidate_correct_message_scores(x) <= min_score+1e-4 % Tolerance of 0.0001 as we are often comparing floating point scores
-       min_score_indices(y,1) = x;
-       y = y+1;
-   end
-end
+min_score_indices = find(candidate_correct_message_scores <= min_score+1e-12);
+%min_score_indices = zeros(1,1);
+%y = 1;
+%for x=1:size(candidate_correct_message_scores,1) % For each candidate message score
+%   if candidate_correct_message_scores(x) >= min_score-1e-4 && candidate_correct_message_scores(x) <= min_score+1e-4 % Tolerance of 0.0001 as we are often comparing floating point scores
+%       min_score_indices(y,1) = x;
+%       y = y+1;
+%   end
+%end
 
 if verbose == 1
     min_score

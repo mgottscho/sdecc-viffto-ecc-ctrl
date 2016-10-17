@@ -15,7 +15,7 @@ fi
 ########################## FEEL FREE TO CHANGE THESE OPTIONS ##################################
 ISA=rv64g    # Set the target ISA; benchmarks must be disassembled for this as well
 
-INPUT_TYPE=dynamic
+INPUT_TYPE=dynamic-perfect
 if [[ "$INPUT_TYPE" == "static" ]]; then # Static evaluation
     SPEC_BENCHMARKS="400.perlbench 401.bzip2 403.gcc 410.bwaves 416.gamess 429.mcf 433.milc 434.zeusmp 435.gromacs 436.cactusADM 437.leslie3d 444.namd 445.gobmk 447.dealII 450.soplex 453.povray 454.calculix 456.hmmer 458.sjeng 459.GemsFDTD 462.libquantum 464.h264ref 465.tonto 470.lbm 471.omnetpp 473.astar 481.wrf 482.sphinx3 483.xalancbmk" # Static -- all are working
     INPUT_DIRECTORY=$MWG_DATA_PATH/swd_ecc_data/$ISA/disassembly/linux-gnu # For static
@@ -67,7 +67,8 @@ fi
 N=39
 K=32
 NUM_MESSAGES=1000
-NUM_THREADS=$(cat /proc/cpuinfo | grep ^processor | wc -l ) 
+#NUM_THREADS=$(cat /proc/cpuinfo | grep ^processor | wc -l ) 
+NUM_THREADS=1
 CODE_TYPE=hsiao1970
 #NUM_SAMPLED_ERROR_PATTERNS=1000
 NUM_SAMPLED_ERROR_PATTERNS=741 # Max for (39,32) SECDED
@@ -76,7 +77,7 @@ NUM_SAMPLED_ERROR_PATTERNS=741 # Max for (39,32) SECDED
 #NUM_SAMPLED_ERROR_PATTERNS=79079 # Max for (79,64) DECTED
 #NUM_SAMPLED_ERROR_PATTERNS=141750 # Max for (144,128) ChipKill
 POLICY=filter-joint-frequency-sort-pick-longest-pad
-VERBOSE_RECOVERY=0
+VERBOSE_RECOVERY=1
 
 OUTPUT_DIRECTORY=$MWG_DATA_PATH/swd_ecc_data/$ISA/inst-recovery/offline-$INPUT_TYPE/$CODE_TYPE/$N,$K/$POLICY
 

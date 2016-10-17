@@ -10,13 +10,15 @@ function [longestRun] = count_longest_run(bin)
 % Author: Mark Gottscho
 % Email: mgottscho@ucla.edu
 
-longestRun = size(bin,2); % Init to max
+%longestRun = size(bin,2); % Init to max
+% commented out for speed
 
 %% Check input validity to ensure each character is either '0' or '1' and no other value
-if (sum(bin == '1')+sum(bin == '0')) ~= size(bin,2)
-    longestRun = -1;
-    return;
-end
+% commented out for speed
+%if (sum(bin == '1')+sum(bin == '0')) ~= size(bin,2)
+%    longestRun = -1;
+%    return;
+%end
 
 
 %% Find longest run of '0's

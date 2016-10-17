@@ -36,17 +36,21 @@ function [decoded_message, num_error_bits] = secded_decoder(received_codeword, H
    k = n-r;
 
    %% Input validation
-   input_valid = 0;
-   if ((n == 39 && k == 32) || (n == 72 && k == 64) || (n == 8 && k == 4)) && (strcmp(code_type,'hsiao1970') == 1 || strcmp(code_type,'davydov1991') == 1) && (sum(size(received_codeword) == [1,n]) == 2)
-           input_valid = 1;
-   end
 
-   if input_valid == 0
-       return;
-   end
+   % commented out for speed
+   %input_valid = 0;
+   %if ((n == 39 && k == 32) || (n == 72 && k == 64) || (n == 8 && k == 4)) && (strcmp(code_type,'hsiao1970') == 1 || strcmp(code_type,'davydov1991') == 1) && (sum(size(received_codeword) == [1,n]) == 2)
+   %        input_valid = 1;
+   %end
+
+   %if input_valid == 0
+   %    return;
+   %end
    
    %% Set default message
-   decoded_message = repmat('X',1,k);
+   % commented out for speed
+   %decoded_message = repmat('X',1,k);
+   decoded_message = 'X';
          
    %% Compute syndrome of received codeword
    s = mod(H*received_codeword',2);

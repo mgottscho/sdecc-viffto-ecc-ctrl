@@ -31,19 +31,20 @@ k = n-r;
 
 %% Set default return values
 num_error_bits = Inf;
-decoded_message = repmat('X',1,k);
+%decoded_message = repmat('X',1,k);
+decoded_message = 'X';
 
-%% Input validation
-input_valid = 0;
-if ((n == 79 && k == 64) || (n == 45 && k == 32))
-   if (sum(size(received_codeword) == [1,n]) == 2)
-       input_valid = 1;
-   end
-end
-
-if input_valid == 0
-   return;
-end
+%% Input validation -- commented out for speed
+%input_valid = 0;
+%if ((n == 79 && k == 64) || (n == 45 && k == 32))
+%   if (sum(size(received_codeword) == [1,n]) == 2)
+%       input_valid = 1;
+%   end
+%end
+%
+%if input_valid == 0
+%   return;
+%end
 
 %% Compute syndrome of received codeword
 s = mod(H*received_codeword',2);

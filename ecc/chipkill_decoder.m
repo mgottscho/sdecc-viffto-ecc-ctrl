@@ -19,17 +19,17 @@ function [ decoded_message, num_error_bits, num_error_symbols ] = chipkill_decod
     k = n-r;
 
 
-    %% Input validation
-    input_valid = 0;
-    if (n == 144 && k == 128)
-       if (sum(size(received_codeword) == [1,n]) == 2)
-           input_valid = 1;
-       end
-    end
+    %% Input validation -- commented out for speed
+    %input_valid = 0;
+    %if (n == 144 && k == 128)
+    %   if (sum(size(received_codeword) == [1,n]) == 2)
+    %       input_valid = 1;
+    %   end
+    %end
 
-    if input_valid == 0
-       return;
-    end
+    %if input_valid == 0
+    %   return;
+    %end
    
    %% Set default message
    decoded_message = repmat('X',1,k);
@@ -63,6 +63,22 @@ function [ decoded_message, num_error_bits, num_error_symbols ] = chipkill_decod
            return;
        end
    end
+   
+   % Next we check for the quadruple bit flips
+   for symbol = 1:n/symbol_size
+       if nnz(mod(H(:,1+symbol_size*(symbol-1))+H(:,2+symbol_size*(symbol-1))+H(:,3+symbol_size*(symbol-1))+H(:,4+symbol_size*(symbol-1))+s,2))==0 % Only one way this happens for symbol size of 4 bits: all four columns within a symbol of H sum to syndrome.
+           num_error_symbols = 1;
+           num_error_bits = 4;
+           error(1+symbol_size*(symbol-1))='1';
+           error(2+symbol_size*(symbol-1))='1';
+           error(3+symbol_size*(symbol-1))='1';
+           error(4+symbol_size*(symbol-1))='1';
+           decoded_codeword = my_bitxor(received_codeword,error);
+           decoded_message = decoded_codeword(1:k);
+           return
+       end
+   end
+
 
    %Next we check all possible double bit flips within a symbol
    for symbol = 1:n/symbol_size
@@ -98,21 +114,6 @@ function [ decoded_message, num_error_bits, num_error_symbols ] = chipkill_decod
                    end
                end
            end
-       end
-   end
-
-   %Lastly we check for the quadruple bit flips
-   for symbol = 1:n/symbol_size
-       if nnz(mod(H(:,1+symbol_size*(symbol-1))+H(:,2+symbol_size*(symbol-1))+H(:,3+symbol_size*(symbol-1))+H(:,4+symbol_size*(symbol-1))+s,2))==0 % Only one way this happens for symbol size of 4 bits: all four columns within a symbol of H sum to syndrome.
-           num_error_symbols = 1;
-           num_error_bits = 4;
-           error(1+symbol_size*(symbol-1))='1';
-           error(2+symbol_size*(symbol-1))='1';
-           error(3+symbol_size*(symbol-1))='1';
-           error(4+symbol_size*(symbol-1))='1';
-           decoded_codeword = my_bitxor(received_codeword,error);
-           decoded_message = decoded_codeword(1:k);
-           return
        end
    end
 

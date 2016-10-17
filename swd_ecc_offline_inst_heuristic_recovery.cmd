@@ -62,9 +62,9 @@
   setenv LM_LICENSE_FILE /u/local/licenses/license.matlab
   set path = ( $path /sbin )
 #
-  echo mcc swd_ecc_offline_inst_heuristic_recovery.m -m -I common -I ecc -I rv64g
+  echo mcc swd_ecc_offline_inst_heuristic_recovery.m -m -g -I common -I ecc -I rv64g
 requeue:
-  /u/local/apps/matlab/8.6/bin/mcc swd_ecc_offline_inst_heuristic_recovery.m -m -I common -I ecc -I rv64g
+  /u/local/apps/matlab/8.6/bin/mcc swd_ecc_offline_inst_heuristic_recovery.m -m -g -I common -I ecc -I rv64g
   set rc = $status
 #
 # if( `grep -c 'Maximum number of users' /u/project/puneet/mgottsch/eccgrp-ecc-ctrl/swd_ecc_offline_inst_heuristic_recovery.joblog.$JOB_ID` > 0 || `grep -c 'License checkout failed' /u/project/puneet/mgottsch/eccgrp-ecc-ctrl/swd_ecc_offline_inst_heuristic_recovery.joblog.$JOB_ID` > 0 ) then

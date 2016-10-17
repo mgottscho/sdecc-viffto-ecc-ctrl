@@ -12,17 +12,20 @@ function [dec] = my_bin2dec(bin)
 % Author: Mark Gottscho
 % Email: mgottscho@ucla.edu
 
-dec = NaN; 
+%dec = NaN; 
+% commented out for speed
 
 %% Check input validity to ensure each character is either '0' or '1' and no other value
-if (sum(bin == '1')+sum(bin == '0')) ~= size(bin,2)
-    return;
-end
+% commented out for speed
+%if (sum(bin == '1')+sum(bin == '0')) ~= size(bin,2)
+%    return;
+%end
 
 %% Check input validity to ensure k <= 64
-if size(bin,2) > 64
-    return;
-end
+% commented out for speed
+%if size(bin,2) > 64
+%    return;
+%end
 
 v = uint64(length(bin)-1:-1:0);
 base = uint64(2).^v;

@@ -54,18 +54,18 @@ function swd_ecc_offline_inst_heuristic_recovery(architecture, benchmark, n, k, 
 
 architecture
 benchmark
-n = str2num(n)
-k = str2num(k)
-num_messages = str2num(num_messages)
-num_sampled_error_patterns = str2num(num_sampled_error_patterns)
+n = str2double(n)
+k = str2double(k)
+num_messages = str2double(num_messages)
+num_sampled_error_patterns = str2double(num_sampled_error_patterns)
 input_filename
 output_filename
-n_threads = str2num(n_threads)
+n_threads = str2double(n_threads)
 code_type
 policy
 mnemonic_hotness_filename
 rd_hotness_filename
-verbose_recovery = str2num(verbose_recovery)
+verbose_recovery = str2double(verbose_recovery)
 
 rng('shuffle'); % Seed RNG based on current time
 
@@ -84,7 +84,7 @@ if wc_return_code ~= 0
     display(['FATAL! Could not get line count (# inst) from ' input_filename '.']);
     return;
 end
-total_num_inst = str2num(strtok(wc_output));
+total_num_inst = str2double(strtok(wc_output));
 num_packed_inst = k/32; % We assume 32-bits per instruction. For k as a multiple of 32, we have packed instructions per message. FIXME: this is only true for RV64G
 display(['Number of randomly-sampled messages to test SWD-ECC: ' num2str(num_messages) '. Total instructions in trace: ' num2str(total_num_inst) '. Since k = ' num2str(k) ', we have ' num2str(num_packed_inst) ' packed instructions per ECC message.']);
 
@@ -169,14 +169,14 @@ while i <= total_num_inst && j <= num_messages
             for x=1:9 % 9 iterations because payload is 9th entry in a row of the above format
                 [token,remain] = strtok(remain,',');
             end
-            [payload_token, payload_remain] = strtok(token,'x'); % Find the part of "PAYLOAD 0xDEADBEEF" after the "0x" part.
+            [~, payload_remain] = strtok(token,'x'); % Find the part of "PAYLOAD 0xDEADBEEF" after the "0x" part.
             payload = payload_remain(2:end);
             % Now we have target instruction of interest, but have to find its packed message representation.
             [token, remain] = strtok(remain,','); % Throw away blockpos
             cacheline = repmat('X',1,128);
             for x=1:8 % 8 iterations, one per word in cacheline. Assume 64 bits per word. This is 128 hex symbols per cacheline
                 [token, remain] = strtok(remain,',');
-                [word_token, word_remain] = strtok(token,'x'); % Find the part of "0x000000000DEADBEEF" after the "0x" part.
+                [~, word_remain] = strtok(token,'x'); % Find the part of "0x000000000DEADBEEF" after the "0x" part.
                 cacheline(1,(x-1)*16+1:(x-1)*16+16) = word_remain(2:end);
             end
 
@@ -218,7 +218,7 @@ for i=1:num_messages
        %% Disassemble each instruction that we sampled.
        inst_hex = packed_message((packed_inst-1)*8+1:(packed_inst-1)*8+8);
 
-       [disassembly, legal, mnemonic, codec, rd, rs1, rs2, rs3, imm, arg] = parse_rv64g_decoder_output(inst_hex);
+       [~, legal, mnemonic, codec, rd, rs1, rs2, rs3, imm, arg] = parse_rv64g_decoder_output(inst_hex);
        map = containers.Map();
        map('legal') = legal; 
        map('mnemonic') = mnemonic; 
@@ -308,6 +308,45 @@ if verbose_recovery == 1
     sampled_error_pattern_indices
 end
 
+%% Read mnemonic and rd distributions from files now
+if verbose == 1
+    display('Importing side information...');
+end
+
+% mnemonic frequency
+fid = fopen(mnemonic_hotness_filename);
+instruction_mnemonic_hotness_file = textscan(fid, '%s', 'Delimiter', ',');
+fclose(fid);
+instruction_mnemonic_hotness_file = instruction_mnemonic_hotness_file{1};
+%instruction_mnemonic_hotness_file = reshape(instruction_mnemonic_hotness_file, 2, size(instruction_mnemonic_hotness_file,1)/2)';
+instruction_mnemonic_hotness_file = reshape(instruction_mnemonic_hotness_file, 67, size(instruction_mnemonic_hotness_file,1)/67)'; % FIXME: 67 is hardcoded number of registers (64) + 'NA' + 'TOTAL' + mnemonic column
+instruction_mnemonic_hotness = containers.Map(); % Init
+if strcmp(policy, 'filter-joint-frequency-sort-pick-longest-pad') == 1
+    for r=2:size(instruction_mnemonic_hotness_file,1)
+        reg_in_mnemonic_hotness = containers.Map();
+        for c=3:size(instruction_mnemonic_hotness_file,2)
+            reg_in_mnemonic_hotness(instruction_mnemonic_hotness_file{1,c}) = str2double(instruction_mnemonic_hotness_file{r,c});
+        end
+        instruction_mnemonic_hotness(instruction_mnemonic_hotness_file{r,1}) = reg_in_mnemonic_hotness;
+    end
+else
+    for r=2:size(instruction_mnemonic_hotness_file,1)
+        instruction_mnemonic_hotness(instruction_mnemonic_hotness_file{r,1}) = str2double(instruction_mnemonic_hotness_file{r,2});
+    end
+end
+
+% rd frequency
+fid = fopen(rd_hotness_filename);
+instruction_rd_hotness_file = textscan(fid, '%s', 'Delimiter', ',');
+fclose(fid);
+instruction_rd_hotness_file = instruction_rd_hotness_file{1};
+instruction_rd_hotness_file = reshape(instruction_rd_hotness_file, 2, size(instruction_rd_hotness_file,1)/2)';
+instruction_rd_hotness = containers.Map(); % Init
+for r=2:size(instruction_rd_hotness_file,1)
+    instruction_rd_hotness(instruction_rd_hotness_file{r,1}) = str2double(instruction_rd_hotness_file{r,2});
+end
+
+
 display('Evaluating SWD-ECC...');
 
 results_candidate_messages = NaN(num_messages,num_sampled_error_patterns); % Init
@@ -338,7 +377,7 @@ parfor i=1:num_messages % Parallelize loop across separate threads, since this c
 
     for j=1:num_sampled_error_patterns
         error = error_patterns(sampled_error_pattern_indices(j),:);
-        [original_codeword, received_string, num_candidate_messages, num_valid_messages, recovered_message, suggest_to_crash, recovered_successfully] = inst_recovery('rv64g', num2str(n), num2str(k), message_bin, error, code_type, policy, mnemonic_hotness_filename, rd_hotness_filename, num2str(verbose_recovery));
+        [~, ~, num_candidate_messages, num_valid_messages, ~, suggest_to_crash, recovered_successfully] = inst_recovery('rv64g', num2str(n), num2str(k), message_bin, error, code_type, policy, instruction_mnemonic_hotness, instruction_rd_hotness, num2str(verbose_recovery));
 
         %% Store results for this instruction/error pattern pair
         results_candidate_messages(i,j) = num_candidate_messages;
