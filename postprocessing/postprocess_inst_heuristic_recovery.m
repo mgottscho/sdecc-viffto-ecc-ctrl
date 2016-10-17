@@ -2,9 +2,9 @@
 % Author: Mark Gottscho <mgottscho@ucla.edu>
 
 %%%%%%%% CHANGE ME AS NEEDED %%%%%%%%%%%%
-input_directory = '/Users/Mark/Dropbox/SoftwareDefinedECC/data/rv64g/inst-recovery/offline-dynamic-baseline/davydov1991/39,32/baseline-pick-random/2016-10-11';
+input_directory = 'D:\Dropbox\SoftwareDefinedECC\data\rv64g\inst-recovery\offline-dynamic-split-int-float\hsiao1970\39,32\filter-joint-frequency-sort-pick-longest-pad\2016-10-17';
 output_directory = input_directory;
-inst_fields_file = '/Users/Mark/Dropbox/SoftwareDefinedECC/data/rv64g/rv64g_inst_field_bitmasks_revised.mat';
+inst_fields_file = ['D:\Dropbox' filesep 'SoftwareDefinedECC' filesep 'data' filesep 'rv64g' filesep 'rv64g_inst_field_bitmasks_revised.mat'];
 num_inst = 1000;
 num_error_patterns = 741; % For (39,32) SECDED
 %num_error_patterns = 2556; % For (72,64) SECDED
@@ -13,8 +13,8 @@ num_error_patterns = 741; % For (39,32) SECDED
 %num_error_patterns = 141750; % For (144,128) ChipKill
 %num_error_patterns = 1000; % sampled
 architecture = 'rv64g';
-code_type = 'davydov1991';
-policy = 'Baseline-Pick-Random';
+code_type = 'hsiao1970';
+policy = 'Filter-Joint-Frequency-Sort-Pick-Longest-Pad';
 
 %% Read in names of benchmarks to process
 dir_contents = dir(input_directory);
