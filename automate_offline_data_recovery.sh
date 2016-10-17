@@ -38,10 +38,10 @@ NUM_SAMPLED_ERROR_PATTERNS=1000 # sampled
 #NUM_SAMPLED_ERROR_PATTERNS=14190 # Max for (45,32) DECTED
 #NUM_SAMPLED_ERROR_PATTERNS=79079 # Max for (79,64) DECTED
 #NUM_SAMPLED_ERROR_PATTERNS=141750 # Max for (144,128) ChipKill
-POLICY=dbx-pick-random
+POLICY=hamming-pick-random
 VERBOSE_RECOVERY=0
 
-OUTPUT_DIRECTORY=$MWG_DATA_PATH/swd_ecc_data/$ISA/data-recovery/offline-$INPUT_TYPE/$CODE_TYPE/$POLICY
+OUTPUT_DIRECTORY=$MWG_DATA_PATH/swd_ecc_data/$ISA/data-recovery/offline-$INPUT_TYPE/$CODE_TYPE/$N,$K/$POLICY
 
 #if [[ "$MWG_MACHINE_NAME" == "hoffman" ]]; then
 #    NUM_THREADS=16 # Override above.

@@ -67,8 +67,7 @@ fi
 N=39
 K=32
 NUM_MESSAGES=1000
-#NUM_THREADS=$(cat /proc/cpuinfo | grep ^processor | wc -l ) 
-NUM_THREADS=1
+NUM_THREADS=$(cat /proc/cpuinfo | grep ^processor | wc -l ) 
 CODE_TYPE=hsiao1970
 #NUM_SAMPLED_ERROR_PATTERNS=1000
 NUM_SAMPLED_ERROR_PATTERNS=741 # Max for (39,32) SECDED
@@ -77,7 +76,7 @@ NUM_SAMPLED_ERROR_PATTERNS=741 # Max for (39,32) SECDED
 #NUM_SAMPLED_ERROR_PATTERNS=79079 # Max for (79,64) DECTED
 #NUM_SAMPLED_ERROR_PATTERNS=141750 # Max for (144,128) ChipKill
 POLICY=filter-joint-frequency-sort-pick-longest-pad
-VERBOSE_RECOVERY=1
+VERBOSE_RECOVERY=0
 
 OUTPUT_DIRECTORY=$MWG_DATA_PATH/swd_ecc_data/$ISA/inst-recovery/offline-$INPUT_TYPE/$CODE_TYPE/$N,$K/$POLICY
 
