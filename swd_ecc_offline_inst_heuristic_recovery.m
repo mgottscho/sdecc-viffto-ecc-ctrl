@@ -309,9 +309,7 @@ if verbose_recovery == 1
 end
 
 %% Read mnemonic and rd distributions from files now
-if verbose_recovery == 1
-    display('Importing side information...');
-end
+display('Importing side information...');
 
 % mnemonic frequency
 fid = fopen(mnemonic_hotness_filename);

@@ -13,8 +13,7 @@ function [candidate_correct_messages, retval] = compute_candidate_correct_messag
 % Author: Mark Gottscho
 % Email: mgottscho@ucla.edu
 
-r = size(H,1);
-n = size(H,2);
+[r,n] = size(H);
 k = n-r;
 
 %if ~isdeployed
@@ -40,7 +39,7 @@ if strcmp(code_type, 'hsiao1970') == 1 || strcmp(code_type, 'davydov1991') == 1 
             [decoded_message, num_error_bits] = dected_decoder(trial_string, H);
        end
 
-       if decoded_message(1) == 'X'
+       if decoded_message(1) ~= 'X'
            % This is a candidate codeword.
            candidate_correct_messages(x,:) = decoded_message;
            x = x+1;
@@ -59,7 +58,7 @@ elseif strcmp(code_type, 'fujiwara1982') == 1 % ChipKill
             % Attempt to decode
             [decoded_message, num_error_bits, num_error_symbols] = chipkill_decoder(trial_string, H, 4);
        
-            if decoded_message(1) == 'X'
+            if decoded_message(1) ~= 'X'
                 % This is a candidate codeword.
                 candidate_correct_messages(x,:) = decoded_message;
                 x = x+1;
