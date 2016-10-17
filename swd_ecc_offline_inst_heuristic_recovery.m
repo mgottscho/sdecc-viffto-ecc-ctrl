@@ -309,7 +309,7 @@ if verbose_recovery == 1
 end
 
 %% Read mnemonic and rd distributions from files now
-if verbose == 1
+if verbose_recovery == 1
     display('Importing side information...');
 end
 
