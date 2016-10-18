@@ -48,7 +48,7 @@ if verbose == 1
     verbose
 end
 
-%rng('shuffle'); % Seed RNG based on current time -- FIXME: commented out for speed. If we RNG in swd_ecc_offline_data_heuristic_recovery then we shouldn't need to do it again...
+rng('shuffle'); % Seed RNG based on current time -- FIXME: comment out for speed? If we RNG in swd_ecc_offline_data_heuristic_recovery then we shouldn't need to do it again...
 
 %% Init some return values
 original_codeword = repmat('X',1,n);
