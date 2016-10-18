@@ -15,7 +15,7 @@ fi
 ########################## FEEL FREE TO CHANGE THESE OPTIONS ##################################
 ISA=rv64g    # Set the target ISA; benchmarks must be disassembled for this as well
 
-INPUT_TYPE=dynamic-perfect
+INPUT_TYPE=dynamic-split-int-float
 if [[ "$INPUT_TYPE" == "static" ]]; then # Static evaluation
     SPEC_BENCHMARKS="400.perlbench 401.bzip2 403.gcc 410.bwaves 416.gamess 429.mcf 433.milc 434.zeusmp 435.gromacs 436.cactusADM 437.leslie3d 444.namd 445.gobmk 447.dealII 450.soplex 453.povray 454.calculix 456.hmmer 458.sjeng 459.GemsFDTD 462.libquantum 464.h264ref 465.tonto 470.lbm 471.omnetpp 473.astar 481.wrf 482.sphinx3 483.xalancbmk" # Static -- all are working
     INPUT_DIRECTORY=$MWG_DATA_PATH/swd_ecc_data/$ISA/disassembly/linux-gnu # For static
@@ -23,6 +23,7 @@ if [[ "$INPUT_TYPE" == "static" ]]; then # Static evaluation
     RD_HOTNESS_FILENAME=$MWG_DATA_PATH/swd_ecc_data/$ISA/program-statistics/static/$ISA-rd-hotness-static-all.csv
 
 elif [[ "$INPUT_TYPE" == "dynamic-static-side-info" ]]; then # Dynamic evaluation with static side info
+    # TODO FIXME: this won't work with filter-joint-frequency-sort-pick-longest-pad since we did not collect the relevant data yet.
     SPEC_BENCHMARKS="400.perlbench 401.bzip2 403.gcc 410.bwaves 435.gromacs 436.cactusADM 444.namd 447.dealII 450.soplex 453.povray 454.calculix 456.hmmer 458.sjeng 459.GemsFDTD 462.libquantum 464.h264ref 465.tonto 470.lbm 471.omnetpp 473.astar" # Dynamic -- working
     INPUT_DIRECTORY=$MWG_DATA_PATH/swd_ecc_data/$ISA/spike # For dynamic
     MNEMONIC_HOTNESS_FILENAME=$MWG_DATA_PATH/swd_ecc_data/$ISA/program-statistics/static/$ISA-mnemonic-hotness-static-all.csv
@@ -64,13 +65,13 @@ else
     exit 1
 fi
 
-N=39
+N=45
 K=32
 NUM_MESSAGES=1000
 NUM_THREADS=$(cat /proc/cpuinfo | grep ^processor | wc -l ) 
-CODE_TYPE=hsiao1970
-#NUM_SAMPLED_ERROR_PATTERNS=1000
-NUM_SAMPLED_ERROR_PATTERNS=741 # Max for (39,32) SECDED
+CODE_TYPE=bose1960
+NUM_SAMPLED_ERROR_PATTERNS=1000
+#NUM_SAMPLED_ERROR_PATTERNS=741 # Max for (39,32) SECDED
 #NUM_SAMPLED_ERROR_PATTERNS=2556 # Max for (72,64) SECDED
 #NUM_SAMPLED_ERROR_PATTERNS=14190 # Max for (45,32) DECTED
 #NUM_SAMPLED_ERROR_PATTERNS=79079 # Max for (79,64) DECTED
