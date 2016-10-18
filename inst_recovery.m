@@ -434,6 +434,11 @@ elseif strcmp(policy, 'filter-rank-pick-random') == 1 ...
         %        y = y+1;
         %    end
         %end
+        
+        % Special case: it is entirely possible based on SI that no valid messages have a probability > 0. In this case, put all valid messages as targets.
+        if size(target_inst_indices,1) == 0
+            target_inst_indices = (1:num_valid_messages)';
+        end
     end
 
     if strcmp(policy, 'filter-joint-frequency-sort-pick-longest-pad') == 1
@@ -506,6 +511,11 @@ elseif strcmp(policy, 'filter-rank-pick-random') == 1 ...
         %        y = y+1;
         %    end
         %end
+
+        % Special case: it is entirely possible based on SI that no valid messages have a probability > 0. In this case, put all valid messages as targets.
+        if size(target_inst_indices,1) == 0
+            target_inst_indices = (1:num_valid_messages)';
+        end
     end
 
     % Choose recovery target
