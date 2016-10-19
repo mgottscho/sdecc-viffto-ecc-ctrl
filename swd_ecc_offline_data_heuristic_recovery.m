@@ -199,7 +199,7 @@ if verbose_recovery == 1
 end
 
 %% Get our ECC encoder and decoder matrices
-if verbose == 1
+if verbose_recovery == 1
     display('Getting ECC encoder and decoder matrices...');
 end
 

@@ -309,7 +309,7 @@ if verbose_recovery == 1
 end
 
 %% Get the G and H for our code
-if verbose == 1
+if verbose_recovery == 1
     display('Getting ECC encoder and decoder matrices...');
 end
 
