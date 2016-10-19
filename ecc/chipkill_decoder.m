@@ -71,7 +71,7 @@ function [ decoded_message, num_error_bits, num_error_symbols ] = chipkill_decod
        % Only one way this happens for symbol size of 4 bits: all four columns within a symbol of H sum to syndrome.
        idx = symbol_size*(symbol-1)+1;
        cols = H(:,idx:idx+3);
-       columns_plus_syndrome = mod(sum(sum(cols,2),s),2);
+       columns_plus_syndrome = mod(sum(cols,2)+s,2);
        %if nnz(mod(H(:,1+symbol_size*(symbol-1))+H(:,2+symbol_size*(symbol-1))+H(:,3+symbol_size*(symbol-1))+H(:,4+symbol_size*(symbol-1))+s,2))==0  
        if nnz(columns_plus_syndrome) == 0 
            num_error_symbols = 1;
