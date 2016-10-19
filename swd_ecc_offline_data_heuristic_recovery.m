@@ -198,6 +198,22 @@ if verbose_recovery == 1
     num_sampled_error_patterns
 end
 
+%% Get our ECC encoder and decoder matrices
+if verbose == 1
+    display('Getting ECC encoder and decoder matrices...');
+end
+
+if strcmp(code_type, 'hsiao1970') == 1 || strcmp(code_type, 'davydov1991') == 1 % SECDED
+    [G,H] = getSECDEDCodes(n,code_type);
+elseif strcmp(code_type, 'bose1960') == 1 % DECTED
+    [G,H] = getDECTEDCodes(n);
+elseif strcmp(code_type, 'fujiwara1982') == 1 % ChipKill
+    [G,H] = getChipkillCodes(n);
+else
+    display(['FATAL! Unsupported code type: ' code_type]);
+end
+
+
 results_candidate_messages = NaN(num_words,num_sampled_error_patterns); % Init
 success = NaN(num_words, num_sampled_error_patterns); % Init
 could_have_crashed = NaN(num_words, num_sampled_error_patterns); % Init
@@ -237,7 +253,7 @@ parfor i=1:num_words % Parallelize loop across separate threads, since this coul
         error = error_patterns(sampled_error_pattern_indices(j),:);
 
         %% Do heuristic recovery for this message/error pattern combo.
-        [original_codeword, received_string, num_candidate_messages, recovered_message, suggest_to_crash, recovered_successfully] = data_recovery('rv64g', num2str(n), num2str(k), message_bin, error, code_type, policy, serialized_cacheline_bin, sampled_blockpos_indices(i), verbose_recovery);
+        [original_codeword, received_string, num_candidate_messages, recovered_message, suggest_to_crash, recovered_successfully] = data_recovery('rv64g', num2str(n), num2str(k), message_bin, error, code_type, G, H, policy, serialized_cacheline_bin, sampled_blockpos_indices(i), verbose_recovery);
 
         %% Store results for this message/error pattern pair
         success(i,j) = recovered_successfully;

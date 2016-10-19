@@ -1,4 +1,4 @@
-function [original_codeword, received_string, num_candidate_messages, recovered_message, suggest_to_crash, recovered_successfully] = data_recovery(architecture, n, k, original_message, error_pattern, code_type, policy, cacheline_bin, message_blockpos, verbose)
+function [original_codeword, received_string, num_candidate_messages, recovered_message, suggest_to_crash, recovered_successfully] = data_recovery(architecture, n, k, original_message, error_pattern, code_type, G, H, policy, cacheline_bin, message_blockpos, verbose)
 % This function attempts to heuristically recover from a DUE affecting a single received string.
 % The message is assumed to be data of arbitrary type stored in memory.
 % To compute candidate codewords, we trial flip bits and decode using specified ECC decoder.
@@ -14,6 +14,8 @@ function [original_codeword, received_string, num_candidate_messages, recovered_
 %   original_message -- Binary String of length k bits/chars
 %   error_pattern --    Binary String of length n bits/chars
 %   code_type --        String: '[hsiao1970|davydov1991|bose1960|fujiwara1982]'
+%   G --                k x n binary generator matrix
+%   H --                (n-k) x n binary parity-check matrix
 %   policy --           String: '[hamming-pick-random|longest-run-pick-random|delta-pick-random|dbx-pick-random]'
 %   cacheline_bin --    String: Set of words_per_block k-bit binary strings, e.g. '0001010101....00001,0000000000.....00000,...,111101010...00101'. words_per_block is inferred by the number of binary strings that are delimited by commas.
 %   message_blockpos -- String: '[0-(words_per_block-1)]' denoting the position of the message under test within the cacheline. This message should match original_message argument above.
@@ -61,21 +63,6 @@ recovered_successfully = 0;
 
 if ~isdeployed
     addpath ecc common rv64g % Add sub-folders to MATLAB search paths for calling other functions we wrote
-end
-
-%% Get our ECC encoder and decoder matrices
-if verbose == 1
-    display('Getting ECC encoder and decoder matrices...');
-end
-
-if strcmp(code_type, 'hsiao1970') == 1 || strcmp(code_type, 'davydov1991') == 1 % SECDED
-    [G,H] = getSECDEDCodes(n,code_type);
-elseif strcmp(code_type, 'bose1960') == 1 % DECTED
-    [G,H] = getDECTEDCodes(n);
-elseif strcmp(code_type, 'fujiwara1982') == 1 % ChipKill
-    [G,H] = getChipkillCodes(n);
-else
-    display(['FATAL! Unsupported code type: ' code_type]);
 end
 
 %% Encode the original message, then corrupt the codeword with the provided error pattern

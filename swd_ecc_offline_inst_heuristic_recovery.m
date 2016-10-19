@@ -308,6 +308,21 @@ if verbose_recovery == 1
     sampled_error_pattern_indices
 end
 
+%% Get the G and H for our code
+if verbose == 1
+    display('Getting ECC encoder and decoder matrices...');
+end
+
+if strcmp(code_type, 'hsiao1970') == 1 || strcmp(code_type, 'davydov1991') == 1 % SECDED
+    [G,H] = getSECDEDCodes(n,code_type);
+elseif strcmp(code_type, 'bose1960') == 1 % DECTED
+    [G,H] = getDECTEDCodes(n);
+elseif strcmp(code_type, 'fujiwara1982') == 1 % ChipKill
+    [G,H] = getChipkillCodes(n);
+else
+    display(['FATAL! Unsupported code type: ' code_type]);
+end
+
 %% Read mnemonic and rd distributions from files now
 display('Importing side information...');
 
@@ -375,7 +390,7 @@ parfor i=1:num_messages % Parallelize loop across separate threads, since this c
 
     for j=1:num_sampled_error_patterns
         error = error_patterns(sampled_error_pattern_indices(j),:);
-        [~, ~, num_candidate_messages, num_valid_messages, ~, suggest_to_crash, recovered_successfully] = inst_recovery('rv64g', num2str(n), num2str(k), message_bin, error, code_type, policy, instruction_mnemonic_hotness, instruction_rd_hotness, num2str(verbose_recovery));
+        [~, ~, num_candidate_messages, num_valid_messages, ~, suggest_to_crash, recovered_successfully] = inst_recovery('rv64g', num2str(n), num2str(k), message_bin, error, code_type, G, H, policy, instruction_mnemonic_hotness, instruction_rd_hotness, num2str(verbose_recovery));
 
         %% Store results for this instruction/error pattern pair
         results_candidate_messages(i,j) = num_candidate_messages;

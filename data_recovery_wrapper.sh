@@ -17,5 +17,9 @@ if [[ "$MWG_MACHINE_NAME" == "hoffman" ]]; then
 elif [[ "$MWG_MACHINE_NAME" == "nanocad-server-testbed" ]]; then
     MY_PRELOAD=/usr/lib/x86_64-linux-gnu/libstdc++.so.6
 fi
+
+# FIXME TODO
+echo "THIS SCRIPT IS BROKEN! We currently do not have an easy way to pass in INSTRUCTION_MNEMONIC_HOTNESS, INSTRUCTION_RD_HOTNESS 2D cell array data structures nor G and H matrices. FIXME and TODO later for Spike-driven evaluations..."
+exit 1
    
 LD_PRELOAD=$MY_PRELOAD LD_LIBRARY_PATH=$MCRROOT/bin/glnxa64:$MCRROOT/runtime/glnxa64:$LD_LIBRARY_PATH $BINARY_LOCATION/data_recovery $ISA $N $K $ORIGINAL_MESSAGE $ERROR_PATTERN $CODE_TYPE $POLICY $CACHELINE $MESSAGE_BLOCKPOS $VERBOSE

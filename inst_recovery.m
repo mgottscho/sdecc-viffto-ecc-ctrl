@@ -1,4 +1,4 @@
-function [original_codeword, received_string, num_candidate_messages, num_valid_messages, recovered_message, suggest_to_crash, recovered_successfully] = inst_recovery(architecture, n, k, original_message, error_pattern, code_type, policy, instruction_mnemonic_hotness, instruction_rd_hotness, verbose)
+function [original_codeword, received_string, num_candidate_messages, num_valid_messages, recovered_message, suggest_to_crash, recovered_successfully] = inst_recovery(architecture, n, k, original_message, error_pattern, code_type, G, H, policy, instruction_mnemonic_hotness, instruction_rd_hotness, verbose)
 % This function attempts to heuristically recover from a DUE affecting a single received string.
 % The message is assumed to be an instruction of the given architecture in big endian format.
 % To compute candidate codewords, we flip a single bit one at a time and decode using specified ECC decoder.
@@ -12,6 +12,8 @@ function [original_codeword, received_string, num_candidate_messages, num_valid_
 %   original_message -- Binary String of length k bits/chars. Note that k might not be 32 which is the instruction size! We will treat original_message as being a set of packed 32-bit instructions.
 %   error_pattern --    Binary String of length n bits/chars
 %   code_type --        String: '[hsiao1970|davydov1991|bose1960|fujiwara1982]'
+%   G --                k x n binary generator matrix
+%   H --                (n-k) x n binary parity-check matrix
 %   policy --           String: '[  baseline-pick-random 
 %                                 | filter-pick-random
 %                                 | filter-rank-pick-random
@@ -77,21 +79,6 @@ if ~isdeployed
     addpath ecc common inst_recovery_policies rv64g % Add sub-folders to MATLAB search paths for calling other functions we wrote
 end
 
-%% Get our ECC encoder and decoder matrices
-if verbose == 1
-    display('Getting ECC encoder and decoder matrices...');
-end
-
-if strcmp(code_type, 'hsiao1970') == 1 || strcmp(code_type, 'davydov1991') == 1 % SECDED
-    [G,H] = getSECDEDCodes(n,code_type);
-elseif strcmp(code_type, 'bose1960') == 1 % DECTED
-    [G,H] = getDECTEDCodes(n);
-elseif strcmp(code_type, 'fujiwara1982') == 1 % ChipKill
-    [G,H] = getChipkillCodes(n);
-else
-    display(['FATAL! Unsupported code type: ' code_type]);
-end
-
 %% Encode the original message, then corrupt the codeword with the provided error pattern
 if verbose == 1
     display('Getting the original codeword and generating the received (corrupted) string...');
@@ -127,14 +114,15 @@ if verbose == 1
         display(['This is a ChipKill code with symbol size of 4 bits. The decoder found ' num2str(num_error_symbols) ' symbols in error.']);
     end
 end
+    
+%if verbose == 1 && sum(error_pattern=='1') ~= num_error_bits
+%    display('NOTE: This is a MIS-CORRECTION by the ECC decoder itself.');
+%end
 
 %% If the ECC decoder returned the correct message, we are done.
 if strcmp(recovered_message,original_message) == 1
     if verbose == 1
         display('No error or correctable error. We are done, no need for heuristic recovery.');
-    end
-    if sum(error_pattern=='1') ~= num_error_bits && verbose == 1
-        display('NOTE: This is a MIS-CORRECTION by the ECC decoder itself.');
     end
     return;
 end

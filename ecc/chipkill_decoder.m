@@ -32,13 +32,15 @@ function [ decoded_message, num_error_bits, num_error_symbols ] = chipkill_decod
     %end
    
    %% Set default message
-   decoded_message = repmat('X',1,k);
+   % commented out for speed
+   %decoded_message = repmat('X',1,k);
 
    %% Compute syndrome of received codeword
+   % Note: received_codeword is a string of binary '0' and '1' characters, which have ASCII values 48 and 49, respectively. Thus we can do multiplication of 48 and 49 with a binary H, mod2 to get syndrome s numerically. Fancy.
    s = mod(H*received_codeword',2);
 
    %% CASE 0: Syndrome is 0, no errors detected
-   if s == zeros(r,1)
+   if nnz(s) == 0
        decoded_message = received_codeword(1:k); % Assume code is systematic, meaning that first k bit positions are the message, and parity bits are glued on the end
        num_error_symbols = 0;
        num_error_bits = 0;
@@ -52,7 +54,7 @@ function [ decoded_message, num_error_bits, num_error_symbols ] = chipkill_decod
    %Need to go through All possible single, double, triple, and quadruple
    %bit-error-patterns that can occur within pre-determined b-bit symbols.
 
-   %First we check the single bit flips (all possible single bit flips within a symbol)
+   % First we check the single bit flips (all possible single bit flips within a symbol), as this is the simplest and fast case
    for a=1:n
        if nnz(mod(H(:,a)+s,2))==0 % Column of H at bit position a matches syndrome. This means there is one bit error.
            num_error_symbols = 1;
@@ -64,54 +66,65 @@ function [ decoded_message, num_error_bits, num_error_symbols ] = chipkill_decod
        end
    end
    
-   % Next we check for the quadruple bit flips
+   % Next we check for the quadruple bit flips, as this is a fast and simple case
    for symbol = 1:n/symbol_size
-       if nnz(mod(H(:,1+symbol_size*(symbol-1))+H(:,2+symbol_size*(symbol-1))+H(:,3+symbol_size*(symbol-1))+H(:,4+symbol_size*(symbol-1))+s,2))==0 % Only one way this happens for symbol size of 4 bits: all four columns within a symbol of H sum to syndrome.
+       % Only one way this happens for symbol size of 4 bits: all four columns within a symbol of H sum to syndrome.
+       idx = symbol_size*(symbol-1)+1;
+       cols = H(:,idx:idx+3);
+       columns_plus_syndrome = mod(sum(sum(cols,2),s),2);
+       %if nnz(mod(H(:,1+symbol_size*(symbol-1))+H(:,2+symbol_size*(symbol-1))+H(:,3+symbol_size*(symbol-1))+H(:,4+symbol_size*(symbol-1))+s,2))==0  
+       if nnz(columns_plus_syndrome) == 0 
            num_error_symbols = 1;
            num_error_bits = 4;
-           error(1+symbol_size*(symbol-1))='1';
-           error(2+symbol_size*(symbol-1))='1';
-           error(3+symbol_size*(symbol-1))='1';
-           error(4+symbol_size*(symbol-1))='1';
+           error(idx:idx+3) = '1111';
            decoded_codeword = my_bitxor(received_codeword,error);
            decoded_message = decoded_codeword(1:k);
-           return
+           return;
        end
    end
-
-
-   %Next we check all possible double bit flips within a symbol
+   
+   % Next we check for the triple bit flips, as this is almost the exact same as checking for single bit flips, only '0' and '1' are reversed! This looks ugly but is faster than it seems.
    for symbol = 1:n/symbol_size
-       for a=1+symbol_size*(symbol-1):symbol_size*symbol-1 % a is the first bit position of each symbol
-           for b=a+1:symbol_size*symbol % b iterates over the 2nd possible bit positions within each symbol
-               if nnz(mod(H(:,a)+H(:,b)+s,2))==0 % sum of columns a and b in H are syndrome, meaning we found double-bit error within a symbol.
-                   num_error_symbols = 1;
-                   num_error_bits = 2;
-                   error(a)='1';
-                   error(b)='1';
-                   decoded_codeword = my_bitxor(received_codeword,error);
-                   decoded_message = decoded_codeword(1:k);
-                   return
+       idx = symbol_size*(symbol-1)+1;
+       cols = H(:,idx:idx+3);
+       % This looks like an ugly triple for loop and it is. However, when symbol size is 4 bits, there are only 4 ways to have three-bit error. This loop structure merely memoizes shared parts of 3-column sums.
+       for a=1:2 % a is the first bit flip position in the symbol
+           col_a_plus_syndrome = mod(cols(:,a)+s,2);
+           for b=a+1:3 % b is the second bit flip position in the symbol
+               col_a_b_plus_syndrome = mod(col_a_plus_syndrome+cols(:,b),2);
+               for c=b+1:4 % c is the third bit flip position in the symbol
+                   columns_plus_syndrome = mod(col_a_b_plus_syndrome+cols(:,c),2);
+                   if nnz(columns_plus_syndrome)==0 % sum of columns a, b, and c in H are syndrome, meaning we found triple-bit error within a symbol.
+                       num_error_symbols = 1;
+                       num_error_bits = 3;
+                       error(idx+a-1)='1';
+                       error(idx+b-1)='1';
+                       error(idx+c-1)='1';
+                       decoded_codeword = my_bitxor(received_codeword,error);
+                       decoded_message = decoded_codeword(1:k);
+                       return;
+                   end
                end
            end
        end
    end
 
-   %Next we check for the triple bit flips
+   % Next we check all possible double bit flips within a symbol. There are 6 ways to do this. This is the slowest case.
    for symbol = 1:n/symbol_size
-       for a=1+symbol_size*(symbol-1):symbol_size*symbol-2 % a is the first bit position of each symbol
-           for b=a+1:symbol_size*symbol-1 % b iterates over the 2nd possible bit positions within each symbol
-               for c=b+1:symbol_size*symbol % c iterates over the 3rd possible bit positions within each symbol
-                   if nnz(mod(H(:,a)+H(:,b)+H(:,c)+s,2))==0 % sum of columns a, b, and c in H are syndrome, meaning we found triple-bit error within a symbol.
-                       num_error_symbols = 1;
-                       num_error_bits = 3;
-                       error(a)='1';
-                       error(b)='1';
-                       error(c)='1';
-                       decoded_codeword = my_bitxor(received_codeword,error);
-                       decoded_message = decoded_codeword(1:k);
-                       return
-                   end
+       idx = symbol_size*(symbol-1)+1;
+       cols = H(:,idx:idx+3);
+       for a=1:3 % a is the first bit flip position in the symbol
+           col_a_plus_syndrome = mod(cols(:,a)+s,2);
+           for b=a+1:4 % b is the second bit flip position in the symbol
+               columns_plus_syndrome = mod(col_a_plus_syndrome+cols(:,b),2);
+               if nnz(columns_plus_syndrome)==0 % sum of columns a and b in H are syndrome, meaning we found double-bit error within a symbol.
+                   num_error_symbols = 1;
+                   num_error_bits = 2;
+                   error(idx+a-1)='1';
+                   error(idx+b-1)='1';
+                   decoded_codeword = my_bitxor(received_codeword,error);
+                   decoded_message = decoded_codeword(1:k);
+                   return;
                end
            end
        end
