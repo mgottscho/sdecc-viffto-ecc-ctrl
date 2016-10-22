@@ -1,4 +1,4 @@
-function [original_codeword, received_string, num_candidate_messages, num_valid_messages, recovered_message, suggest_to_crash, recovered_successfully] = inst_recovery(architecture, n, k, original_message, error_pattern, code_type, G, H, policy, instruction_mnemonic_hotness, instruction_rd_hotness, verbose)
+function [num_valid_messages, recovered_message, suggest_to_crash, recovered_successfully] = inst_recovery(architecture, n, k, original_message, candidate_correct_messages, policy, instruction_mnemonic_hotness, instruction_rd_hotness, verbose)
 % This function attempts to heuristically recover from a DUE affecting a single received string.
 % The message is assumed to be an instruction of the given architecture in big endian format.
 % To compute candidate codewords, we flip a single bit one at a time and decode using specified ECC decoder.
@@ -10,10 +10,7 @@ function [original_codeword, received_string, num_candidate_messages, num_valid_
 %   n --                String: '[39|45|72|79|144]'
 %   k --                String: '[32|64|128]'
 %   original_message -- Binary String of length k bits/chars. Note that k might not be 32 which is the instruction size! We will treat original_message as being a set of packed 32-bit instructions.
-%   error_pattern --    Binary String of length n bits/chars
-%   code_type --        String: '[hsiao1970|davydov1991|bose1960|fujiwara1982]'
-%   G --                k x n binary generator matrix
-%   H --                (n-k) x n binary parity-check matrix
+%   candidate_correct_messages -- Nx1 cell array of binary strings, each k bits/chars long
 %   policy --           String: '[  baseline-pick-random 
 %                                 | filter-pick-random
 %                                 | filter-rank-pick-random
@@ -37,9 +34,6 @@ function [original_codeword, received_string, num_candidate_messages, num_valid_
 %   verbose -- '1' if you want console printouts of progress to stdout.
 %
 % Returns:
-%   original_codeword -- n-bit encoded version of original_message
-%   received_string -- n-bit string that is corrupted by the bit flips specified by error_pattern
-%   num_candidate_messages -- Scalar
 %   num_valid_messages -- Scalar
 %   recovered_message -- k-bit message that corresponds to our target for heuristic recovery
 %   suggest_to_crash -- 0 if we are confident in recovery, 1 if we recommend crashing out instead
@@ -57,102 +51,35 @@ if verbose == 1
     n
     k
     original_message
-    error_pattern
-    code_type
+    candidate_correct_messages
     policy
     instruction_mnemonic_hotness
     instruction_rd_hotness
 end
 
-rng('shuffle'); % Seed RNG based on current time -- FIXME: comment out for speed? If we RNG in swd_ecc_offline_inst_heuristic_recovery then we shouldn't need to do it again...
+%rng('shuffle'); % Seed RNG based on current time -- commented out for speed. If we RNG in swd_ecc_offline_inst_heuristic_recovery then we shouldn't need to do it again.
 
 %% Init some return values
-original_codeword = repmat('X',1,n);
-received_string = repmat('X',1,n);
-num_candidate_messages = -1;
 num_valid_messages = -1;
 recovered_message = repmat('X',1,k);
 suggest_to_crash = 0;
 recovered_successfully = 0;
 
 if ~isdeployed
-    addpath ecc common inst_recovery_policies rv64g % Add sub-folders to MATLAB search paths for calling other functions we wrote
+    addpath ecc common rv64g % Add sub-folders to MATLAB search paths for calling other functions we wrote
 end
 
-%% Encode the original message, then corrupt the codeword with the provided error pattern
-if verbose == 1
-    display('Getting the original codeword and generating the received (corrupted) string...');
-end
+num_candidate_messages = size(candidate_correct_messages,1);
 
-original_codeword = ecc_encoder(original_message,G);
-received_string = my_bitxor(original_codeword, error_pattern);
-
-if verbose == 1
-    original_message
-    original_codeword
-    error_pattern
-    received_string
-end
-
-%% Attempt to recover the original message. This could actually succeed depending on the code used and how many bits are in the error pattern.
-if verbose == 1
-    display('Attempting to decode the received string...');
-end
-
-if strcmp(code_type, 'hsiao1970') == 1 || strcmp(code_type, 'davydov1991') == 1 % SECDED
-    [recovered_message, num_error_bits] = secded_decoder(received_string, H, code_type);
-elseif strcmp(code_type, 'bose1960') == 1 % DECTED
-    [recovered_message, num_error_bits] = dected_decoder(received_string, H);
-elseif strcmp(code_type, 'fujiwara1982') == 1 % ChipKill
-    [recovered_message, num_error_bits, num_error_symbols] = chipkill_decoder(received_string, H, 4);
-end % didn't check bad code type error condition because we should have caught it earlier anyway
-
-if verbose == 1
-    display(['Sanity check: ECC decoder determined that there are ' num2str(num_error_bits) ' bits in error. The input error pattern had ' num2str(sum(error_pattern=='1')) ' bits flipped.']);
-
-    if strcmp(code_type, 'fujiwara1982') == 1 % ChipKill
-        display(['This is a ChipKill code with symbol size of 4 bits. The decoder found ' num2str(num_error_symbols) ' symbols in error.']);
-    end
-end
-    
-%if verbose == 1 && sum(error_pattern=='1') ~= num_error_bits
-%    display('NOTE: This is a MIS-CORRECTION by the ECC decoder itself.');
-%end
-
-%% If the ECC decoder returned the correct message, we are done.
-if strcmp(recovered_message,original_message) == 1
-    if verbose == 1
-        display('No error or correctable error. We are done, no need for heuristic recovery.');
-    end
-    return;
-end
-
-%% If we got to this point, we have to recover from a DUE. 
 if verbose == 1
     display('Attempting heuristic recovery...');
 end
 
-%% Warn if input message is actually illegal
+%% Warn if original message is actually illegal
 original_message_hex = my_bin2hex(original_message);
 [~, legal] = parse_rv64g_decoder_output(original_message_hex);
 if verbose == 1 && legal ~= 1
-    display('WARNING: Input message is not a legal instruction!');
-end
-
-%% Flip bits on the corrupted codeword, and attempt decoding on each. We should find several bit flip combinations that decode successfully
-if verbose == 1
-    display('Computing candidate codewords...');
-end
-
-recovered_message = repmat('X',1,k); % Re-init
-[candidate_correct_messages, retval] = compute_candidate_correct_messages(received_string,H,code_type);
-if retval ~= 0
-    display('FATAL! Something went wrong computing candidate-correct messages!');
-    return;
-end
-
-if verbose == 1
-    candidate_correct_messages
+    display('WARNING: Original message is not a legal instruction!');
 end
 
 num_packed_inst = k/32; % Assume 32 bits per instruction. Then if k is a multiple of 32 we have packed instructions. FIXME: only valid for RV64G
@@ -184,7 +111,6 @@ elseif strcmp(policy, 'filter-rank-pick-random') == 1 ...
     if verbose == 1
         display('RECOVERY STEP 1: FILTER. Filtering candidate codewords for (sets of) instruction legality...');
     end
-    num_candidate_messages = size(candidate_correct_messages,1);
     num_valid_messages = 0;
     candidate_valid_messages = repmat('0',1,k); % Init
     valid_messages_mnemonic = cell(1,num_packed_inst);

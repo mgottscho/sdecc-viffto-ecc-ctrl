@@ -375,40 +375,96 @@ mycluster = parcluster('local');
 mycluster.NumWorkers = n_threads;
 mypool = parpool(mycluster,n_threads);
 
-parfor i=1:num_messages % Parallelize loop across separate threads, since this could take a long time. Each instruction is a totally independent procedure to perform.
-    %% Get the "message," which is the original instruction, i.e., the ground truth from input file.
-    message_hex = sampled_trace_hex(i,:);
-    message_bin = sampled_trace_bin(i,:);
-    %[legal, mnemonic, codec, rd, rs1, rs2, rs3, imm, arg] = parse_rv64g_decoder_output(message_hex);
-    
-    %% Check that the message is actually a valid instruction to begin with.
-    %if legal == 0 
-    %   display(['WARNING: Found illegal input instruction: ' message_hex '. This should not happen. However, we will try heuristic recovery anyway.']);
+%% Iterate over sampled number of detected-but-uncorrectable error patterns.
+parfor j=1:num_sampled_error_patterns % Parallelize loop across separate threads
+    error = error_patterns(sampled_error_pattern_indices(j),:);
+        
+    zero_codeword = repmat('0',1,n);
+    received_string_zero_message = my_bitxor(zero_codeword, error);
+        
+    %% Flip bits on the corrupted codeword, and attempt decoding on each. We should find several bit flip combinations that decode successfully
+    %if verbose_recovery == 1
+    %    display(['Computing candidate codewords for the zero codeword corrupted by error pattern ' error '...']);
     %end
 
-    %% Iterate over sampled number of detected-but-uncorrectable error patterns.
+    [candidate_correct_messages_zero_message, retval] = compute_candidate_correct_messages(received_string_zero_message,H,code_type);
+    num_candidate_messages = size(candidate_correct_messages_zero_message,1);
 
-    for j=1:num_sampled_error_patterns
-        error = error_patterns(sampled_error_pattern_indices(j),:);
-        [~, ~, num_candidate_messages, num_valid_messages, ~, suggest_to_crash, recovered_successfully] = inst_recovery('rv64g', num2str(n), num2str(k), message_bin, error, code_type, G, H, policy, instruction_mnemonic_hotness, instruction_rd_hotness, num2str(verbose_recovery));
+    if retval ~= 0
+        display('FATAL! Something went wrong computing candidate-correct messages!');
+    else
+        for i=1:num_messages   
+            %% Get the "message," which is the original instruction, i.e., the ground truth from input file.
+            original_message_hex = sampled_trace_hex(i,:);
+            original_message_bin = sampled_trace_bin(i,:);
+            
+            %% Check that the message is actually a valid instruction to begin with.
+            %if legal == 0 
+            %   display(['WARNING: Found illegal input instruction: ' original_message_hex '. This should not happen. However, we will try heuristic recovery anyway.']);
+            %end
 
-        %% Store results for this instruction/error pattern pair
-        results_candidate_messages(i,j) = num_candidate_messages;
-        results_valid_messages(i,j) = num_valid_messages;
-        success(i,j) = recovered_successfully;
-        could_have_crashed(i,j) = suggest_to_crash;
-        if suggest_to_crash == 1
-            success_with_crash_option(i,j) = ~success(i,j); % If success is 1, then we robbed ourselves of a chance to recover. Otherwise, if success is 0, we saved ourselves from corruption and potential failure!
-        else
-            success_with_crash_option(i,j) = success(i,j); % If we decide not to crash, success rate is same.
+            candidate_correct_messages = repmat('X',num_candidate_messages,k);
+            for x=1:num_candidate_messages
+                candidate_correct_messages(x,:) = my_bitxor(candidate_correct_messages_zero_message(x,:),original_message_bin); 
+            end
+
+            if verbose_recovery == 1
+                original_message_hex
+                original_message_bin
+                error
+                %received_string
+                candidate_correct_messages
+            end
+
+            %% Attempt to recover the original message. This could actually succeed depending on the code used and how many bits are in the error pattern.
+            %if verbose_recovery == 1
+            %    display('Attempting to decode the received string...');
+            %end
+
+            %if strcmp(code_type, 'hsiao1970') == 1 || strcmp(code_type, 'davydov1991') == 1 % SECDED
+            %    [recovered_message, num_error_bits] = secded_decoder(received_string, H, code_type);
+            %elseif strcmp(code_type, 'bose1960') == 1 % DECTED
+            %    [recovered_message, num_error_bits] = dected_decoder(received_string, H);
+            %elseif strcmp(code_type, 'fujiwara1982') == 1 % ChipKill
+            %    [recovered_message, num_error_bits, num_error_symbols] = chipkill_decoder(received_string, H, 4);
+            %end % didn't check bad code type error condition because we should have caught it earlier anyway
+            %
+            %if verbose_recovery == 1
+            %    display(['Sanity check: ECC decoder determined that there are ' num2str(num_error_bits) ' bits in error. The input error pattern had ' num2str(sum(error_pattern=='1')) ' bits flipped.']);
+
+            %    if strcmp(code_type, 'fujiwara1982') == 1 % ChipKill
+            %        display(['This is a ChipKill code with symbol size of 4 bits. The decoder found ' num2str(num_error_symbols) ' symbols in error.']);
+            %    end
+            %end
+            %    
+            %if verbose_recovery == 1 && sum(error_pattern=='1') ~= num_error_bits
+            %    display('NOTE: This is a MIS-CORRECTION by the ECC decoder itself.');
+            %end
+        
+            %if strcmp(recovered_message,original_message) == 1
+            %    display('ERROR: No error or correctable error. This should not have happened.');
+            %    return;
+            %end
+
+            [num_valid_messages, recovered_message, suggest_to_crash, recovered_successfully] = inst_recovery('rv64g', num2str(n), num2str(k), original_message_bin, candidate_correct_messages, policy, instruction_mnemonic_hotness, instruction_rd_hotness, num2str(verbose_recovery));
+
+            %% Store results for this instruction/error pattern pair
+            results_candidate_messages(i,j) = num_candidate_messages;
+            results_valid_messages(i,j) = num_valid_messages;
+            success(i,j) = recovered_successfully;
+            could_have_crashed(i,j) = suggest_to_crash;
+            if suggest_to_crash == 1
+                success_with_crash_option(i,j) = ~success(i,j); % If success is 1, then we robbed ourselves of a chance to recover. Otherwise, if success is 0, we saved ourselves from corruption and potential failure!
+            else
+                success_with_crash_option(i,j) = success(i,j); % If we decide not to crash, success rate is same.
+            end
         end
     end
-    
+
     % Progress indicator.
     % This will not show accurate progress if the loop is parallelized
     % across threads with parfor, since they can execute out-of-order
-    display(['Completed message # ' num2str(i) ' is index ' num2str(sampled_message_indices(i)) ' in the program. hex: ' message_hex '.']); %legal = ' num2str(legal) ', mnemonic = ' mnemonic ', codec = ' codec ',rd = ' rd ', rs1 = ' rs1 ', rs2 = ' rs2 ', rs3 = ' rs3 ', imm = ' imm ', arg = ' arg]);
-    %'. avg_success = ' num2str(sum(success(i,:))) ', avg_could_have_crashed = ' num2str(sum(could_have_crashed(i,:))) ', avg_success_with_crash_option = ' num2str(sum(success_with_crash_option(i,:)))]);
+    display(['Completed error pattern # ' num2str(j) ' is index ' num2str(sampled_error_pattern_indices(j)) '.']);
 end
 
 %% Save all variables
