@@ -2,8 +2,8 @@
 % Author: Mark Gottscho <mgottscho@ucla.edu>
 
 %%%%%%%% CHANGE ME AS NEEDED %%%%%%%%%%%%
-input_directory = '/Users/Mark/Dropbox/SoftwareDefinedECC/data/rv64g/data-recovery/offline-dynamic/fujiwara1982/144,128/hamming-pick-random';
-output_directory = input_directory;
+input_directory = 'D:\Dropbox\SoftwareDefinedECC\data\rv64g\data-recovery\offline-dynamic\fujiwara1982\144,128\hamming-pick-random\2016-10-22';
+output_directory = [input_directory filesep 'postprocessed'];
 num_words = 1000;
 %num_error_patterns = 741; % For (39,32) SECDED
 %num_error_patterns = 2556; % For (72,64) SECDED
@@ -51,7 +51,7 @@ for bench=1:num_benchmarks
     benchmark_successes(:,:,bench) = success;
     benchmark_could_have_crashed(:,:,bench) = could_have_crashed;
     benchmark_success_with_crash_option(:,:,bench) = success_with_crash_option;
-    data_heuristic_recovery_plot;
+    %data_heuristic_recovery_plot;
 end
 
 figure;
@@ -101,7 +101,9 @@ xlabel('Average Rate of Success With Crash Opt-in', 'FontSize', 12, 'FontName', 
 title(['Overall Average Rate of Success With Crash Opt-In for ' code_type ' (' num2str(n) ',' num2str(k) ') ' architecture ': ' policy ' Policy'],  'FontSize', 12, 'FontName', 'Arial');
 print(gcf, '-depsc2', [output_directory filesep 'overall_recovery_with_crash_option_avg.eps']);
 
-if strcmp(code_type,'hsiao1970') == 1 || strcmp(code_type,'davydov1991') == 1
+if (strcmp(code_type,'hsiao1970') == 1 || strcmp(code_type,'davydov1991') == 1) && k == 32
     secded_candidate_codewords_heatmap
     print(gcf, '-depsc2', [output_directory filesep code_type '-' num2str(n) '-' num2str(k) '-cc-heatmap.eps']);
 end
+
+save([output_directory filesep 'postprocessed.mat']);

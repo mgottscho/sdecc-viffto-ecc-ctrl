@@ -2,8 +2,8 @@
 % Author: Mark Gottscho <mgottscho@ucla.edu>
 
 %%%%%%%% CHANGE ME AS NEEDED %%%%%%%%%%%%
-input_directory = 'D:\Dropbox\SoftwareDefinedECC\data\rv64g\inst-recovery\offline-dynamic-split-int-float\hsiao1970\72,64\filter-joint-frequency-sort-pick-longest-pad\2016-10-17';
-output_directory = input_directory;
+input_directory = 'D:\Dropbox\SoftwareDefinedECC\data\rv64g\inst-recovery\offline-dynamic-split-int-float\fujiwara1982\144,128\filter-joint-frequency-sort-pick-longest-pad\2016-10-19';
+output_directory = [input_directory filesep 'postprocessed'];
 inst_fields_file = ['D:\Dropbox' filesep 'SoftwareDefinedECC' filesep 'data' filesep 'rv64g' filesep 'rv64g_inst_field_bitmasks_revised.mat'];
 num_inst = 1000;
 %num_error_patterns = 741; % For (39,32) SECDED
@@ -13,7 +13,7 @@ num_inst = 1000;
 %num_error_patterns = 141750; % For (144,128) ChipKill
 num_error_patterns = 1000; % sampled
 architecture = 'rv64g';
-code_type = 'hsiao1970';
+code_type = 'fujiwara1982';
 policy = 'Filter-Joint-Frequency-Sort-Pick-Longest-Pad';
 
 %% Read in names of benchmarks to process
@@ -108,7 +108,9 @@ title(['Overall Average Rate of Success With Crash Opt-In for ' code_type ' (' n
 print(gcf, '-depsc2', [output_directory filesep 'overall_recovery_with_crash_option_avg.eps']);
 
 % FIXME for k=64
-if strcmp(code_type,'hsiao1970') == 1 || strcmp(code_type,'davydov1991') == 1
+if k == 32 && (strcmp(code_type,'hsiao1970') == 1 || strcmp(code_type,'davydov1991') == 1)
     secded_candidate_codewords_heatmap
     print(gcf, '-depsc2', [output_directory filesep code_type '-' num2str(n) '-' num2str(k) '-cc-heatmap.eps']);
 end
+
+save([output_directory filesep 'postprocessed.mat']);
