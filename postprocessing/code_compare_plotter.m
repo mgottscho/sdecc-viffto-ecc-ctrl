@@ -9,11 +9,11 @@ avg_benchmark_successes_concat(:,7) = avg_benchmark_successes_fujiwara_144_128;
 avg_benchmark_successes_concat(21,:) = geomean(avg_benchmark_successes_concat(1:20,:));
 benchmark_names{21,1} = 'Geometric Mean';
 figure
-barh(avg_benchmark_successes_concat)
-colormap(cold)
+barh(fliplr(avg_benchmark_successes_concat))
+colormap('cool')
 set(gca,'YDir','reverse')
 set(gca,'YTick',1:21)
 set(gca,'YTickLabel',benchmark_names)
 xlabel('Average Rate of Heuristic Recovery')
 set(gca,'ylim',[0 22])
-legend({'(39,32) SECDED - Hsiao', '(39,32) SECDED - Davydov', '(72,64) SECDED - Hsiao', '(72,64) SECDED - Davydov', '(45,32) DECTED', '(79,64) DECTED', '(144,128) SSCDSD - Fujiwara'})
+legend(fliplr({'(39,32) SECDED - Hsiao', '(39,32) SECDED - Davydov', '(72,64) SECDED - Hsiao', '(72,64) SECDED - Davydov', '(45,32) DECTED', '(79,64) DECTED', '(144,128) SSCDSD - Fujiwara'}))
