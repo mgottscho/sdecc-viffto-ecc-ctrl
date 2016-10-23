@@ -1,4 +1,4 @@
-function [original_codeword, received_string, num_candidate_messages, recovered_message, suggest_to_crash, recovered_successfully] = data_recovery(architecture, n, k, original_message, error_pattern, code_type, G, H, policy, cacheline_bin, message_blockpos, verbose)
+function [recovered_message, suggest_to_crash, recovered_successfully] = data_recovery(architecture, n, k, original_message, candidate_correct_messages, policy, cacheline_bin, message_blockpos, verbose)
 % This function attempts to heuristically recover from a DUE affecting a single received string.
 % The message is assumed to be data of arbitrary type stored in memory.
 % To compute candidate codewords, we trial flip bits and decode using specified ECC decoder.
@@ -12,20 +12,13 @@ function [original_codeword, received_string, num_candidate_messages, recovered_
 %   n --                String: '[39|45|72|79|144]'
 %   k --                String: '[32|64|128]'
 %   original_message -- Binary String of length k bits/chars
-%   error_pattern --    Binary String of length n bits/chars
-%   code_type --        String: '[hsiao1970|davydov1991|bose1960|fujiwara1982]'
-%   G --                k x n binary generator matrix
-%   H --                (n-k) x n binary parity-check matrix
+%   candidate_correct_messages -- Nx1 cell array of binary strings, each k bits/chars long
 %   policy --           String: '[hamming-pick-random|longest-run-pick-random|delta-pick-random|dbx-pick-random]'
 %   cacheline_bin --    String: Set of words_per_block k-bit binary strings, e.g. '0001010101....00001,0000000000.....00000,...,111101010...00101'. words_per_block is inferred by the number of binary strings that are delimited by commas.
 %   message_blockpos -- String: '[0-(words_per_block-1)]' denoting the position of the message under test within the cacheline. This message should match original_message argument above.
 %   verbose -- '1' if you want console printouts of progress to stdout.
 %
 % Returns:
-%   original_codeword -- n-bit encoded version of original_message
-%   received_string -- n-bit string that is corrupted by the bit flips specified by error_pattern
-%   num_candidate_messages -- Scalar
-%   num_valid_messages -- Scalar
 %   recovered_message -- k-bit message that corresponds to our target for heuristic recovery
 %   suggest_to_crash -- 0 if we are confident in recovery, 1 if we recommend crashing out instead
 %   recovered_successfully -- 1 if we matched original_message, 0 otherwise
@@ -42,42 +35,22 @@ if verbose == 1
     n
     k
     original_message
-    error_pattern
-    code_type
+    candidate_correct_messages
     policy
     cacheline_bin
     message_blockpos
     verbose
 end
 
-rng('shuffle'); % Seed RNG based on current time -- FIXME: comment out for speed? If we RNG in swd_ecc_offline_data_heuristic_recovery then we shouldn't need to do it again...
+%rng('shuffle'); % Seed RNG based on current time -- FIXME: comment out for speed? If we RNG in swd_ecc_offline_data_heuristic_recovery then we shouldn't need to do it again...
 
 %% Init some return values
-original_codeword = repmat('X',1,n);
-received_string = repmat('X',1,n);
-num_candidate_messages = -1;
-num_valid_messages = -1;
 recovered_message = repmat('X',1,k);
 suggest_to_crash = 0;
 recovered_successfully = 0;
 
 if ~isdeployed
     addpath ecc common rv64g % Add sub-folders to MATLAB search paths for calling other functions we wrote
-end
-
-%% Encode the original message, then corrupt the codeword with the provided error pattern
-if verbose == 1
-    display('Getting the original codeword and generating the received (corrupted) string...');
-end
-
-original_codeword = ecc_encoder(original_message,G);
-received_string = my_bitxor(original_codeword, error_pattern);
-
-if verbose == 1
-    original_message
-    original_codeword
-    error_pattern
-    received_string
 end
 
 %% Parse cacheline_bin to convert into cell array
@@ -113,26 +86,6 @@ if verbose == 1
     parsed_cacheline_bin
 end
 
-%% Attempt to recover the original message. This could actually succeed depending on the code used and how many bits are in the error pattern.
-if verbose == 1
-    display('Attempting to decode the received string...');
-end
-
-if strcmp(code_type, 'hsiao1970') == 1 || strcmp(code_type, 'davydov1991') == 1 % SECDED
-    [recovered_message, num_error_bits] = secded_decoder(received_string, H, code_type);
-elseif strcmp(code_type, 'bose1960') == 1 % DECTED
-    [recovered_message, num_error_bits] = dected_decoder(received_string, H);
-elseif strcmp(code_type, 'fujiwara1982') == 1 % ChipKill
-    [recovered_message, num_error_bits, num_error_symbols] = chipkill_decoder(received_string, H, 4);
-end % didn't check bad code type error condition because we should have caught it earlier anyway
-
-if verbose == 1
-    display(['Sanity check: ECC decoder determined that there are ' num2str(num_error_bits) ' bits in error. The input error pattern had ' num2str(sum(error_pattern=='1')) ' bits flipped.']);
-
-    if strcmp(code_type, 'fujiwara1982') == 1 % ChipKill
-        display(['This is a ChipKill code with symbol size of 4 bits. The decoder found ' num2str(num_error_symbols) ' symbols in error.']);
-    end
-end
 
 %% If the ECC decoder returned the correct message, we are done.
 if strcmp(recovered_message,original_message) == 1
@@ -148,23 +101,6 @@ end
 %% If we got to this point, we have to recover from a DUE. 
 if verbose == 1
     display('Attempting heuristic recovery...');
-end
-
-%% Flip bits on the corrupted codeword, and attempt decoding on each. We should find several bit flip combinations that decode successfully
-if verbose == 1
-    display('Computing candidate codewords...');
-end
-
-recovered_message = repmat('X',1,k); % Re-init
-[candidate_correct_messages, retval] = compute_candidate_correct_messages(received_string,H,code_type);
-num_candidate_messages = size(candidate_correct_messages,1);
-if retval ~= 0
-    display('FATAL! Something went wrong computing candidate-correct messages!');
-    return;
-end
-
-if verbose == 1
-    candidate_correct_messages
 end
 
 %% Score the candidate-correct messages

@@ -234,42 +234,90 @@ mycluster = parcluster('local');
 mycluster.NumWorkers = n_threads;
 mypool = parpool(mycluster,n_threads);
 
-%% Do the hard work
-parfor i=1:num_words % Parallelize loop across separate threads, since this could take a long time. Each word is a totally independent procedure to perform.
-    %% Get the cacheline and "message," which is the original word, i.e., the ground truth from input file.
-    cacheline_hex  = sampled_trace_cachelines_hex(i,:);
-    cacheline_bin  = sampled_trace_cachelines_bin(i,:);
-    message_hex = cacheline_hex{sampled_blockpos_indices(i)};
-    message_bin = cacheline_bin{sampled_blockpos_indices(i)};
-
-    %% Serialize cacheline_bin into a string, as data_recovery() requires this instead of cell array.
-    serialized_cacheline_bin = cacheline_bin{1,1}; % init
-    for x=2:size(cacheline_bin,2)
-        serialized_cacheline_bin = [serialized_cacheline_bin ',' cacheline_bin{1,x}];
-    end
+%% Iterate over sampled number of detected-but-uncorrectable error patterns.
+parfor j=1:num_sampled_error_patterns
+    error = error_patterns(sampled_error_pattern_indices(j),:);
     
-    %% Iterate over sampled number of detected-but-uncorrectable error patterns.
-    for j=1:num_sampled_error_patterns
-        error = error_patterns(sampled_error_pattern_indices(j),:);
+    zero_codeword = repmat('0',1,n);
+    received_string_zero_message = my_bitxor(zero_codeword, error);
+    
+    [candidate_correct_messages_zero_message, retval] = compute_candidate_correct_messages(received_string_zero_message,H,code_type);
+    num_candidate_messages = size(candidate_correct_messages_zero_message,1);
 
-        %% Do heuristic recovery for this message/error pattern combo.
-        [original_codeword, received_string, num_candidate_messages, recovered_message, suggest_to_crash, recovered_successfully] = data_recovery('rv64g', num2str(n), num2str(k), message_bin, error, code_type, G, H, policy, serialized_cacheline_bin, sampled_blockpos_indices(i), verbose_recovery);
+    if retval ~= 0
+        display('FATAL! Something went wrong computing candidate-correct messages!');
+    else
+        for i=1:num_words % Parallelize loop across separate threads, since this could take a long time. Each word is a totally independent procedure to perform.
+            %% Get the cacheline and "message," which is the original word, i.e., the ground truth from input file.
+            cacheline_hex  = sampled_trace_cachelines_hex(i,:);
+            cacheline_bin  = sampled_trace_cachelines_bin(i,:);
+            original_message_hex = cacheline_hex{sampled_blockpos_indices(i)};
+            original_message_bin = cacheline_bin{sampled_blockpos_indices(i)};
+           
+            %% Compute candidate messages
+            candidate_correct_messages = repmat('X',num_candidate_messages,k);
+            for x=1:num_candidate_messages
+                candidate_correct_messages(x,:) = my_bitxor(candidate_correct_messages_zero_message(x,:),original_message_bin); 
+            end
 
-        %% Store results for this message/error pattern pair
-        success(i,j) = recovered_successfully;
-        could_have_crashed(i,j) = suggest_to_crash;
-        if suggest_to_crash == 1
-            success_with_crash_option(i,j) = ~success(i,j); % If success is 1, then we robbed ourselves of a chance to recover. Otherwise, if success is 0, we saved ourselves from corruption and potential failure!
-        else
-            success_with_crash_option(i,j) = success(i,j); % If we decide not to crash, success rate is same.
+            %% Serialize cacheline_bin into a string, as data_recovery() requires this instead of cell array.
+            serialized_cacheline_bin = cacheline_bin{1,1}; % init
+            for x=2:size(cacheline_bin,2)
+                serialized_cacheline_bin = [serialized_cacheline_bin ',' cacheline_bin{1,x}];
+            end
+            
+            if verbose_recovery == 1
+                original_message_hex
+                original_message_bin
+                error
+                %received_string
+                candidate_correct_messages
+                for x=1:size(cacheline_bin,2)
+                    x
+                    cacheline_bin{1,x}
+                end
+            end
+
+%            %% Attempt to recover the original message. This could actually succeed depending on the code used and how many bits are in the error pattern.
+%            if verbose == 1
+%                display('Attempting to decode the received string...');
+%            end
+%
+%            if strcmp(code_type, 'hsiao1970') == 1 || strcmp(code_type, 'davydov1991') == 1 % SECDED
+%                [recovered_message, num_error_bits] = secded_decoder(received_string, H, code_type);
+%            elseif strcmp(code_type, 'bose1960') == 1 % DECTED
+%                [recovered_message, num_error_bits] = dected_decoder(received_string, H);
+%            elseif strcmp(code_type, 'fujiwara1982') == 1 % ChipKill
+%                [recovered_message, num_error_bits, num_error_symbols] = chipkill_decoder(received_string, H, 4);
+%            end % didn't check bad code type error condition because we should have caught it earlier anyway
+%
+%            if verbose == 1
+%                display(['Sanity check: ECC decoder determined that there are ' num2str(num_error_bits) ' bits in error. The input error pattern had ' num2str(sum(error_pattern=='1')) ' bits flipped.']);
+%
+%                if strcmp(code_type, 'fujiwara1982') == 1 % ChipKill
+%                    display(['This is a ChipKill code with symbol size of 4 bits. The decoder found ' num2str(num_error_symbols) ' symbols in error.']);
+%                end
+%            end
+
+            %% Do heuristic recovery for this message/error pattern combo.
+            [recovered_message, suggest_to_crash, recovered_successfully] = data_recovery('rv64g', num2str(n), num2str(k), original_message_bin, candidate_correct_messages, policy, serialized_cacheline_bin, sampled_blockpos_indices(i), verbose_recovery);
+
+            %% Store results for this message/error pattern pair
+            success(i,j) = recovered_successfully;
+            could_have_crashed(i,j) = suggest_to_crash;
+            if suggest_to_crash == 1
+                success_with_crash_option(i,j) = ~success(i,j); % If success is 1, then we robbed ourselves of a chance to recover. Otherwise, if success is 0, we saved ourselves from corruption and potential failure!
+            else
+                success_with_crash_option(i,j) = success(i,j); % If we decide not to crash, success rate is same.
+            end
+            results_candidate_messages(i,j) = num_candidate_messages;
         end
-        results_candidate_messages(i,j) = num_candidate_messages;
     end
 
     %% Progress indicator
     % This will not show accurate progress if the loop is parallelized
     % across threads with parfor, since they can execute out-of-order
-    display(['Completed word # ' num2str(i) ' is index ' num2str(sampled_cacheline_indices(i)) ' cacheline in the program, block position ' num2str(sampled_blockpos_indices(i)) '. hex: ' message_hex]);
+    display(['Completed error pattern # ' num2str(j) ' is index ' num2str(sampled_error_pattern_indices(j)) '.']); 
 end
 
 %% Save all variables

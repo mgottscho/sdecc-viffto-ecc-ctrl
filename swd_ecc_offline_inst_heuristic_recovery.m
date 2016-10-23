@@ -475,3 +475,4 @@ display('Done!');
 %% Shut down parallel computing pool
 delete(mypool);
 
+end
