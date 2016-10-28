@@ -1,19 +1,38 @@
-avg_benchmark_successes_concat = NaN(20,7);
-avg_benchmark_successes_concat(:,1) = avg_benchmark_successes_hsiao_39_32;
-avg_benchmark_successes_concat(:,2) = avg_benchmark_successes_davydov_39_32;
-avg_benchmark_successes_concat(:,3) = avg_benchmark_successes_hsiao_72_64;
-avg_benchmark_successes_concat(:,4) = avg_benchmark_successes_davydov_72_64;
-avg_benchmark_successes_concat(:,5) = avg_benchmark_successes_bose_45_32;
-avg_benchmark_successes_concat(:,6) = avg_benchmark_successes_bose_79_64;
-avg_benchmark_successes_concat(:,7) = avg_benchmark_successes_fujiwara_144_128;
-avg_benchmark_successes_concat(21,:) = geomean(avg_benchmark_successes_concat(1:20,:));
-benchmark_names{21,1} = 'Geometric Mean';
 figure
-barh(fliplr(avg_benchmark_successes_concat))
+
+subplot(2,1,1);
+bar(avg_benchmark_successes_data_concat_split_int_float);
 colormap('cool')
-set(gca,'YDir','reverse')
-set(gca,'YTick',1:21)
-set(gca,'YTickLabel',benchmark_names)
-xlabel('Average Rate of Heuristic Recovery')
-set(gca,'ylim',[0 22])
-legend(fliplr({'(39,32) SECDED - Hsiao', '(39,32) SECDED - Davydov', '(72,64) SECDED - Hsiao', '(72,64) SECDED - Davydov', '(45,32) DECTED', '(79,64) DECTED', '(144,128) SSCDSD - Fujiwara'}))
+set(gca,'XTick',1:21)
+set(gca,'XTickLabel',[int_benchmark_names(int_benchmark_indices); float_benchmark_names(float_benchmark_indices); 'Geo. Mean'])
+ylabel('Average Rate of Heuristic Recovery','FontSize',14)
+set(gca,'xlim',[0 22])
+set(gca,'ylim',[0 1])
+set(gca,'FontSize',14);
+xlabel('(a) Data Memory')
+xticklabel_rotate([],45,[],'fontsize',14)
+hold on;
+bar([1:21], random_recovery_probs,'k');
+
+subplot(2,1,2);
+bar(avg_benchmark_successes_inst_concat_split_int_float);
+colormap('cool')
+set(gca,'XTick',1:21)
+set(gca,'XTickLabel',[int_benchmark_names(int_benchmark_indices); float_benchmark_names(float_benchmark_indices); 'Geo. Mean'])
+ylabel('Average Rate of Heuristic Recovery','FontSize',14)
+set(gca,'xlim',[0 22])
+set(gca,'ylim',[0 1])
+set(gca,'FontSize',14);
+xlabel('(b) Instruction Memory')
+xticklabel_rotate([],45,[],'fontsize',14)
+hold on
+bar([1:21], random_recovery_probs,'k');
+
+
+legend({'(39,32) SECDED - Hsiao', '(39,32) SECDED - Davydov', '(72,64) SECDED - Hsiao', '(72,64) SECDED - Davydov', '(45,32) DECTED', '(79,64) DECTED', '(144,128) SSCDSD - Kaneda'},'fontsize',12,'fontname','arial')
+% inst_text_box = uicontrol('style','text')
+% set(inst_text_box,'String','(b) Instruction Memory','fontsize',14,'fontname','arial')
+% data_text_box = uicontrol('style','text')
+% set(data_text_box,'String','(a) Data Memory','fontsize',14,'fontname','arial')
+% set(inst_text_box,'backgroundcolor',[1 1 1])
+% set(data_text_box,'backgroundcolor',[1 1 1])
