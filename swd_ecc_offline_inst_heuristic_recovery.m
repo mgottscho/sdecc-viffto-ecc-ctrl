@@ -1,4 +1,4 @@
-function swd_ecc_offline_inst_heuristic_recovery(architecture, benchmark, n, k, num_messages, num_sampled_error_patterns, input_filename, output_filename, n_threads, code_type, policy, mnemonic_hotness_filename, rd_hotness_filename, verbose_recovery)
+function swd_ecc_offline_inst_heuristic_recovery(architecture, benchmark, n, k, num_messages, num_sampled_error_patterns, input_filename, output_filename, n_threads, code_type, policy, mnemonic_hotness_filename, rd_hotness_filename, crash_threshold, verbose_recovery)
 % This function evaluates heuristic recovery from corrupted instructions in an offline manner.
 %
 % It iterates over a series of instructions that are statically extracted from a compiled program.
@@ -44,6 +44,7 @@ function swd_ecc_offline_inst_heuristic_recovery(architecture, benchmark, n, k, 
 %                                ]'
 %   mnemonic_hotness_filename -- String: full path to CSV file containing the relative frequency of each instruction to use for ranking
 %   rd_hotness_filename -- String: full path to CSV file containing the relative frequency of each destination register address to use for ranking
+%   crash_threshold -- fraction from 0 to 1, expressed as a string, e.g. '0.5'.
 %   verbose_recovery -- String: '[0|1]'
 %
 % Returns:
@@ -65,6 +66,7 @@ code_type
 policy
 mnemonic_hotness_filename
 rd_hotness_filename
+crash_threshold = str2double(crash_threshold)
 verbose_recovery = str2double(verbose_recovery)
 
 rng('shuffle'); % Seed RNG based on current time
@@ -446,7 +448,7 @@ parfor j=1:num_sampled_error_patterns % Parallelize loop across separate threads
             %    return;
             %end
 
-            [num_valid_messages, recovered_message, suggest_to_crash, recovered_successfully] = inst_recovery('rv64g', num2str(n), num2str(k), original_message_bin, candidate_correct_messages, policy, instruction_mnemonic_hotness, instruction_rd_hotness, num2str(verbose_recovery));
+            [num_valid_messages, recovered_message, suggest_to_crash, recovered_successfully] = inst_recovery('rv64g', num2str(n), num2str(k), original_message_bin, candidate_correct_messages, policy, instruction_mnemonic_hotness, instruction_rd_hotness, num2str(crash_threshold), num2str(verbose_recovery));
 
             %% Store results for this instruction/error pattern pair
             results_candidate_messages(i,j) = num_candidate_messages;

@@ -1,4 +1,4 @@
-function [num_valid_messages, recovered_message, suggest_to_crash, recovered_successfully] = inst_recovery(architecture, n, k, original_message, candidate_correct_messages, policy, instruction_mnemonic_hotness, instruction_rd_hotness, verbose)
+function [num_valid_messages, recovered_message, suggest_to_crash, recovered_successfully] = inst_recovery(architecture, n, k, original_message, candidate_correct_messages, policy, instruction_mnemonic_hotness, instruction_rd_hotness, crash_threshold, verbose)
 % This function attempts to heuristically recover from a DUE affecting a single received string.
 % The message is assumed to be an instruction of the given architecture in big endian format.
 % To compute candidate codewords, we flip a single bit one at a time and decode using specified ECC decoder.
@@ -31,6 +31,7 @@ function [num_valid_messages, recovered_message, suggest_to_crash, recovered_suc
 %                                ]'
 %   instruction_mnemonic_hotness -- Big 2D cell array imported from CSV file
 %   instruction_rd_hotness -- Big 2D cell array imported from CSV file
+%   crash_threshold -- fraction from 0 to 1, expressed as a string, e.g. '0.5'.
 %   verbose -- '1' if you want console printouts of progress to stdout.
 %
 % Returns:
@@ -44,6 +45,7 @@ function [num_valid_messages, recovered_message, suggest_to_crash, recovered_suc
 
 n = str2double(n);
 k = str2double(k);
+crash_threshold = str2double(crash_threshold);
 verbose = str2double(verbose);
 
 if verbose == 1
@@ -55,6 +57,7 @@ if verbose == 1
     policy
     instruction_mnemonic_hotness
     instruction_rd_hotness
+    crash_threshold
 end
 
 %rng('shuffle'); % Seed RNG based on current time -- commented out for speed. If we RNG in swd_ecc_offline_inst_heuristic_recovery then we shouldn't need to do it again.
@@ -481,7 +484,7 @@ elseif strcmp(policy, 'filter-rank-pick-random') == 1 ...
 
 
             target_inst_index = target_inst_indices(1);
-            if valid_messages_probabilities(target_inst_index) < 0.5
+            if valid_messages_probabilities(target_inst_index) < crash_threshold
                 suggest_to_crash = 1;
             end
         end
@@ -519,7 +522,7 @@ elseif strcmp(policy, 'filter-rank-pick-random') == 1 ...
             %    end
             %end
             target_inst_index = max_avg_pad_length_indices(1);
-            if valid_messages_probabilities(target_inst_index) < 0.5
+            if valid_messages_probabilities(target_inst_index) < crash_threshold
                 suggest_to_crash = 1;
             end
         end
