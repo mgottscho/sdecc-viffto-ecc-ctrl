@@ -2,7 +2,7 @@
 % Author: Mark Gottscho <mgottscho@ucla.edu>
 
 %%%%%%%% CHANGE ME AS NEEDED %%%%%%%%%%%%
-input_directory = 'D:\Dropbox\SoftwareDefinedECC\data\rv64g\inst-recovery\offline-dynamic-split-int-float\fujiwara1982\144,128\filter-joint-frequency-sort-pick-longest-pad\2016-10-19';
+input_directory = 'D:\Dropbox\SoftwareDefinedECC\data\rv64g\inst-recovery\offline-dynamic-split-int-float\kaneda1982\144,128\filter-joint-frequency-sort-pick-longest-pad\2016-10-19';
 output_directory = [input_directory filesep 'postprocessed'];
 inst_fields_file = ['D:\Dropbox' filesep 'SoftwareDefinedECC' filesep 'data' filesep 'rv64g' filesep 'rv64g_inst_field_bitmasks_revised.mat'];
 num_inst = 1000;
@@ -13,7 +13,7 @@ num_inst = 1000;
 %num_error_patterns = 141750; % For (144,128) ChipKill
 num_error_patterns = 1000; % sampled
 architecture = 'rv64g';
-code_type = 'fujiwara1982';
+code_type = 'kaneda1982';
 policy = 'Filter-Joint-Frequency-Sort-Pick-Longest-Pad';
 
 %% Read in names of benchmarks to process

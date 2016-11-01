@@ -4,7 +4,7 @@ function [candidate_correct_messages, retval] = compute_candidate_correct_messag
 % Arguments:
 %    received_string -- String of length n binary characters, where each is either '0' or '1'.
 %    H -- Binary matrix of dimension (n-k) x n, where each is either 0 or 1. This is the parity-check matrix.
-%    code_type -- String: '[hsiao1970|davydov1991|bose1960|fujiwara1982]' SECDED, DECTED, ChipKill-only for now.
+%    code_type -- String: '[hsiao1970|davydov1991|bose1960|kaneda1982]' SECDED, DECTED, ChipKill-only for now.
 %
 % Returns:
 %    candidate_correct_messages -- Character matrix of dimension c x k. Each row corresponds to a message that, when encoded and corrupted with a detected-but-uncorrectable error, could have resulted in the given received_string. Upon error in this function, candidate_correct_messages will be set to an n x k matrix of 'X'.
@@ -46,7 +46,7 @@ if strcmp(code_type, 'hsiao1970') == 1 || strcmp(code_type, 'davydov1991') == 1 
        end
     end
 % For codes that correct t-sym errors and detect t+1-sym errors, we only need to iterate over linear number of smybol "flip" positions.
-elseif strcmp(code_type, 'fujiwara1982') == 1 % ChipKill
+elseif strcmp(code_type, 'kaneda1982') == 1 % ChipKill
     sym_error_patterns = dec2bin(1:15);
     for sym_pos=1:n/4 % assume symbol size of 4 bits
         % Try all possible ways of changing a symbol

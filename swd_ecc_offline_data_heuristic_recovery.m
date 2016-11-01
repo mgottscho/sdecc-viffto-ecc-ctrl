@@ -23,7 +23,7 @@ function swd_ecc_offline_data_heuristic_recovery(architecture, benchmark, n, k, 
 %   input_filename --   String
 %   output_filename --  String
 %   n_threads --        String: '[1|2|3|...]'
-%   code_type --        String: '[hsiao|davydov1991|bose1960|fujiwara1982]'
+%   code_type --        String: '[hsiao|davydov1991|bose1960|kaneda1982]'
 %   policy --           String: '[baseline-pick-random|hamming-pick-random|longest-run-pick-random|delta-pick-random|dbx-pick-random]'
 %   verbose_recovery -- String: '[0|1]'
 %
@@ -169,7 +169,7 @@ elseif strcmp(code_type,'bose1960') == 1 % DECTED
             end
         end
     end
-elseif strcmp(code_type,'fujiwara1982') == 1 % ChipKill
+elseif strcmp(code_type,'kaneda1982') == 1 % ChipKill
     num_error_patterns = nchoosek(n/4,2) * 15^2;
     error_patterns = repmat('0',num_error_patterns,n);
     sym_error_patterns = dec2bin(1:15);
@@ -207,7 +207,7 @@ if strcmp(code_type, 'hsiao1970') == 1 || strcmp(code_type, 'davydov1991') == 1 
     [G,H] = getSECDEDCodes(n,code_type);
 elseif strcmp(code_type, 'bose1960') == 1 % DECTED
     [G,H] = getDECTEDCodes(n);
-elseif strcmp(code_type, 'fujiwara1982') == 1 % ChipKill
+elseif strcmp(code_type, 'kaneda1982') == 1 % ChipKill
     [G,H] = getChipkillCodes(n);
 else
     display(['FATAL! Unsupported code type: ' code_type]);
@@ -287,14 +287,14 @@ parfor j=1:num_sampled_error_patterns
 %                [recovered_message, num_error_bits] = secded_decoder(received_string, H, code_type);
 %            elseif strcmp(code_type, 'bose1960') == 1 % DECTED
 %                [recovered_message, num_error_bits] = dected_decoder(received_string, H);
-%            elseif strcmp(code_type, 'fujiwara1982') == 1 % ChipKill
+%            elseif strcmp(code_type, 'kaneda1982') == 1 % ChipKill
 %                [recovered_message, num_error_bits, num_error_symbols] = chipkill_decoder(received_string, H, 4);
 %            end % didn't check bad code type error condition because we should have caught it earlier anyway
 %
 %            if verbose == 1
 %                display(['Sanity check: ECC decoder determined that there are ' num2str(num_error_bits) ' bits in error. The input error pattern had ' num2str(sum(error_pattern=='1')) ' bits flipped.']);
 %
-%                if strcmp(code_type, 'fujiwara1982') == 1 % ChipKill
+%                if strcmp(code_type, 'kaneda1982') == 1 % ChipKill
 %                    display(['This is a ChipKill code with symbol size of 4 bits. The decoder found ' num2str(num_error_symbols) ' symbols in error.']);
 %                end
 %            end
