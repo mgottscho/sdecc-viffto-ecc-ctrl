@@ -370,6 +370,7 @@ success = NaN(num_messages, num_sampled_error_patterns); % Init
 could_have_crashed = NaN(num_messages, num_sampled_error_patterns); % Init
 success_with_crash_option = NaN(num_messages, num_sampled_error_patterns); % Init
 results_estimated_prob_correct = NaN(num_messages, num_sampled_error_patterns); % Init
+results_miscorrect = NaN(num_messages, num_sampled_error_patterns); % Init
     
 
 %% Set up parallel computing
@@ -459,8 +460,10 @@ parfor j=1:num_sampled_error_patterns % Parallelize loop across separate threads
             results_estimated_prob_correct(i,j) = estimated_prob_correct;
             if suggest_to_crash == 1
                 success_with_crash_option(i,j) = ~success(i,j); % If success is 1, then we robbed ourselves of a chance to recover. Otherwise, if success is 0, we saved ourselves from corruption and potential failure!
+                results_miscorrect(i,j) = 0;
             else
                 success_with_crash_option(i,j) = success(i,j); % If we decide not to crash, success rate is same.
+                results_miscorrect(i,j) = ~success(i,j);
             end
         end
     end
