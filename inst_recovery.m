@@ -443,6 +443,7 @@ elseif strcmp(policy, 'filter-rank-pick-random') == 1 ...
         if verbose == 1
             display(['LAST STEP: CHOOSE TARGET. We have one recovery target: ' num2str(target_inst_index)]);
         end
+        estimated_prob_correct = 1;
 
         % Handle special case, where NO candidate-correct messages were valid, perhaps because input message was an illegal instruction. In this case, actually revert to picking randomly and advise to crash.
         if target_inst_index == 0
