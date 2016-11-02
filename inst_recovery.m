@@ -443,7 +443,6 @@ elseif strcmp(policy, 'filter-rank-pick-random') == 1 ...
         if verbose == 1
             display(['LAST STEP: CHOOSE TARGET. We have one recovery target: ' num2str(target_inst_index)]);
         end
-        estimated_prob_correct = 1;
 
         % Handle special case, where NO candidate-correct messages were valid, perhaps because input message was an illegal instruction. In this case, actually revert to picking randomly and advise to crash.
         if target_inst_index == 0
@@ -454,6 +453,8 @@ elseif strcmp(policy, 'filter-rank-pick-random') == 1 ...
                 display(['SPECIAL CASE ENCOUNTERED: The recovery target is invalid, perhaps because none of the candidate messages are actually valid (perhaps the input instruction is illegal). We reverted to picking target randomly and got ' num2str(target_inst_index) '. Recommend always crashing in this case.']);
             end
             estimated_prob_correct = 0;
+        else
+            estimated_prob_correct = valid_messages_probabilities(target_inst_index);
         end
     else % Have several recovery targets
         if strcmp(policy, 'filter-pick-random') == 1 ...
