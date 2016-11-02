@@ -1,4 +1,4 @@
-function [num_valid_messages, recovered_message, suggest_to_crash, recovered_successfully] = inst_recovery(architecture, n, k, original_message, candidate_correct_messages, policy, instruction_mnemonic_hotness, instruction_rd_hotness, crash_threshold, verbose)
+function [num_valid_messages, recovered_message, estimated_prob_correct, suggest_to_crash, recovered_successfully] = inst_recovery(architecture, n, k, original_message, candidate_correct_messages, policy, instruction_mnemonic_hotness, instruction_rd_hotness, crash_threshold, verbose)
 % This function attempts to heuristically recover from a DUE affecting a single received string.
 % The message is assumed to be an instruction of the given architecture in big endian format.
 % To compute candidate codewords, we flip a single bit one at a time and decode using specified ECC decoder.
@@ -37,6 +37,7 @@ function [num_valid_messages, recovered_message, suggest_to_crash, recovered_suc
 % Returns:
 %   num_valid_messages -- Scalar
 %   recovered_message -- k-bit message that corresponds to our target for heuristic recovery
+%   estimated_prob_correct -- fraction from 0 to 1 estimating what the policy thinks is the probability of correctness of its chosen message
 %   suggest_to_crash -- 0 if we are confident in recovery, 1 if we recommend crashing out instead
 %   recovered_successfully -- 1 if we matched original_message, 0 otherwise
 %
@@ -65,6 +66,7 @@ end
 %% Init some return values
 num_valid_messages = -1;
 recovered_message = repmat('X',1,k);
+estimated_prob_correct = 0;
 suggest_to_crash = 0;
 recovered_successfully = 0;
 
@@ -450,6 +452,7 @@ elseif strcmp(policy, 'filter-rank-pick-random') == 1 ...
             if verbose == 1
                 display(['SPECIAL CASE ENCOUNTERED: The recovery target is invalid, perhaps because none of the candidate messages are actually valid (perhaps the input instruction is illegal). We reverted to picking target randomly and got ' num2str(target_inst_index) '. Recommend always crashing in this case.']);
             end
+            estimated_prob_correct = 0;
         end
     else % Have several recovery targets
         if strcmp(policy, 'filter-pick-random') == 1 ...
@@ -463,6 +466,7 @@ elseif strcmp(policy, 'filter-rank-pick-random') == 1 ...
                 suggest_to_crash = 1;
             end
             target_inst_index = target_inst_indices(randi(size(target_inst_indices,1),1));
+            estimated_prob_correct = NaN;
         end
 
         if strcmp(policy, 'filter-rank-sort-pick-first') == 1 ...
@@ -475,6 +479,7 @@ elseif strcmp(policy, 'filter-rank-pick-random') == 1 ...
                 suggest_to_crash = 1;
             end
             target_inst_index = target_inst_indices(1);
+            estimated_prob_correct = NaN;
         end
 
         if strcmp(policy, 'filter-frequency-sort-pick-first') == 1
@@ -487,6 +492,7 @@ elseif strcmp(policy, 'filter-rank-pick-random') == 1 ...
             if valid_messages_probabilities(target_inst_index) < crash_threshold
                 suggest_to_crash = 1;
             end
+            estimated_prob_correct = valid_messages_probabilities(target_inst_index);
         end
 
         if strcmp(policy, 'filter-frequency-sort-pick-longest-pad') == 1 ...
@@ -525,6 +531,7 @@ elseif strcmp(policy, 'filter-rank-pick-random') == 1 ...
             if valid_messages_probabilities(target_inst_index) < crash_threshold
                 suggest_to_crash = 1;
             end
+            estimated_prob_correct = valid_messages_probabilities(target_inst_index);
         end
     end
 end

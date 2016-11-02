@@ -369,6 +369,7 @@ results_valid_messages = NaN(num_messages,num_sampled_error_patterns); % Init
 success = NaN(num_messages, num_sampled_error_patterns); % Init
 could_have_crashed = NaN(num_messages, num_sampled_error_patterns); % Init
 success_with_crash_option = NaN(num_messages, num_sampled_error_patterns); % Init
+results_estimated_prob_correct = NaN(num_messages, num_sampled_error_patterns); % Init
     
 
 %% Set up parallel computing
@@ -448,13 +449,14 @@ parfor j=1:num_sampled_error_patterns % Parallelize loop across separate threads
             %    return;
             %end
 
-            [num_valid_messages, recovered_message, suggest_to_crash, recovered_successfully] = inst_recovery('rv64g', num2str(n), num2str(k), original_message_bin, candidate_correct_messages, policy, instruction_mnemonic_hotness, instruction_rd_hotness, num2str(crash_threshold), num2str(verbose_recovery));
+            [num_valid_messages, recovered_message, estimated_prob_correct, suggest_to_crash, recovered_successfully] = inst_recovery('rv64g', num2str(n), num2str(k), original_message_bin, candidate_correct_messages, policy, instruction_mnemonic_hotness, instruction_rd_hotness, num2str(crash_threshold), num2str(verbose_recovery));
 
             %% Store results for this instruction/error pattern pair
             results_candidate_messages(i,j) = num_candidate_messages;
             results_valid_messages(i,j) = num_valid_messages;
             success(i,j) = recovered_successfully;
             could_have_crashed(i,j) = suggest_to_crash;
+            results_estimated_prob_correct(i,j) = estimated_prob_correct;
             if suggest_to_crash == 1
                 success_with_crash_option(i,j) = ~success(i,j); % If success is 1, then we robbed ourselves of a chance to recover. Otherwise, if success is 0, we saved ourselves from corruption and potential failure!
             else
