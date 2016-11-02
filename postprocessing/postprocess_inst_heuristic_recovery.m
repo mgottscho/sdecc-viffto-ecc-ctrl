@@ -2,9 +2,9 @@
 % Author: Mark Gottscho <mgottscho@ucla.edu>
 
 %%%%%%%% CHANGE ME AS NEEDED %%%%%%%%%%%%
-input_directory = 'D:\Dropbox\SoftwareDefinedECC\data\rv64g\inst-recovery\offline-dynamic-split-int-float\kaneda1982\144,128\filter-joint-frequency-sort-pick-longest-pad\2016-11-2 crash threshold 0.8';
+input_directory = '/Users/Mark/Dropbox/SoftwareDefinedECC/data/rv64g/inst-recovery/offline-dynamic-split-int-float/kaneda1982/144,128/filter-joint-frequency-sort-pick-longest-pad/2016-11-2 crash threshold 0.8';
 output_directory = [input_directory filesep 'postprocessed'];
-inst_fields_file = ['D:\Dropbox' filesep 'SoftwareDefinedECC' filesep 'data' filesep 'rv64g' filesep 'rv64g_inst_field_bitmasks_revised.mat'];
+inst_fields_file = ['/Users/Mark/Dropbox' filesep 'SoftwareDefinedECC' filesep 'data' filesep 'rv64g' filesep 'rv64g_inst_field_bitmasks_revised.mat'];
 num_inst = 1000;
 %num_error_patterns = 741; % For (39,32) SECDED
 %num_error_patterns = 2556; % For (72,64) SECDED
@@ -47,6 +47,7 @@ num_benchmarks = size(benchmark_names,1);
 benchmark_successes = NaN(num_inst,num_error_patterns,num_benchmarks);
 benchmark_could_have_crashed = NaN(num_inst,num_error_patterns,num_benchmarks);
 benchmark_success_with_crash_option = NaN(num_inst,num_error_patterns,num_benchmarks);
+benchmark_miscorrect = NaN(num_inst,num_error_patterns,num_benchmarks);
 load(inst_fields_file);
 
 for bench=1:num_benchmarks
@@ -55,6 +56,7 @@ for bench=1:num_benchmarks
     benchmark_successes(:,:,bench) = success;
     benchmark_could_have_crashed(:,:,bench) = could_have_crashed;
     benchmark_success_with_crash_option(:,:,bench) = success_with_crash_option;
+    benchmark_miscorrect(:,:,bench) = results_miscorrect;
     if k == 32 && (strcmp(code_type, 'hsiao1970') == 1 || strcmp(code_type, 'davydov1991') == 1) % SECDED only for these plots. Make sure number of error patterns is fully sampled
         inst_heuristic_recovery_plot;
     end
@@ -108,6 +110,73 @@ xlim([0 1]);
 xlabel('Average Rate of Success With Crash Opt-in', 'FontSize', 12, 'FontName', 'Arial');
 title(['Overall Average Rate of Success With Crash Opt-In for ' code_type ' (' num2str(n) ',' num2str(k) ') ' architecture ': ' policy ' Policy'],  'FontSize', 12, 'FontName', 'Arial');
 print(gcf, '-depsc2', [output_directory filesep 'overall_recovery_with_crash_option_avg.eps']);
+
+avg_benchmark_miscorrect = reshape(mean(mean(benchmark_miscorrect,1),2), [size(benchmark_miscorrect,3),1]);
+figure;
+barh(avg_benchmark_miscorrect, 'k');
+ylabel('Benchmark', 'FontSize', 12, 'FontName', 'Arial');
+set(gca,'YTick', 1:size(benchmark_names,1));
+set(gca,'YTickLabel', benchmark_names, 'FontSize', 12, 'FontName', 'Arial');
+%xlim([0 1]);
+xlabel('Average Rate of Miscorrection', 'FontSize', 12, 'FontName', 'Arial');
+title(['Overall Average Rate of Miscorrection With Crash Opt-In for ' code_type ' (' num2str(n) ',' num2str(k) ') ' architecture ': ' policy ' Policy'],  'FontSize', 12, 'FontName', 'Arial');
+print(gcf, '-depsc2', [output_directory filesep 'overall_miscorrect_with_crash_option_avg.eps']);
+
+figure;
+barh([avg_benchmark_success_with_crash_option 1-(avg_benchmark_success_with_crash_option+avg_benchmark_miscorrect) avg_benchmark_miscorrect],'stacked');
+ylabel('Benchmark', 'FontSize', 12, 'FontName', 'Arial');
+set(gca,'YTick', 1:size(benchmark_names,1));
+set(gca,'YTickLabel', benchmark_names, 'FontSize', 12, 'FontName', 'Arial');
+xlim([0 1]);
+xlabel('Fraction of DUEs', 'FontSize', 12, 'FontName', 'Arial');
+title(['Breakdown of Successful Recovery, Forced Crashes, and Miscorrections for ' code_type ' (' num2str(n) ',' num2str(k) ') ' architecture ': ' policy ' Policy'],  'FontSize', 12, 'FontName', 'Arial');
+print(gcf, '-depsc2', [output_directory filesep 'overall_crash_policy_breakdown.eps']);
+
+figure;
+barh([avg_benchmark_successes 1-avg_benchmark_successes],'stacked');
+ylabel('Benchmark', 'FontSize', 12, 'FontName', 'Arial');
+set(gca,'YTick', 1:size(benchmark_names,1));
+set(gca,'YTickLabel', benchmark_names, 'FontSize', 12, 'FontName', 'Arial');
+xlim([0 1]);
+xlabel('Fraction of DUEs', 'FontSize', 12, 'FontName', 'Arial');
+title(['Breakdown of Successful Recovery and Miscorrections with No Crash Policy for ' code_type ' (' num2str(n) ',' num2str(k) ') ' architecture ': ' policy ' Policy'],  'FontSize', 12, 'FontName', 'Arial');
+print(gcf, '-depsc2', [output_directory filesep 'overall_miscorrect_no_crash_policy_breakdown.eps']);
+
+stackData = NaN(num_benchmarks, 2, 3);
+for bench=1:num_benchmarks
+   % No crash policy
+   stackData(bench,1,1) = avg_benchmark_successes(bench);
+   stackData(bench,1,2) = 0;
+   stackData(bench,1,3) = 1-avg_benchmark_successes(bench);
+
+   % Crash policy
+   stackData(bench,2,1) = avg_benchmark_success_with_crash_option(bench);
+   stackData(bench,2,2) = 1-(avg_benchmark_success_with_crash_option(bench)+avg_benchmark_miscorrect(bench));
+   stackData(bench,2,3) = avg_benchmark_miscorrect(bench);
+end
+plotBarStackGroups(stackData,benchmark_names);
+xlim([0 21]);
+xticklabel_rotate([],45,[],'fontsize',14);
+ylabel('Fraction of DUEs', 'FontSize', 12, 'FontName', 'Arial');
+colormap(flipud(prism));
+legend({'Successful Recovery', 'Forced Crash', 'Failed Recovery (MCE)'});
+title(['Breakdown of DUEs for ' code_type ' (' num2str(n) ',' num2str(k) ') ' architecture ': ' policy ' Policy'],  'FontSize', 12, 'FontName', 'Arial');
+print(gcf, '-depsc2', [output_directory filesep 'due_breakdown.eps']);
+
+
+figure;
+subplot(1,2,1);
+avg_benchmark_successes_geomean = geomean(avg_benchmark_successes);
+avg_benchmark_success_with_crash_option_geomean = geomean(avg_benchmark_success_with_crash_option);
+avg_benchmark_miscorrect_geomean = geomean(avg_benchmark_miscorrect);
+pie([avg_benchmark_successes_geomean 1-avg_benchmark_successes_geomean]);
+subplot(1,2,2);
+pie([avg_benchmark_success_with_crash_option_geomean 1-(avg_benchmark_success_with_crash_option_geomean+avg_benchmark_miscorrect_geomean) avg_benchmark_miscorrect_geomean]);
+colormap(flipud(prism));
+legend({'Successful Recovery', 'Forced Crash', 'Failed Recovery (MCE)'});
+title(['Breakdown of DUEs for ' code_type ' (' num2str(n) ',' num2str(k) ') ' architecture ': ' policy ' Policy'],  'FontSize', 12, 'FontName', 'Arial');
+print(gcf, '-depsc2', [output_directory filesep 'due_breakdown.eps']);
+
 
 % FIXME for k=64
 if k == 32 && (strcmp(code_type,'hsiao1970') == 1 || strcmp(code_type,'davydov1991') == 1)
