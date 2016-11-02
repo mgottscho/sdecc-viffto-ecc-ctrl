@@ -2,7 +2,7 @@
 % Author: Mark Gottscho <mgottscho@ucla.edu>
 
 %%%%%%%% CHANGE ME AS NEEDED %%%%%%%%%%%%
-input_directory = 'D:\Dropbox\SoftwareDefinedECC\data\rv64g\inst-recovery\offline-dynamic-split-int-float\kaneda1982\144,128\filter-joint-frequency-sort-pick-longest-pad\2016-10-19';
+input_directory = 'D:\Dropbox\SoftwareDefinedECC\data\rv64g\inst-recovery\offline-dynamic-split-int-float\kaneda1982\144,128\filter-joint-frequency-sort-pick-longest-pad\2016-11-2 crash threshold 0.8';
 output_directory = [input_directory filesep 'postprocessed'];
 inst_fields_file = ['D:\Dropbox' filesep 'SoftwareDefinedECC' filesep 'data' filesep 'rv64g' filesep 'rv64g_inst_field_bitmasks_revised.mat'];
 num_inst = 1000;
@@ -15,6 +15,8 @@ num_error_patterns = 1000; % sampled
 architecture = 'rv64g';
 code_type = 'kaneda1982';
 policy = 'Filter-Joint-Frequency-Sort-Pick-Longest-Pad';
+
+mkdir(output_directory);
 
 %% Read in names of benchmarks to process
 dir_contents = dir(input_directory);
@@ -49,7 +51,7 @@ load(inst_fields_file);
 
 for bench=1:num_benchmarks
     benchmark = benchmark_names{bench};
-    load([input_directory filesep architecture '-' benchmark '-inst-heuristic-recovery.mat'], 'results_candidate_messages', 'results_valid_messages', 'success', 'could_have_crashed', 'success_with_crash_option', 'error_patterns', 'n', 'k');
+    load([input_directory filesep architecture '-' benchmark '-inst-heuristic-recovery.mat'], 'results_candidate_messages', 'results_valid_messages', 'results_estimated_prob_correct', 'results_miscorrect', 'success', 'could_have_crashed', 'success_with_crash_option', 'error_patterns', 'n', 'k');
     benchmark_successes(:,:,bench) = success;
     benchmark_could_have_crashed(:,:,bench) = could_have_crashed;
     benchmark_success_with_crash_option(:,:,bench) = success_with_crash_option;
