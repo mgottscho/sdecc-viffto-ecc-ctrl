@@ -454,6 +454,10 @@ elseif strcmp(policy, 'filter-rank-pick-random') == 1 ...
             end
             estimated_prob_correct = 0;
         else
+            % FIXME won't work for non-probability based policies?
+            if valid_messages_probabilities(target_inst_index) < crash_threshold
+                suggest_to_crash = 1;
+            end
             estimated_prob_correct = valid_messages_probabilities(target_inst_index);
         end
     else % Have several recovery targets
