@@ -37,10 +37,8 @@ elif [[ "$INPUT_TYPE" == "dynamic" ]]; then # Dynamic
     RD_HOTNESS_FILENAME=$MWG_DATA_PATH/swd_ecc_data/$ISA/program-statistics/dynamic/$ISA-rd-hotness-dyn-all.csv
 
 elif [[ "$INPUT_TYPE" == "dynamic-split-int-float" ]]; then # Dynamic
-    #INT_SPEC_BENCHMARKS="400.perlbench 401.bzip2 403.gcc 456.hmmer 458.sjeng 462.libquantum 464.h264ref 471.omnetpp 473.astar"
-    INT_SPEC_BENCHMARKS="400.perlbench"
-    #FLOAT_SPEC_BENCHMARKS="410.bwaves 435.gromacs 436.cactusADM 444.namd 447.dealII 450.soplex 453.povray 454.calculix 459.GemsFDTD 465.tonto 470.lbm"
-    FLOAT_SPEC_BENCHMARKS=""
+    INT_SPEC_BENCHMARKS="400.perlbench 401.bzip2 403.gcc 456.hmmer 458.sjeng 462.libquantum 464.h264ref 471.omnetpp 473.astar"
+    FLOAT_SPEC_BENCHMARKS="410.bwaves 435.gromacs 436.cactusADM 444.namd 447.dealII 450.soplex 453.povray 454.calculix 459.GemsFDTD 465.tonto 470.lbm"
     INPUT_DIRECTORY=$MWG_DATA_PATH/swd_ecc_data/$ISA/spike # For dynamic
     #INT_MNEMONIC_HOTNESS_FILENAME=$MWG_DATA_PATH/swd_ecc_data/$ISA/program-statistics/dynamic/$ISA-mnemonic-hotness-dyn-int.csv
     INT_MNEMONIC_HOTNESS_FILENAME=$MWG_DATA_PATH/swd_ecc_data/$ISA/program-statistics/dynamic/$ISA-joint-mnemonic-reg-hotness-dyn-int.csv
@@ -79,7 +77,7 @@ NUM_SAMPLED_ERROR_PATTERNS=1000
 #NUM_SAMPLED_ERROR_PATTERNS=79079 # Max for (79,64) DECTED
 #NUM_SAMPLED_ERROR_PATTERNS=141750 # Max for (144,128) ChipKill
 POLICY=filter-joint-frequency-sort-pick-longest-pad
-CRASH_THRESHOLD=1
+CRASH_THRESHOLD=0.8
 VERBOSE_RECOVERY=0
 
 OUTPUT_DIRECTORY=$MWG_DATA_PATH/swd_ecc_data/$ISA/inst-recovery/offline-$INPUT_TYPE/$CODE_TYPE/$N,$K/$POLICY
