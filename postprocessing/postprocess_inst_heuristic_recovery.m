@@ -2,7 +2,7 @@
 % Author: Mark Gottscho <mgottscho@ucla.edu>
 
 %%%%%%%% CHANGE ME AS NEEDED %%%%%%%%%%%%
-input_directory = '/Users/Mark/Dropbox/SoftwareDefinedECC/data/rv64g/inst-recovery/offline-dynamic-split-int-float/kaneda1982/144,128/filter-joint-frequency-sort-pick-longest-pad/2016-11-2 crash threshold 0.8';
+input_directory = '/Users/Mark/Dropbox/SoftwareDefinedECC/data/rv64g/inst-recovery/offline-dynamic-split-int-float/kaneda1982/144,128/filter-joint-frequency-sort-pick-longest-pad/2016-11-2 crash threshold 0.9';
 output_directory = [input_directory filesep 'postprocessed'];
 inst_fields_file = ['/Users/Mark/Dropbox' filesep 'SoftwareDefinedECC' filesep 'data' filesep 'rv64g' filesep 'rv64g_inst_field_bitmasks_revised.mat'];
 num_inst = 1000;
@@ -123,16 +123,6 @@ title(['Overall Average Rate of Miscorrection With Crash Opt-In for ' code_type 
 print(gcf, '-depsc2', [output_directory filesep 'overall_miscorrect_with_crash_option_avg.eps']);
 
 figure;
-barh([avg_benchmark_success_with_crash_option 1-(avg_benchmark_success_with_crash_option+avg_benchmark_miscorrect) avg_benchmark_miscorrect],'stacked');
-ylabel('Benchmark', 'FontSize', 12, 'FontName', 'Arial');
-set(gca,'YTick', 1:size(benchmark_names,1));
-set(gca,'YTickLabel', benchmark_names, 'FontSize', 12, 'FontName', 'Arial');
-xlim([0 1]);
-xlabel('Fraction of DUEs', 'FontSize', 12, 'FontName', 'Arial');
-title(['Breakdown of Successful Recovery, Forced Crashes, and Miscorrections for ' code_type ' (' num2str(n) ',' num2str(k) ') ' architecture ': ' policy ' Policy'],  'FontSize', 12, 'FontName', 'Arial');
-print(gcf, '-depsc2', [output_directory filesep 'overall_crash_policy_breakdown.eps']);
-
-figure;
 barh([avg_benchmark_successes 1-avg_benchmark_successes],'stacked');
 ylabel('Benchmark', 'FontSize', 12, 'FontName', 'Arial');
 set(gca,'YTick', 1:size(benchmark_names,1));
@@ -150,8 +140,8 @@ for bench=1:num_benchmarks
    stackData(bench,1,3) = 1-avg_benchmark_successes(bench);
 
    % Crash policy
-   stackData(bench,2,1) = avg_benchmark_success_with_crash_option(bench);
-   stackData(bench,2,2) = 1-(avg_benchmark_success_with_crash_option(bench)+avg_benchmark_miscorrect(bench));
+   stackData(bench,2,1) = 1-(avg_benchmark_could_have_crashed(bench)+avg_benchmark_miscorrect(bench));
+   stackData(bench,2,2) = avg_benchmark_could_have_crashed(bench);
    stackData(bench,2,3) = avg_benchmark_miscorrect(bench);
 end
 plotBarStackGroups(stackData,benchmark_names);
@@ -167,11 +157,11 @@ print(gcf, '-depsc2', [output_directory filesep 'due_breakdown.eps']);
 figure;
 subplot(1,2,1);
 avg_benchmark_successes_geomean = geomean(avg_benchmark_successes);
-avg_benchmark_success_with_crash_option_geomean = geomean(avg_benchmark_success_with_crash_option);
+avg_benchmark_could_have_crashed_geomean = geomean(avg_benchmark_could_have_crashed);
 avg_benchmark_miscorrect_geomean = geomean(avg_benchmark_miscorrect);
 pie([avg_benchmark_successes_geomean 1-avg_benchmark_successes_geomean]);
 subplot(1,2,2);
-pie([avg_benchmark_success_with_crash_option_geomean 1-(avg_benchmark_success_with_crash_option_geomean+avg_benchmark_miscorrect_geomean) avg_benchmark_miscorrect_geomean]);
+pie([1-(avg_benchmark_could_have_crashed_geomean+avg_benchmark_miscorrect_geomean) avg_benchmark_could_have_crashed_geomean avg_benchmark_miscorrect_geomean]);
 colormap(flipud(prism));
 legend({'Successful Recovery', 'Forced Crash', 'Failed Recovery (MCE)'});
 title(['Breakdown of DUEs for ' code_type ' (' num2str(n) ',' num2str(k) ') ' architecture ': ' policy ' Policy'],  'FontSize', 12, 'FontName', 'Arial');
