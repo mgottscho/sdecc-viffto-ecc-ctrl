@@ -1,4 +1,4 @@
-function swd_ecc_offline_data_heuristic_recovery(architecture, benchmark, n, k, num_words, num_sampled_error_patterns, words_per_block, input_filename, output_filename, n_threads, code_type, policy, verbose_recovery)
+function swd_ecc_offline_data_heuristic_recovery(architecture, benchmark, n, k, num_words, num_sampled_error_patterns, words_per_block, input_filename, output_filename, n_threads, code_type, policy, crash_threshold, verbose_recovery)
 % This function iterates over a series of data cache lines that are statically extracted
 % from a compiled program that was executed and produced a dynamic memory trace.
 % We choose a cache line and word within a cache line randomly.
@@ -25,6 +25,7 @@ function swd_ecc_offline_data_heuristic_recovery(architecture, benchmark, n, k, 
 %   n_threads --        String: '[1|2|3|...]'
 %   code_type --        String: '[hsiao|davydov1991|bose1960|kaneda1982]'
 %   policy --           String: '[baseline-pick-random|hamming-pick-random|longest-run-pick-random|delta-pick-random|dbx-pick-random]'
+%   crash_threshold -- String of a scalar. Policy-defined semantics and range.
 %   verbose_recovery -- String: '[0|1]'
 %
 % Returns:
@@ -45,6 +46,7 @@ output_filename
 n_threads = str2num(n_threads)
 code_type
 policy
+crash_threshold
 verbose_recovery
 
 rng('shuffle'); % Seed RNG based on current time
@@ -70,7 +72,6 @@ total_num_cachelines = str2num(strtok(wc_output));
 display(['Number of randomly-sampled words to test SWD-ECC: ' num2str(num_words) '. Total cache lines in trace: ' num2str(total_num_cachelines) '.']);
 
 %% Randomly choose cache lines from the trace, and load them
-rng('shuffle'); % Seed RNG based on current time
 sampled_cacheline_indices = sortrows(randperm(total_num_cachelines, num_words)'); % Randomly permute the indices of cachelines. We will choose the first num_words of the permuted list to evaluate. Then, from each of these cachelines, we randomly pick one word from within it.
 sampled_blockpos_indices = randi(words_per_block, 1, num_words); % Randomly generate the block position within the cacheline
 
@@ -218,6 +219,9 @@ results_candidate_messages = NaN(num_words,num_sampled_error_patterns); % Init
 success = NaN(num_words, num_sampled_error_patterns); % Init
 could_have_crashed = NaN(num_words, num_sampled_error_patterns); % Init
 success_with_crash_option = NaN(num_words, num_sampled_error_patterns); % Init
+results_miscorrect = NaN(num_words, num_sampled_error_patterns); % Init
+avg_candidate_scores = NaN(num_words, num_sampled_error_patterns); % Init
+var_candidate_scores = NaN(num_words, num_sampled_error_patterns); % Init
 
 %% Randomly generate sampled error pattern indices
 sampled_error_pattern_indices = sortrows(randperm(num_error_patterns, num_sampled_error_patterns)'); % Increasing order of indices. This does not affect experiment correctness.
@@ -300,15 +304,19 @@ parfor j=1:num_sampled_error_patterns
 %            end
 
             %% Do heuristic recovery for this message/error pattern combo.
-            [recovered_message, suggest_to_crash, recovered_successfully] = data_recovery('rv64g', num2str(n), num2str(k), original_message_bin, candidate_correct_messages, policy, serialized_cacheline_bin, sampled_blockpos_indices(i), verbose_recovery);
+            [candidate_scores, recovered_message, suggest_to_crash, recovered_successfully] = data_recovery('rv64g', num2str(n), num2str(k), original_message_bin, candidate_correct_messages, policy, serialized_cacheline_bin, sampled_blockpos_indices(i), crash_threshold, verbose_recovery);
 
             %% Store results for this message/error pattern pair
             success(i,j) = recovered_successfully;
             could_have_crashed(i,j) = suggest_to_crash;
+            avg_candidate_scores(i,j) = mean(candidate_scores);
+            var_candidate_scores(i,j) = var(candidate_scores);
             if suggest_to_crash == 1
                 success_with_crash_option(i,j) = ~success(i,j); % If success is 1, then we robbed ourselves of a chance to recover. Otherwise, if success is 0, we saved ourselves from corruption and potential failure!
+                results_miscorrect(i,j) = 0;
             else
                 success_with_crash_option(i,j) = success(i,j); % If we decide not to crash, success rate is same.
+                results_miscorrect(i,j) = ~success(i,j);
             end
             results_candidate_messages(i,j) = num_candidate_messages;
         end

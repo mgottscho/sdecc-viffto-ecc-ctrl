@@ -1,4 +1,4 @@
-function [recovered_message, suggest_to_crash, recovered_successfully] = data_recovery(architecture, n, k, original_message, candidate_correct_messages, policy, cacheline_bin, message_blockpos, verbose)
+function [candidate_correct_message_scores, recovered_message, suggest_to_crash, recovered_successfully] = data_recovery(architecture, n, k, original_message, candidate_correct_messages, policy, cacheline_bin, message_blockpos, crash_threshold, verbose)
 % This function attempts to heuristically recover from a DUE affecting a single received string.
 % The message is assumed to be data of arbitrary type stored in memory.
 % To compute candidate codewords, we trial flip bits and decode using specified ECC decoder.
@@ -16,9 +16,11 @@ function [recovered_message, suggest_to_crash, recovered_successfully] = data_re
 %   policy --           String: '[hamming-pick-random|longest-run-pick-random|delta-pick-random|dbx-pick-random]'
 %   cacheline_bin --    String: Set of words_per_block k-bit binary strings, e.g. '0001010101....00001,0000000000.....00000,...,111101010...00101'. words_per_block is inferred by the number of binary strings that are delimited by commas.
 %   message_blockpos -- String: '[0-(words_per_block-1)]' denoting the position of the message under test within the cacheline. This message should match original_message argument above.
+%   crash_threshold -- String of a scalar. Policy-defined semantics and range.
 %   verbose -- '1' if you want console printouts of progress to stdout.
 %
 % Returns:
+%   candidate_correct_message_scores -- Nx1 numeric scores corresponding to each candidate message, where lower is better.
 %   recovered_message -- k-bit message that corresponds to our target for heuristic recovery
 %   suggest_to_crash -- 0 if we are confident in recovery, 1 if we recommend crashing out instead
 %   recovered_successfully -- 1 if we matched original_message, 0 otherwise
@@ -28,6 +30,7 @@ function [recovered_message, suggest_to_crash, recovered_successfully] = data_re
 
 n = str2double(n);
 k = str2double(k);
+crash_threshold = str2double(crash_threshold);
 verbose = str2double(verbose);
 
 if verbose == 1
@@ -39,6 +42,7 @@ if verbose == 1
     policy
     cacheline_bin
     message_blockpos
+    crash_threshold
     verbose
 end
 
@@ -245,7 +249,9 @@ recovered_message = candidate_correct_messages(target_message_index,:);
 
 %% Compute whether we got the correct answer or not for this data/error pattern pairing
 recovered_successfully = (strcmp(recovered_message, original_message) == 1);
-suggest_to_crash = 0; % TODO: implement crash policy
+
+%% TODO: implement crash policy using crash_threshold
+suggest_to_crash = 0;
 
 if verbose == 1
     recovered_successfully
