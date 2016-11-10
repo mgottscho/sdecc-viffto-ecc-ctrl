@@ -411,6 +411,7 @@ parfor j=1:num_sampled_error_patterns % Parallelize loop across separate threads
             for x=1:num_candidate_messages
                 candidate_correct_messages(x,:) = my_bitxor(candidate_correct_messages_zero_message(x,:),original_message_bin); 
             end
+            candidate_correct_messages = unique(candidate_correct_messages,'rows','sorted'); % Sort feature is important
 
             if verbose_recovery == 1
                 original_message_hex
