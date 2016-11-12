@@ -24,7 +24,7 @@ function swd_ecc_offline_data_heuristic_recovery(architecture, benchmark, n, k, 
 %   output_filename --  String
 %   n_threads --        String: '[1|2|3|...]'
 %   code_type --        String: '[hsiao|davydov1991|bose1960|kaneda1982]'
-%   policy --           String: '[baseline-pick-random|hamming-pick-random|longest-run-pick-random|delta-pick-random|dbx-longest-run-pick-random|dbx-weight-pick-longest-run]'
+%   policy --           String: '[baseline-pick-random|hamming-pick-random|longest-run-pick-random|delta-pick-random|dbx-longest-run-pick-random|dbx-weight-pick-longest-run|dbx-longest-run-pick-lowest-weight]'
 %   crash_threshold -- String of a scalar. Policy-defined semantics and range.
 %   verbose_recovery -- String: '[0|1]'
 %

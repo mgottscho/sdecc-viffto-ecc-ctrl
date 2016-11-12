@@ -13,7 +13,7 @@ function [candidate_correct_message_scores, recovered_message, suggest_to_crash,
 %   k --                String: '[32|64|128]'
 %   original_message -- Binary String of length k bits/chars
 %   candidate_correct_messages -- Nx1 cell array of binary strings, each k bits/chars long
-%   policy --           String: '[hamming-pick-random|longest-run-pick-random|delta-pick-random|dbx-longest-run-pick-random|dbx-weight-pick-longest-run]'
+%   policy --           String: '[hamming-pick-random|longest-run-pick-random|delta-pick-random|dbx-longest-run-pick-random|dbx-weight-pick-longest-run|dbx-longest-run-pick-lowest-weight]'
 %   cacheline_bin --    String: Set of words_per_block k-bit binary strings, e.g. '0001010101....00001,0000000000.....00000,...,111101010...00101'. words_per_block is inferred by the number of binary strings that are delimited by commas.
 %   message_blockpos -- String: '[0-(words_per_block-1)]' denoting the position of the message under test within the cacheline. This message should match original_message argument above.
 %   crash_threshold -- String of a scalar. Policy-defined semantics and range.
@@ -175,7 +175,8 @@ elseif strcmp(policy, 'delta-pick-random') == 1
         score = sum(deltas.^2); % Sum of squares of abs-deltas. Score is now a double.
         candidate_correct_message_scores(x) = score; % Each score is a double.
     end
-elseif strcmp(policy, 'dbx-longest-run-pick-random') == 1 
+elseif strcmp(policy, 'dbx-longest-run-pick-random') == 1 ...
+    || strcmp(policy, 'dbx-longest-run-pick-lowest-weight') == 1
     % DBX longest run metric
     % For each candidate message, compute the DBX transform of the cacheline using the given candidate-correct message. 
     % The score is avg k+1 - maximum 0 run length over all of DBX matrix.
@@ -282,6 +283,25 @@ elseif strcmp(policy, 'dbx-weight-pick-longest-run') == 1
             max_run_length = run_lengths(x);
             target_message_index = min_score_indices(x);
         end
+    end
+elseif strcmp(policy, 'dbx-longest-run-pick-lowest-weight') == 1
+    if verbose == 1
+        display('LAST STEP: CHOOSE TARGET. Pick the target with the lowest Hamming weight.');
+    end
+    
+    weights = zeros(size(min_score_indices,1),1);
+    min_weight = Inf;
+    target_message_index = 0;
+    for x=1:size(min_score_indices,1)
+        weights(x) = sum(candidate_correct_messages(min_score_indices(x),:) == '1');
+        if weights(x) < min_weight
+            min_weight = weights(x);
+            target_message_index = min_score_indices(x);
+        end
+    end
+
+    if verbose == 1
+        weights
     end
 else
     display(['FATAL! Unknown policy: ' policy]);
