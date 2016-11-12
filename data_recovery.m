@@ -178,22 +178,37 @@ elseif strcmp(policy, 'delta-pick-random') == 1
 elseif strcmp(policy, 'dbx-pick-random') == 1 
     % DBX sparsity metric
     % For each candidate message, compute the DBX transform of the cacheline using the given candidate-correct message. 
-    % The score is the proportion of 1s in the matrix.
-    % The score can take a range of [0,1]. Lower scores are better.
+    % The score is avg k+1 - maximum 0 run length over all of DBX matrix.
+    % The score can take a range of [0,k+1]. Lower scores are better.
     if verbose == 1
-        display('RECOVERY STEP 1: Compute scores of all candidate-correct messages by performing the Delta-Bitplane-XOR (DBX) transform of the entire cacheline using the given candidate-correct message. Lower scores are better. Scores are the proportion of 1s in the DBX output matrix.')
+        display('RECOVERY STEP 1: Compute scores of all candidate-correct messages by performing the Delta-Bitplane-XOR (DBX) transform of the entire cacheline using the given candidate-correct message. Lower scores are better. Scores are averaged k+1 - maximum run length of 0 over all of DBX output matrix.')
     end
     for x=1:size(candidate_correct_messages,1)
-        cacheline_with_candidate_message = cell2mat(parsed_cacheline_bin);
-        cacheline_with_candidate_message(message_blockpos,:) = candidate_correct_messages(x,:);
-        [DBX_bin, delta_bin] = dbx_transform(cacheline_with_candidate_message);
+        reordered_cacheline_with_candidate_message = repmat('X',size(parsed_cacheline_bin,1),k);
+        reordered_cacheline_with_candidate_message(1,:) = candidate_correct_messages(x,:);
+        z = 1;
+        for y=2:size(reordered_cacheline_with_candidate_message,1)
+            if z ~= message_blockpos 
+                reordered_cacheline_with_candidate_message(y,:) = parsed_cacheline_bin{z,1};
+            end
+            z = z+1; 
+        end
+        [DBX_bin, delta_bin] = dbx_transform(reordered_cacheline_with_candidate_message);
+        %cacheline_with_candidate_message = cell2mat(parsed_cacheline_bin);
+        %cacheline_with_candidate_message(message_blockpos,:) = candidate_correct_messages(x,:);
+        %[DBX_bin, delta_bin] = dbx_transform(cacheline_with_candidate_message);
 
         if verbose == 1
             delta_bin
             DBX_bin
         end
 
-        score = sum(sum(DBX_bin=='1')) / prod(size(DBX_bin));
+        %score = sum(sum(DBX_bin=='1')) / prod(size(DBX_bin));
+        score = 0;
+        for y=1:size(DBX_bin,1)
+            score = score + (k+1 - count_longest_run(DBX_bin(y,:)));
+        end
+        score = score / size(DBX_bin,1);
         candidate_correct_message_scores(x) = score;
     end
 else % error
