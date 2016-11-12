@@ -174,4 +174,4 @@ if k == 32 && (strcmp(code_type,'hsiao1970') == 1 || strcmp(code_type,'davydov19
     print(gcf, '-depsc2', [output_directory filesep code_type '-' num2str(n) '-' num2str(k) '-cc-heatmap.eps']);
 end
 
-save([output_directory filesep 'postprocessed.mat']);
+save([output_directory filesep 'postprocessed.mat'], '-v7.3');
