@@ -13,7 +13,7 @@ function [candidate_correct_message_scores, recovered_message, suggest_to_crash,
 %   k --                String: '[32|64|128]'
 %   original_message -- Binary String of length k bits/chars
 %   candidate_correct_messages -- Nx1 cell array of binary strings, each k bits/chars long
-%   policy --           String: '[hamming-pick-random|longest-run-pick-random|delta-pick-random|dbx-pick-random]'
+%   policy --           String: '[hamming-pick-random|longest-run-pick-random|delta-pick-random|dbx-longest-run-pick-random|dbx-weight-pick-longest-run]'
 %   cacheline_bin --    String: Set of words_per_block k-bit binary strings, e.g. '0001010101....00001,0000000000.....00000,...,111101010...00101'. words_per_block is inferred by the number of binary strings that are delimited by commas.
 %   message_blockpos -- String: '[0-(words_per_block-1)]' denoting the position of the message under test within the cacheline. This message should match original_message argument above.
 %   crash_threshold -- String of a scalar. Policy-defined semantics and range.
@@ -175,8 +175,8 @@ elseif strcmp(policy, 'delta-pick-random') == 1
         score = sum(deltas.^2); % Sum of squares of abs-deltas. Score is now a double.
         candidate_correct_message_scores(x) = score; % Each score is a double.
     end
-elseif strcmp(policy, 'dbx-pick-random') == 1 
-    % DBX sparsity metric
+elseif strcmp(policy, 'dbx-longest-run-pick-random') == 1 
+    % DBX longest run metric
     % For each candidate message, compute the DBX transform of the cacheline using the given candidate-correct message. 
     % The score is avg k+1 - maximum 0 run length over all of DBX matrix.
     % The score can take a range of [0,k+1]. Lower scores are better.
@@ -194,21 +194,38 @@ elseif strcmp(policy, 'dbx-pick-random') == 1
             z = z+1; 
         end
         [DBX_bin, delta_bin] = dbx_transform(reordered_cacheline_with_candidate_message);
-        %cacheline_with_candidate_message = cell2mat(parsed_cacheline_bin);
-        %cacheline_with_candidate_message(message_blockpos,:) = candidate_correct_messages(x,:);
-        %[DBX_bin, delta_bin] = dbx_transform(cacheline_with_candidate_message);
 
         if verbose == 1
             delta_bin
             DBX_bin
         end
 
-        %score = sum(sum(DBX_bin=='1')) / prod(size(DBX_bin));
         score = 0;
         for y=1:size(DBX_bin,1)
             score = score + (k+1 - count_longest_run(DBX_bin(y,:)));
         end
         score = score / size(DBX_bin,1);
+        candidate_correct_message_scores(x) = score;
+    end
+elseif strcmp(policy, 'dbx-weight-pick-longest-run') == 1 
+    % DBX sparsity metric
+    % For each candidate message, compute the DBX transform of the cacheline using the given candidate-correct message. 
+    % The score is the fraction of 1s in the DBX matrix.
+    % The score can take a range of [0,1]. Lower scores are better.
+    if verbose == 1
+        display('RECOVERY STEP 1: Compute scores of all candidate-correct messages by performing the Delta-Bitplane-XOR (DBX) transform of the entire cacheline using the given candidate-correct message. Lower scores are better. Scores are the fraction of 1s in the DBX output matrix.')
+    end
+    for x=1:size(candidate_correct_messages,1)
+        cacheline_with_candidate_message = cell2mat(parsed_cacheline_bin);
+        cacheline_with_candidate_message(message_blockpos,:) = candidate_correct_messages(x,:);
+        [DBX_bin, delta_bin] = dbx_transform(cacheline_with_candidate_message);
+
+        if verbose == 1
+            delta_bin
+            DBX_bin
+        end
+
+        score = sum(sum(DBX_bin=='1')) / prod(size(DBX_bin));
         candidate_correct_message_scores(x) = score;
     end
 else % error
@@ -249,8 +266,23 @@ target_message_score = min_score;
 target_message_index = NaN;
 if strcmp(policy, 'baseline-pick-random') == 1
     target_message_index = randi(size(candidate_correct_messages,1),1);
-elseif strcmp(policy, 'hamming-pick-random') == 1 || strcmp(policy, 'longest-run-pick-random') == 1 || strcmp(policy, 'delta-pick-random') == 1 || strcmp(policy, 'dbx-pick-random') == 1
+elseif strcmp(policy, 'hamming-pick-random') == 1 || strcmp(policy, 'longest-run-pick-random') == 1 || strcmp(policy, 'delta-pick-random') == 1 || strcmp(policy, 'dbx-longest-run-pick-random') == 1
     target_message_index = min_score_indices(randi(size(min_score_indices,1),1));
+elseif strcmp(policy, 'dbx-weight-pick-longest-run') == 1
+    if verbose == 1
+        display('LAST STEP: CHOOSE TARGET. Pick the target that has the longest run of 0s or 1s. In a tie, pick first in sorted order.');
+    end
+
+    run_lengths = zeros(size(min_score_indices,1),1);
+    max_run_length = -1;
+    target_message_index = 0;
+    for x=1:size(min_score_indices,1)
+        run_lengths(x) = count_longest_run(candidate_correct_messages(min_score_indices(x),:));
+        if run_lengths(x) > max_run_length
+            max_run_length = run_lengths(x);
+            target_message_index = min_score_indices(x);
+        end
+    end
 else
     display(['FATAL! Unknown policy: ' policy]);
     return;
