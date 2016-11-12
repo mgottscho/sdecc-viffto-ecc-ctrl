@@ -2,7 +2,7 @@
 % Author: Mark Gottscho <mgottscho@ucla.edu>
 
 %%%%%%%% CHANGE ME AS NEEDED %%%%%%%%%%%%
-input_directory = 'D:\Dropbox\SoftwareDefinedECC\data\rv64g\data-recovery\offline-dynamic\kaneda1982\144,128\hamming-pick-random\2016-10-22';
+input_directory = 'D:\Dropbox\SoftwareDefinedECC\data\rv64g\data-recovery\offline-dynamic\hsiao1970\72,64\dbx-weight-pick-longest-pad\crash-threshold-0.5\2016-11-12';
 output_directory = [input_directory filesep 'postprocessed'];
 num_words = 1000;
 %num_error_patterns = 741; % For (39,32) SECDED
@@ -13,8 +13,10 @@ num_words = 1000;
 num_error_patterns = 1000; % sampled
 architecture = 'rv64g';
 %code_type = 'hsiao1970 (39,32) SECDED';
-code_type = 'kaneda1982';
-policy = 'Hamming-Pick-Random';
+code_type = 'hsiao1970';
+policy = 'dbx-weight-pick-longest-pad';
+
+mkdir(output_directory);
 
 %% Read in names of benchmarks to process
 dir_contents = dir(input_directory);
