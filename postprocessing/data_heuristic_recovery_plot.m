@@ -44,7 +44,7 @@ if strcmp(code_type,'hsiao1970') == 1 || strcmp(code_type,'davydov1991') == 1
     xlabel('Index of 1st bit in error', 'FontSize', 12, 'FontName', 'Arial');
     ylabel('Index of 2nd bit in error', 'FontSize', 12, 'FontName', 'Arial');
     title(['Rate of Heuristic Recovery for ' code_type ' (' num2str(n) ',' num2str(k) ') -- ' benchmark ' -- ' policy], 'FontSize', 12, 'FontName', 'Arial');
-
+    savefig(gcf, [output_directory filesep architecture '-' benchmark '-data-heuristic-recovery-heatmap.fig']);
     print(gcf, '-depsc2', [output_directory filesep architecture '-' benchmark '-data-heuristic-recovery-heatmap.eps']);
     close(gcf);
 
@@ -60,7 +60,7 @@ if strcmp(code_type,'hsiao1970') == 1 || strcmp(code_type,'davydov1991') == 1
     ylabel('Index of 2nd bit in error', 'FontSize', 12, 'FontName', 'Arial');
     zlabel('Average Rate of Heuristic Recovery');
     title(['Rate of Heuristic Recovery for ' code_type ' (' num2str(n) ',' num2str(k) ') -- ' benchmark ' -- ' policy], 'FontSize', 12, 'FontName', 'Arial');
-
+    savefig(gcf,[output_directory filesep architecture '-' benchmark '-data-heuristic-recovery-surf.fig']);
     print(gcf, '-depsc2', [output_directory filesep architecture '-' benchmark '-data-heuristic-recovery-surf.eps']);
     close(gcf);
 end
