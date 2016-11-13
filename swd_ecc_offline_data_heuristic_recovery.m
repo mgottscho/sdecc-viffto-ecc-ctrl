@@ -254,9 +254,22 @@ parfor j=1:num_sampled_error_patterns
         for i=1:num_words % Parallelize loop across separate threads, since this could take a long time. Each word is a totally independent procedure to perform.
             %% Get the cacheline and "message," which is the original word, i.e., the ground truth from input file.
             cacheline_hex  = sampled_trace_cachelines_hex(i,:);
-            cacheline_bin  = sampled_trace_cachelines_bin(i,:);
             original_message_hex = cacheline_hex{sampled_blockpos_indices(i)};
-            original_message_bin = cacheline_bin{sampled_blockpos_indices(i)};
+
+            % Swap byte order for policies. We assume that k is the native word size.
+            if strcmp(policy, 'delta-pick-random') == 1 ...
+                || strcmp(policy, 'fdelta-pick-random') == 1 
+                cacheline_bin = cell(1,size(cacheline_hex,2));
+                for x=1:size(cacheline_hex,2)
+                    cacheline_hex{1,x} = reverse_byte_order(cacheline_hex{1,x});
+                    cacheline_bin{1,x} = my_hex2bin(cacheline_hex{1,x});
+                end
+                original_message_hex = reverse_byte_order(original_message_hex);
+                oirignal_message_bin = my_hex2bin(original_message_hex);
+            else
+                cacheline_bin  = sampled_trace_cachelines_bin(i,:);
+                original_message_bin = cacheline_bin{sampled_blockpos_indices(i)};
+            end
            
             %% Compute candidate messages
             candidate_correct_messages = repmat('X',num_candidate_messages,k);
