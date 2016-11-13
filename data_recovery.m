@@ -13,7 +13,7 @@ function [candidate_correct_message_scores, recovered_message, suggest_to_crash,
 %   k --                String: '[32|64|128]'
 %   original_message -- Binary String of length k bits/chars
 %   candidate_correct_messages -- Nx1 cell array of binary strings, each k bits/chars long
-%   policy --           String: '[hamming-pick-random|longest-run-pick-random|delta-pick-random|dbx-longest-run-pick-random|dbx-weight-pick-longest-run|dbx-longest-run-pick-lowest-weight]'
+%   policy --           String: '[hamming-pick-random|hamming-pick-longest-run|longest-run-pick-random|delta-pick-random|dbx-longest-run-pick-random|dbx-weight-pick-longest-run|dbx-longest-run-pick-lowest-weight]'
 %   cacheline_bin --    String: Set of words_per_block k-bit binary strings, e.g. '0001010101....00001,0000000000.....00000,...,111101010...00101'. words_per_block is inferred by the number of binary strings that are delimited by commas.
 %   message_blockpos -- String: '[0-(words_per_block-1)]' denoting the position of the message under test within the cacheline. This message should match original_message argument above.
 %   crash_threshold -- String of a scalar. Policy-defined semantics and range.
@@ -114,7 +114,8 @@ if strcmp(policy, 'baseline-pick-random') == 1
         display('RECOVERY STEP 1: Each candidate-correct message is scored equally.');
     end
     candidate_correct_message_scores = ones(size(candidate_correct_messages,1),1); % All outcomes equally scored
-elseif strcmp(policy, 'hamming-pick-random') == 1
+elseif strcmp(policy, 'hamming-pick-random') == 1 ...
+    || strcmp(policy, 'hamming-pick-longest-run') == 1
     %% Now compute scores for each candidate message
     % HAMMING METRIC
     % For each candidate message, compute the average Hamming distance to each of its neighboring words in the cacheline
@@ -269,7 +270,8 @@ if strcmp(policy, 'baseline-pick-random') == 1
     target_message_index = randi(size(candidate_correct_messages,1),1);
 elseif strcmp(policy, 'hamming-pick-random') == 1 || strcmp(policy, 'longest-run-pick-random') == 1 || strcmp(policy, 'delta-pick-random') == 1 || strcmp(policy, 'dbx-longest-run-pick-random') == 1
     target_message_index = min_score_indices(randi(size(min_score_indices,1),1));
-elseif strcmp(policy, 'dbx-weight-pick-longest-run') == 1
+elseif strcmp(policy, 'hamming-pick-longest-run') == 1 ...
+    || strcmp(policy, 'dbx-weight-pick-longest-run') == 1
     if verbose == 1
         display('LAST STEP: CHOOSE TARGET. Pick the target that has the longest run of 0s or 1s. In a tie, pick first in sorted order.');
     end
