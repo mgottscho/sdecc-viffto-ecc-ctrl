@@ -13,7 +13,7 @@ function [candidate_correct_message_scores, recovered_message, suggest_to_crash,
 %   k --                String: '[32|64|128]'
 %   original_message -- Binary String of length k bits/chars
 %   candidate_correct_messages -- Nx1 cell array of binary strings, each k bits/chars long
-%   policy --           String: '[hamming-pick-random|hamming-pick-longest-run|longest-run-pick-random|delta-pick-random|dbx-longest-run-pick-random|dbx-weight-pick-longest-run|dbx-longest-run-pick-lowest-weight]'
+%   policy --           String: '[hamming-pick-random|hamming-pick-longest-run|longest-run-pick-random|delta-pick-random|fdelta-pick-random|dbx-longest-run-pick-random|dbx-weight-pick-longest-run|dbx-longest-run-pick-lowest-weight]'
 %   cacheline_bin --    String: Set of words_per_block k-bit binary strings, e.g. '0001010101....00001,0000000000.....00000,...,111101010...00101'. words_per_block is inferred by the number of binary strings that are delimited by commas.
 %   message_blockpos -- String: '[0-(words_per_block-1)]' denoting the position of the message under test within the cacheline. This message should match original_message argument above.
 %   crash_threshold -- String of a scalar. Policy-defined semantics and range.
@@ -176,6 +176,43 @@ elseif strcmp(policy, 'delta-pick-random') == 1
         score = sum(deltas.^2); % Sum of squares of abs-deltas. Score is now a double.
         candidate_correct_message_scores(x) = score; % Each score is a double.
     end
+elseif strcmp(policy, 'fdelta-pick-random') == 1
+    % FLOAT-DELTA METRIC
+    % For each candidate message, compute the float-deltas from it to all the other words in the cacheline, using the candidate message as the base.
+    % The score is the sum of squares of the float-deltas.
+    % The score can take a range of [0,MAX_UNSIGNED_INT]. Lower scores are better.
+    if verbose == 1
+        display('RECOVERY STEP 1: Compute scores of all candidate-correct messages by squaring the sum of float-deltas to all neighboring words in the cacheline (when each word is interpreted as a k-bit float). Lower scores are better.');
+    end
+    for x=1:size(candidate_correct_messages,1) % For each candidate message
+        score = Inf;
+        if k == 64
+            base = typecast(my_bin2dec(candidate_correct_messages(x,:)), 'double'); % Set base. This will be decimal uint64 value.
+        elseif k == 32
+            base = typecast(uint32(bin2dec(candidate_correct_messages(x,:)), 'single'));
+        else
+            display(['ERROR! Cannot use fdelta for k = ' k]);
+        end
+        deltas = NaN(words_per_block-1,1); % Init deltas. These will be decimal uint64 values
+        for blockpos=1:words_per_block % For each message in the cacheline (need to skip the message under test)
+            if blockpos ~= message_blockpos % Skip the message under test
+                if k == 64
+                    word = typecast(my_bin2dec(parsed_cacheline_bin{blockpos}), 'double'); % Set base. This will be decimal uint64 value.
+                elseif k == 32
+                    word = typecast(uint32(bin2dec(parsed_cacheline_bin{blockpos}), 'single'));
+                else
+                    display(['ERROR! Cannot use fdelta for k = ' k]);
+                end
+                if base > word
+                    deltas(blockpos) = base - word;
+                else
+                    deltas(blockpos) = word - base;
+                end
+            end
+        end
+        score = sum(deltas.^2); % Sum of squares of abs-deltas. Score is now a double.
+        candidate_correct_message_scores(x) = score; % Each score is a double.
+    end
 elseif strcmp(policy, 'dbx-longest-run-pick-random') == 1 ...
     || strcmp(policy, 'dbx-longest-run-pick-lowest-weight') == 1
     % DBX longest run metric
@@ -268,7 +305,7 @@ target_message_score = min_score;
 target_message_index = NaN;
 if strcmp(policy, 'baseline-pick-random') == 1
     target_message_index = randi(size(candidate_correct_messages,1),1);
-elseif strcmp(policy, 'hamming-pick-random') == 1 || strcmp(policy, 'longest-run-pick-random') == 1 || strcmp(policy, 'delta-pick-random') == 1 || strcmp(policy, 'dbx-longest-run-pick-random') == 1
+elseif strcmp(policy, 'hamming-pick-random') == 1 || strcmp(policy, 'longest-run-pick-random') == 1 || strcmp(policy, 'delta-pick-random') == 1 || strcmp(policy, 'fdelta-pick-random') == 1 || strcmp(policy, 'dbx-longest-run-pick-random') == 1
     target_message_index = min_score_indices(randi(size(min_score_indices,1),1));
 elseif strcmp(policy, 'hamming-pick-longest-run') == 1 ...
     || strcmp(policy, 'dbx-weight-pick-longest-run') == 1
