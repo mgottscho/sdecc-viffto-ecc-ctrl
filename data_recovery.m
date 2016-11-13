@@ -210,7 +210,7 @@ elseif strcmp(policy, 'fdelta-pick-random') == 1
                 end
             end
         end
-        score = sum(deltas.^2); % Sum of squares of abs-deltas. Score is now a double.
+        score = sum(deltas(~isnan(deltas)).^2); % Sum of squares of abs-deltas. Score is now a double.
         candidate_correct_message_scores(x) = score; % Each score is a double.
     end
 elseif strcmp(policy, 'dbx-longest-run-pick-random') == 1 ...
