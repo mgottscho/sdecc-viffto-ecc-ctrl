@@ -120,13 +120,14 @@ xlabel('Average Number of Valid (Filtered) Candidate Messages', 'FontSize', 12, 
 ylabel('Average Rate of Recovery', 'FontSize', 12, 'FontName', 'Arial');
 title(['Rate of Heuristic Recovery for ' code_type ' (' num2str(n) ',' num2str(k) ') -- ' benchmark ' -- ' policy], 'FontSize', 12, 'FontName', 'Arial');
 
+savefig(gcf, [output_directory filesep architecture '-' benchmark '-inst-heuristic-recovery.fig']);
 print(gcf, '-depsc2', [output_directory filesep architecture '-' benchmark '-inst-heuristic-recovery.eps']);
 close(gcf);
 
 if strcmp(code_type,'hsiao1970') == 1 || strcmp(code_type,'davydov1991') == 1
     z=1;
     cc_2d = NaN(n+1,n+1);
-    mean_results_candidate_messages = mean(success);
+    mean_success = mean(success);
     for err_bitpos_1=1:n-1
         for err_bitpos_2=err_bitpos_1+1:n
             cc_2d(err_bitpos_2,err_bitpos_1) = mean_success(z);
@@ -135,8 +136,7 @@ if strcmp(code_type,'hsiao1970') == 1 || strcmp(code_type,'davydov1991') == 1
     end
 
     figure;
-    %mycolors = flipud(hot);
-    %colormap(mycolors);
+    colormap(hot);
     pcolor(cc_2d);
     xlabel('Index of 1st bit in error', 'FontSize', 12, 'FontName', 'Arial');
     ylabel('Index of 2nd bit in error', 'FontSize', 12, 'FontName', 'Arial');
@@ -157,6 +157,14 @@ if strcmp(code_type,'hsiao1970') == 1 || strcmp(code_type,'davydov1991') == 1
     set(gca,'YTickLabel',yticklabel);
     set(gca,'TickLength',[0 0]);
     %title(['Number of Candidate Codewords for ' code_type ' (' num2str(n) ',' num2str(k) ')'], 'FontSize', 12, 'FontName', 'Arial');
+    savefig(gcf, [output_directory filesep architecture '-' benchmark '-inst-heuristic-recovery-heatmap.fig']);
     print(gcf, '-depsc2', [output_directory filesep architecture '-' benchmark '-inst-heuristic-recovery-heatmap.eps']);
+    close(gcf);
+    
+    figure;
+    surf(cc_2d);
+    colormap(hot);
+    savefig(gcf, [output_directory filesep architecture '-' benchmark '-inst-heuristic-recovery-surf.fig']);
+    print(gcf, '-depsc2', [output_directory filesep architecture '-' benchmark '-inst-heuristic-recovery-surf.eps']);
     close(gcf);
 end
