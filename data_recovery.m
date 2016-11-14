@@ -277,24 +277,8 @@ if verbose == 1
 end
 
 %% Now we have scores, let's rank and choose the best candidate message. LOWER SCORES ARE BETTER.
-% TODO: how to decide when to crash? need to quantify level of variation or distinguishability between candidates..
 min_score = min(candidate_correct_message_scores);
-%min_score = Inf;
-%for x=1:size(candidate_correct_message_scores,1) % For each candidate message score
-%   if candidate_correct_message_scores(x) < min_score
-%       min_score = candidate_correct_message_scores(x);
-%   end
-%end
-
 min_score_indices = find(candidate_correct_message_scores <= min_score+1e-12);
-%min_score_indices = zeros(1,1);
-%y = 1;
-%for x=1:size(candidate_correct_message_scores,1) % For each candidate message score
-%   if candidate_correct_message_scores(x) >= min_score-1e-4 && candidate_correct_message_scores(x) <= min_score+1e-4 % Tolerance of 0.0001 as we are often comparing floating point scores
-%       min_score_indices(y,1) = x;
-%       y = y+1;
-%   end
-%end
 
 if verbose == 1
     min_score
@@ -351,13 +335,18 @@ if verbose == 1
     target_message_index
 end
 
-recovered_message = candidate_correct_messages(target_message_index,:);
+%% Crash policy: suggest crash if the min score is not at least crash_threshold*std dev below the mean score.
+std_dev_scores = std(candidate_correct_message_scores);
+mean_score = mean(candidate_correct_message_scores);
+if min_score <= mean_score - (crash_threshold * std_dev_scores)
+    suggest_to_crash = 0;
+else
+    suggest_to_crash = 1;
+end
 
 %% Compute whether we got the correct answer or not for this data/error pattern pairing
+recovered_message = candidate_correct_messages(target_message_index,:);
 recovered_successfully = (strcmp(recovered_message, original_message) == 1);
-
-%% TODO: implement crash policy using crash_threshold
-suggest_to_crash = 0;
 
 if verbose == 1
     recovered_successfully
