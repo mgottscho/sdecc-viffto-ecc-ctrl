@@ -265,7 +265,7 @@ parfor j=1:num_sampled_error_patterns
                     cacheline_bin{1,x} = my_hex2bin(cacheline_hex{1,x});
                 end
                 original_message_hex = reverse_byte_order(original_message_hex);
-                oirignal_message_bin = my_hex2bin(original_message_hex);
+                original_message_bin = my_hex2bin(original_message_hex);
             else
                 cacheline_bin  = sampled_trace_cachelines_bin(i,:);
                 original_message_bin = cacheline_bin{sampled_blockpos_indices(i)};
