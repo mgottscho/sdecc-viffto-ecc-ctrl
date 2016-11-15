@@ -121,18 +121,28 @@ elseif strcmp(policy, 'hamming-pick-random') == 1 ...
     % For each candidate message, compute the average Hamming distance to each of its neighboring words in the cacheline
     % For Hamming distance metric, the score can take a range of [0,k], where the score is the average Hamming distance in bits.
     if verbose == 1
-        display('RECOVERY STEP 1: Compute scores of all candidate-correct messages by average Hamming distance to neighboring words in the cacheline. Lower scores are better.');
+        display('RECOVERY STEP 1: Compute scores of all candidate-correct messages by MEDIAN Hamming distance to neighboring words in the cacheline. Lower scores are better.');
     end
     for x=1:size(candidate_correct_messages,1) % For each candidate message
         score = 0;
+        hamming_distances = NaN(words_per_block-1,1);
+        y = 1;
         for blockpos=1:words_per_block % For each message in the cacheline (need to skip the message under test)
             if blockpos ~= message_blockpos
-               %score = score + my_hamming_dist(candidate_correct_messages(x,:),parsed_cacheline_bin{blockpos});
-               % my_hamming_dist() was very slow. here's a better version...
-               score = score + sum(candidate_correct_messages(x,:) ~= parsed_cacheline_bin{blockpos});
+               hamming_distances(y) = sum(candidate_correct_messages(x,:) ~= parsed_cacheline_bin{blockpos});
+               y = y+1;
+
+               % MEAN HAMMING DISTANCE 
+               %score = score + hamming_distances(y);
+
             end
         end
-        score = score/(words_per_block-1);
+        % MEAN HAMMING DISTANCE
+        %score = score/(words_per_block-1);
+               
+        % MEDIAN HAMMING DISTANCE
+        score = median(hamming_distances);
+
         candidate_correct_message_scores(x) = score;
     end
 elseif strcmp(policy, 'longest-run-pick-random') == 1
