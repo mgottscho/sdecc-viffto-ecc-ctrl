@@ -121,7 +121,7 @@ elseif strcmp(policy, 'hamming-pick-random') == 1 ...
     % For each candidate message, compute the average Hamming distance to each of its neighboring words in the cacheline
     % For Hamming distance metric, the score can take a range of [0,k], where the score is the average Hamming distance in bits.
     if verbose == 1
-        display('RECOVERY STEP 1: Compute scores of all candidate-correct messages by MEDIAN Hamming distance to neighboring words in the cacheline. Lower scores are better.');
+        display('RECOVERY STEP 1: Compute scores of all candidate-correct messages by ARITHMETIC MEAN OF Hamming distance to neighboring words in the cacheline. Lower scores are better.');
     end
     for x=1:size(candidate_correct_messages,1) % For each candidate message
         score = 0;
@@ -133,15 +133,14 @@ elseif strcmp(policy, 'hamming-pick-random') == 1 ...
                y = y+1;
 
                % MEAN HAMMING DISTANCE 
-               %score = score + hamming_distances(y);
-
+               score = score + hamming_distances(y);
             end
         end
         % MEAN HAMMING DISTANCE
-        %score = score/(words_per_block-1);
+        score = score/(words_per_block-1);
                
         % MEDIAN HAMMING DISTANCE
-        score = median(hamming_distances);
+        %score = median(hamming_distances);
 
         candidate_correct_message_scores(x) = score;
     end
