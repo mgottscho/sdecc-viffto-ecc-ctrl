@@ -130,10 +130,11 @@ elseif strcmp(policy, 'hamming-pick-random') == 1 ...
         for blockpos=1:words_per_block % For each message in the cacheline (need to skip the message under test)
             if blockpos ~= message_blockpos
                hamming_distances(y) = sum(candidate_correct_messages(x,:) ~= parsed_cacheline_bin{blockpos});
-               y = y+1;
 
                % MEAN HAMMING DISTANCE 
                score = score + hamming_distances(y);
+               
+               y = y+1;
             end
         end
         % MEAN HAMMING DISTANCE
