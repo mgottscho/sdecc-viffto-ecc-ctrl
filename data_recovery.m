@@ -319,13 +319,13 @@ elseif strcmp(policy, 'hamming-pick-longest-run') == 1 ...
     end
     
     % FIXME: this is a temporary analysis to see if the 2-fork idea may help
-    if size(min_score_indices,1) > 1
-        target_inst_index_backup = min_score_indices(randi(size(min_score_indices,1)));
-    elseif size(candidate_valid_messages,1) > 1
-        target_inst_index_backup = randi(size(candidate_correct_messages,1));
-    else
-        target_inst_index_backup = 0;
-    end
+    %if size(min_score_indices,1) > 1
+    %    target_inst_index_backup = min_score_indices(randi(size(min_score_indices,1)));
+    %elseif size(candidate_valid_messages,1) > 1
+    %    target_inst_index_backup = randi(size(candidate_correct_messages,1));
+    %else
+    %    target_inst_index_backup = 0;
+    %end
 
 elseif strcmp(policy, 'dbx-longest-run-pick-lowest-weight') == 1
     if verbose == 1
@@ -368,15 +368,15 @@ end
 recovered_message = candidate_correct_messages(target_message_index,:);
 
 % FIXME: tmp fork-2 idea
-if target_inst_index_backup > 0
-    recovered_message_backup = candidate_valid_messages(target_inst_index_backup,:);
-else
-    recovered_message_backup = recovered_message;
-end
+%if target_inst_index_backup > 0
+%    recovered_message_backup = candidate_valid_messages(target_inst_index_backup,:);
+%else
+%    recovered_message_backup = recovered_message;
+%end
 
 % FIXME: tmp fork-2 idea
-recovered_successfully = (strcmp(recovered_message, original_message) == 1) ...
-                         || (strcmp(recovered_message_backup, original_message) == 1);
+recovered_successfully = (strcmp(recovered_message, original_message) == 1);% ...
+%                         || (strcmp(recovered_message_backup, original_message) == 1);
 
 if verbose == 1
     recovered_successfully

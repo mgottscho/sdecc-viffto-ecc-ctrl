@@ -440,7 +440,7 @@ elseif strcmp(policy, 'filter-rank-pick-random') == 1 ...
     % Choose recovery target
     if size(target_inst_indices,1) == 1 % Have only one recovery target
         target_inst_index = target_inst_indices(1); 
-        target_inst_index_backup = target_inst_index; % temp FIXME
+        %target_inst_index_backup = target_inst_index; % temp FIXME
         if verbose == 1
             display(['LAST STEP: CHOOSE TARGET. We have one recovery target: ' num2str(target_inst_index)]);
         end
@@ -537,15 +537,15 @@ elseif strcmp(policy, 'filter-rank-pick-random') == 1 ...
             target_inst_index = max_avg_pad_length_indices(1);
 
             % FIXME: this is a temporary analysis to see if the 2-fork idea may help
-            if size(max_avg_pad_length_indices,1) > 1
-                target_inst_index_backup = max_avg_pad_length_indices(2);
-            elseif size(target_inst_indices,1) > 1
-                target_inst_index_backup = target_inst_indices(2);
-            elseif size(candidate_valid_messages,1) > 1
-                target_inst_index_backup = 2;
-            else
-                target_inst_index_backup = 0;
-            end
+            %if size(max_avg_pad_length_indices,1) > 1
+            %    target_inst_index_backup = max_avg_pad_length_indices(2);
+            %elseif size(target_inst_indices,1) > 1
+            %    target_inst_index_backup = target_inst_indices(2);
+            %elseif size(candidate_valid_messages,1) > 1
+            %    target_inst_index_backup = 2;
+            %else
+            %    target_inst_index_backup = 0;
+            %end
 
             if valid_messages_probabilities(target_inst_index) < crash_threshold
                 suggest_to_crash = 1;
@@ -558,7 +558,7 @@ end
 if verbose == 1
     target_inst_indices
     target_inst_index
-    target_inst_index_backup
+    %target_inst_index_backup
 end
 
 %% Final result
@@ -569,15 +569,15 @@ else % Typical case
 end
 
 % FIXME: tmp fork-2 idea
-if target_inst_index_backup > 0
-    recovered_message_backup = candidate_valid_messages(target_inst_index_backup,:);
-else
-    recovered_message_backup = recovered_message;
-end
+%if target_inst_index_backup > 0
+%    recovered_message_backup = candidate_valid_messages(target_inst_index_backup,:);
+%else
+%    recovered_message_backup = recovered_message;
+%end
    
 % FIXME: tmp fork-2 idea
-recovered_successfully = (strcmp(recovered_message, original_message) == 1) ...
-                         || (strcmp(recovered_message_backup, original_message) == 1);
+recovered_successfully = (strcmp(recovered_message, original_message) == 1); %...
+%                         || (strcmp(recovered_message_backup, original_message) == 1);
 
 if verbose == 1
     recovered_successfully
