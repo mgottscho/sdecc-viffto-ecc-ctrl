@@ -4,7 +4,7 @@ function [candidate_correct_messages, retval] = compute_candidate_correct_messag
 % Arguments:
 %    received_string -- String of length n binary characters, where each is either '0' or '1'.
 %    H -- Binary matrix of dimension (n-k) x n, where each is either 0 or 1. This is the parity-check matrix.
-%    code_type -- String: '[hsiao1970|davydov1991|bose1960|kaneda1982]' SECDED, DECTED, ChipKill-only for now.
+%    code_type -- String: '[hsiao1970|davydov1991|bose1960|kaneda1982|ULEL_float|ULEL_even]' SECDED, DECTED, ChipKill, ULEL variants for now.
 %
 % Returns:
 %    candidate_correct_messages -- Character matrix of dimension c x k. Each row corresponds to a message that, when encoded and corrupted with a detected-but-uncorrectable error, could have resulted in the given received_string. Upon error in this function, candidate_correct_messages will be set to an n x k matrix of 'X'.
@@ -64,6 +64,17 @@ elseif strcmp(code_type, 'kaneda1982') == 1 % ChipKill
                 x = x+1;
             end
         end
+    end
+% Unequal-length error-locating codes (ULEL)
+elseif strcmp(code_type, 'ULEL_float') == 1 || strcmp(code_type, 'ULEL_even') == 1
+    segment_locator_mask = ULEL_decoder(received_string,H);
+    candidate_error_locs = find(segment_locator_mask=='1');
+    num_candidates = nnz(candidate_error_locs);
+    candidate_correct_messages = repmat(received_string,num_candidates,1);
+    trial_flip_matrix = repmat('0', num_candidates, n);
+    for i=1:num_candidates
+        trial_flip_matrix(i,candidate_error_locs(i)) = '1';
+        candidate_correct_messages(i,:) = my_bitxor(candidate_correct_messages(i,:), trial_flip_matrix(i,:));
     end
 else
     display(['FATAL! Unsupported code type: ' code_type]);
