@@ -9,8 +9,8 @@ function [candidate_correct_message_scores, recovered_message, suggest_to_crash,
 %
 % Input arguments:
 %   architecture --     String: '[rv64g]'
-%   n --                String: '[39|45|72|79|144]'
-%   k --                String: '[32|64|128]'
+%   n --                String: '[17|18|19|33|34|35|39|45|72|79|144]'
+%   k --                String: '[16|32|64|128]'
 %   original_message -- Binary String of length k bits/chars
 %   candidate_correct_messages -- Nx1 cell array of binary strings, each k bits/chars long
 %   policy --           String: '[hamming-pick-random|hamming-pick-longest-run|longest-run-pick-random|delta-pick-random|fdelta-pick-random|dbx-longest-run-pick-random|dbx-weight-pick-longest-run|dbx-longest-run-pick-lowest-weight]'
@@ -200,6 +200,8 @@ elseif strcmp(policy, 'fdelta-pick-random') == 1
             base = typecast(my_bin2dec(candidate_correct_messages(x,:)), 'double'); % Set base. This will be decimal uint64 value.
         elseif k == 32
             base = typecast(uint32(bin2dec(candidate_correct_messages(x,:)), 'single'));
+        elseif k == 16 % TODO: support 16-bit float
+            display('ERROR TODO: support 16-bit float');
         else
             display(['ERROR! Cannot use fdelta for k = ' k]);
         end
@@ -210,6 +212,8 @@ elseif strcmp(policy, 'fdelta-pick-random') == 1
                     word = typecast(my_bin2dec(parsed_cacheline_bin{blockpos}), 'double'); % Set base. This will be decimal uint64 value.
                 elseif k == 32
                     word = typecast(uint32(bin2dec(parsed_cacheline_bin{blockpos}), 'single'));
+                elseif k == 16 % TODO: support 16-bit float
+                    display('ERROR TODO: support 16-bit float');
                 else
                     display(['ERROR! Cannot use fdelta for k = ' k]);
                 end

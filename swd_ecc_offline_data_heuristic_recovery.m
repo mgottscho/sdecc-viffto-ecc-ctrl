@@ -15,15 +15,15 @@ function swd_ecc_offline_data_heuristic_recovery(architecture, benchmark, n, k, 
 % Input arguments:
 %   architecture --     String: '[rv64g]'
 %   benchmark --        String
-%   n --                String: '[39|45|72|79|144]'
-%   k --                String: '[32|64|128]'
+%   n --                String: '[17|18|19|33|34|35|39|45|72|79|144]'
+%   k --                String: '[16|32|64|128]'
 %   num_words --        String: '[1|2|3|...]'
 %   num_sampled_error_patterns -- String: '[1|2|3|...|number of possible ways for given code to have DUE|-1 for all possible (automatic)]'
 %   words_per_block --  String: '[1|2|3|...]'
 %   input_filename --   String
 %   output_filename --  String
 %   n_threads --        String: '[1|2|3|...]'
-%   code_type --        String: '[hsiao|davydov1991|bose1960|kaneda1982]'
+%   code_type --        String: '[hsiao|davydov1991|bose1960|kaneda1982|ULEL_float|ULEL_even]'
 %   policy --           String: '[baseline-pick-random|hamming-pick-random|hamming-pick-longest-run|longest-run-pick-random|delta-pick-random|fdelta-pick-random||dbx-longest-run-pick-random|dbx-weight-pick-longest-run|dbx-longest-run-pick-lowest-weight]'
 %   crash_threshold -- String of a scalar. Policy-defined semantics and range.
 %   verbose_recovery -- String: '[0|1]'
@@ -143,9 +143,9 @@ for i=1:num_words
     end
 end
 
-%% Construct a matrix containing all possible (t+1)-bit error patterns as bit-strings.
+%% Construct a matrix containing all possible DUE error patterns as bit-strings.
 display('Constructing error-pattern matrix...');
-if strcmp(code_type,'hsiao1970') == 1 || strcmp(code_type,'davydov1991') == 1 % SECDED
+if strcmp(code_type,'hsiao1970') == 1 || strcmp(code_type,'davydov1991') == 1 % SECDED: DUE is t+1 bit error
     num_error_patterns = nchoosek(n,2);
     error_patterns = repmat('0',num_error_patterns,n);
     num_error = 1;
@@ -156,7 +156,7 @@ if strcmp(code_type,'hsiao1970') == 1 || strcmp(code_type,'davydov1991') == 1 % 
             num_error = num_error + 1;
         end
     end
-elseif strcmp(code_type,'bose1960') == 1 % DECTED
+elseif strcmp(code_type,'bose1960') == 1 % DECTED: DUE is t+1 bit error
     num_error_patterns = nchoosek(n,3);
     error_patterns = repmat('0',num_error_patterns,n);
     num_error = 1;
@@ -170,7 +170,7 @@ elseif strcmp(code_type,'bose1960') == 1 % DECTED
             end
         end
     end
-elseif strcmp(code_type,'kaneda1982') == 1 % ChipKill
+elseif strcmp(code_type,'kaneda1982') == 1 % ChipKill: DUE is t+1 symbol error
     num_error_patterns = nchoosek(n/4,2) * 15^2;
     error_patterns = repmat('0',num_error_patterns,n);
     sym_error_patterns = dec2bin(1:15);
@@ -186,6 +186,9 @@ elseif strcmp(code_type,'kaneda1982') == 1 % ChipKill
             end
         end
     end
+elseif strcmp(code_type,'ULEL_float') == 1 || strcmp(code_type,'ULEL_even') == 1 % ULEL: DUE is 1-bit error
+    num_error_patterns = n;
+    error_patterns = eye(n);
 else
     display(['FATAL! Unsupported code type: ' code_type]);
     return;
@@ -210,6 +213,8 @@ elseif strcmp(code_type, 'bose1960') == 1 % DECTED
     [G,H] = getDECTEDCodes(n);
 elseif strcmp(code_type, 'kaneda1982') == 1 % ChipKill
     [G,H] = getChipkillCodes(n);
+elseif strcmp(code_type, 'ULEL_float') == 1 || strcmp(code_type, 'ULEL_even') == 1 % ULEL
+    [G,H] = getULELCodes(k,r,code_type);
 else
     display(['FATAL! Unsupported code type: ' code_type]);
 end
