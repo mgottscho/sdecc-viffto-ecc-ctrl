@@ -16,9 +16,9 @@ function [candidate_correct_messages, retval] = compute_candidate_correct_messag
 [r,n] = size(H);
 k = n-r;
 
-%if ~isdeployed
-%    addpath(['..' filesep 'common']); % Add sub-folders to MATLAB search paths for calling other functions we wrote
-%end
+if ~isdeployed
+    addpath(['..' filesep 'common']); % Add sub-folders to MATLAB search paths for calling other functions we wrote
+end
 
 x = 1;
 candidate_correct_messages = repmat('X',n,k); % Pre-allocate for worst-case capacity. X is placeholder. If something goes wrong, we expect this variable to not change and be returned as-is.
