@@ -291,8 +291,12 @@ elseif strcmp(code_type,'kaneda1982') == 1 % ChipKill
         end
     end
 elseif strcmp(code_type,'ULEL_float') == 1 || strcmp(code_type,'ULEL_even') == 1 % ULEL: DUE is 1-bit error
+    % Identity matrix
+    error_patterns = repmat('0',n,n);
+    for i=1:n
+        error_patterns(i,i) = '1';
+    end
     num_error_patterns = n;
-    error_patterns = eye(n);
 else
     display(['FATAL! Unsupported code type: ' code_type]);
     return;
