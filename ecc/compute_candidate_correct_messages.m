@@ -70,14 +70,13 @@ elseif strcmp(code_type, 'ULEL_float') == 1 || strcmp(code_type, 'ULEL_even') ==
     segment_locator_mask = ULEL_decoder(received_string,H);
     candidate_error_locs = find(segment_locator_mask=='1');
     num_candidates = nnz(candidate_error_locs);
-    candidate_correct_codewords = repmat(received_string,num_candidates,1);
     trial_flip_matrix = repmat('0', num_candidates, n);
     for i=1:num_candidates
         trial_flip_matrix(i,candidate_error_locs(i)) = '1';
-        candidate_correct_codewords(i,:) = my_bitxor(candidate_correct_codewords(i,:), trial_flip_matrix(i,:));
+        candidate_correct_codeword = my_bitxor(received_string, trial_flip_matrix(i,:));
+        candidate_correct_messages(i,:) = candidate_correct_codeword(:,1:k);
     end
-    candidate_correct_messages = candidate_correct_codewords(:,1:k);
-    x = num_candidates;
+    x = num_candidates+1;
 else
     display(['FATAL! Unsupported code type: ' code_type]);
     return;
