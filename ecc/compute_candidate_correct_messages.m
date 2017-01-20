@@ -76,13 +76,14 @@ elseif strcmp(code_type, 'ULEL_float') == 1 || strcmp(code_type, 'ULEL_even') ==
         trial_flip_matrix(i,candidate_error_locs(i)) = '1';
         candidate_correct_messages(i,:) = my_bitxor(candidate_correct_messages(i,:), trial_flip_matrix(i,:));
     end
+    x = num_candidates;
 else
     display(['FATAL! Unsupported code type: ' code_type]);
     return;
 end
 
 % Uniquify the candidate messages
-if x > 1
+if x >= 1
     candidate_correct_messages = candidate_correct_messages(1:x-1, :);
     candidate_correct_messages = unique(candidate_correct_messages,'rows','sorted'); % Sort feature is important
     retval = 0;

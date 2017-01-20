@@ -16,14 +16,14 @@ function swd_ecc_offline_inst_heuristic_recovery(architecture, benchmark, n, k, 
 % Input arguments:
 %   architecture --     String: '[rv64g]'
 %   benchmark --        String
-%   n --                String: '[39|45|72|79|144]'
+%   n --                String: '[33|34|35|39|45|72|79|144]'
 %   k --                String: '[32|64|128]'
 %   num_messages --     String: '[1|2|3|...]'
 %   num_sampled_error_patterns -- String: '[1|2|3|...|number of possible ways for given code to have DUE|-1 for all possible (automatic)]'
 %   input_filename --   String
 %   output_filename --  String
 %   n_threads --        String: '[1|2|3|...]'
-%   code_type --        String: '[hsiao|davydov1991|bose1960|kaneda1982]'
+%   code_type --        String: '[hsiao|davydov1991|bose1960|kaneda1982|ULEL_float|ULEL_even]'
 %   policy --           String: '[  baseline-pick-random 
 %                                 | filter-pick-random
 %                                 | filter-rank-pick-random
@@ -290,6 +290,9 @@ elseif strcmp(code_type,'kaneda1982') == 1 % ChipKill
             end
         end
     end
+elseif strcmp(code_type,'ULEL_float') == 1 || strcmp(code_type,'ULEL_even') == 1 % ULEL: DUE is 1-bit error
+    num_error_patterns = n;
+    error_patterns = eye(n);
 else
     display(['FATAL! Unsupported code type: ' code_type]);
     return;
@@ -321,6 +324,8 @@ elseif strcmp(code_type, 'bose1960') == 1 % DECTED
     [G,H] = getDECTEDCodes(n);
 elseif strcmp(code_type, 'kaneda1982') == 1 % ChipKill
     [G,H] = getChipkillCodes(n);
+elseif strcmp(code_type, 'ULEL_float') == 1 || strcmp(code_type, 'ULEL_even') == 1 % ULEL
+    [G,H] = getULELCodes(k,r,code_type);
 else
     display(['FATAL! Unsupported code type: ' code_type]);
 end

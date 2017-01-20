@@ -4,10 +4,11 @@ function [num_valid_messages, recovered_message, estimated_prob_correct, suggest
 % To compute candidate codewords, we flip a single bit one at a time and decode using specified ECC decoder.
 % We should obtain a set of unique candidate codewords.
 % Based on the policy, we then try to recover the most likely corresponding instruction-message.
+% Note: currently, inst_recovery does not support message sizes of 16-bits because this is smaller than an individual instruction.
 %
 % Input arguments:
 %   architecture --     String: '[rv64g]'
-%   n --                String: '[39|45|72|79|144]'
+%   n --                String: '[33|34|35|39|45|72|79|144]'
 %   k --                String: '[32|64|128]'
 %   original_message -- Binary String of length k bits/chars. Note that k might not be 32 which is the instruction size! We will treat original_message as being a set of packed 32-bit instructions.
 %   candidate_correct_messages -- Nx1 cell array of binary strings, each k bits/chars long
