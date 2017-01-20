@@ -70,12 +70,13 @@ elseif strcmp(code_type, 'ULEL_float') == 1 || strcmp(code_type, 'ULEL_even') ==
     segment_locator_mask = ULEL_decoder(received_string,H);
     candidate_error_locs = find(segment_locator_mask=='1');
     num_candidates = nnz(candidate_error_locs);
-    candidate_correct_messages = repmat(received_string,num_candidates,1);
+    candidate_correct_codewords = repmat(received_string,num_candidates,1);
     trial_flip_matrix = repmat('0', num_candidates, n);
     for i=1:num_candidates
         trial_flip_matrix(i,candidate_error_locs(i)) = '1';
-        candidate_correct_messages(i,:) = my_bitxor(candidate_correct_messages(i,:), trial_flip_matrix(i,:));
+        candidate_correct_codewords(i,:) = my_bitxor(candidate_correct_codewords(i,:), trial_flip_matrix(i,:));
     end
+    candidate_correct_messages = candidate_correct_codewords(:,1:k);
     x = num_candidates;
 else
     display(['FATAL! Unsupported code type: ' code_type]);
@@ -83,8 +84,9 @@ else
 end
 
 % Uniquify the candidate messages
-if x >= 1
+if x > 1
     candidate_correct_messages = candidate_correct_messages(1:x-1, :);
     candidate_correct_messages = unique(candidate_correct_messages,'rows','sorted'); % Sort feature is important
-    retval = 0;
 end
+
+retval = 0;
