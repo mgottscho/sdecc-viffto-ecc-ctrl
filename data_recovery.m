@@ -197,21 +197,21 @@ elseif strcmp(policy, 'fdelta-pick-random') == 1
     for x=1:size(candidate_correct_messages,1) % For each candidate message
         score = Inf;
         if k == 64
-            base = typecast(my_bin2dec(candidate_correct_messages(x,:)), 'double'); % Set base. This will be decimal uint64 value.
+            base = typecast(my_bin2dec(candidate_correct_messages(x,:)), 'double'); 
         elseif k == 32
-            base = typecast(uint32(bin2dec(candidate_correct_messages(x,:)), 'single'));
+            base = typecast(uint32(my_bin2dec(candidate_correct_messages(x,:))), 'single');
         elseif k == 16 % TODO: support 16-bit float
             display('ERROR TODO: support 16-bit float');
         else
             display(['ERROR! Cannot use fdelta for k = ' k]);
         end
-        deltas = NaN(words_per_block-1,1); % Init deltas. These will be decimal uint64 values
+        deltas = NaN(words_per_block-1,1); % Init deltas. 
         for blockpos=1:words_per_block % For each message in the cacheline (need to skip the message under test)
             if blockpos ~= message_blockpos % Skip the message under test
                 if k == 64
-                    word = typecast(my_bin2dec(parsed_cacheline_bin{blockpos}), 'double'); % Set base. This will be decimal uint64 value.
+                    word = typecast(my_bin2dec(parsed_cacheline_bin{blockpos}), 'double');
                 elseif k == 32
-                    word = typecast(uint32(bin2dec(parsed_cacheline_bin{blockpos}), 'single'));
+                    word = typecast(uint32(my_bin2dec(parsed_cacheline_bin{blockpos})), 'single');
                 elseif k == 16 % TODO: support 16-bit float
                     display('ERROR TODO: support 16-bit float');
                 else
@@ -224,6 +224,12 @@ elseif strcmp(policy, 'fdelta-pick-random') == 1
                 end
             end
         end
+
+        if verbose == 1
+            base
+            deltas
+        end
+
         score = sum(deltas(~isnan(deltas)).^2); % Sum of squares of abs-deltas. Score is now a double.
         candidate_correct_message_scores(x) = score; % Each score is a double.
     end

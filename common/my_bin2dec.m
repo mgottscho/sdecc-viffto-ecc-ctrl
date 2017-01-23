@@ -5,7 +5,7 @@ function [dec] = my_bin2dec(bin)
 %   bin --   String of k characters, where each is either '0' or '1'.
 %
 % Returns:
-%   dec --   unsigned integer value represented by the binary input string. NaN on error or if k > 64.
+%   dec --   unsigned integer value (uint64) represented by the binary input string. NaN on error or if k > 64.
 %
 % Code based on that from http://stackoverflow.com/questions/32334748/convert-64-bit-numbers-from-binary-to-decimal-using-uint64
 %
