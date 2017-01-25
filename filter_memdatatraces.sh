@@ -4,7 +4,7 @@
 # Email: mgottscho@ucla.edu
 
 ARGC=$# # Get number of arguments excluding arg0 (the script itself). Check for help message condition.
-if [[ "$ARGC" != 0 ]]; then # Bad number of arguments. 
+if [[ "$ARGC" != 1 ]]; then # Bad number of arguments. 
 	echo "Author: Mark Gottscho"
 	echo "mgottscho@ucla.edu"
 	echo ""
@@ -22,14 +22,7 @@ SPEC_BENCHMARKS="400.perlbench 401.bzip2 403.gcc 410.bwaves 435.gromacs 436.cact
 for SPEC_BENCHMARK in $SPEC_BENCHMARKS; do
 	echo "$SPEC_BENCHMARK..."
     SOURCE_FILE="${TARGET_DIR}/spike_mem_data_trace_${SPEC_BENCHMARK}.txt" 
-    ./extract_inst_lines_from_memdatatrace.sh $SOURCE_FILE ${SOURCE_FILE}.inst &
-    ./extract_data_lines_from_memdatatrace.sh $SOURCE_FILE ${SOURCE_FILE}.data &
-    ./extract_data_read_lines_from_memdatatrace.sh $SOURCE_FILE ${SOURCE_FILE}.data.reads &
-    ./extract_data_write_lines_from_memdatatrace.sh $SOURCE_FILE ${SOURCE_FILE}.data.writes &
-    ./extract_ints_from_memdatatrace.sh ${SOURCE_FILE}.data.reads ${SOURCE_FILE}.data.reads.ints &
-    ./extract_ints_from_memdatatrace.sh ${SOURCE_FILE}.data.writes ${SOURCE_FILE}.data.writes.ints &
-    ./extract_floats_from_memdatatrace.sh ${SOURCE_FILE}.data.reads ${SOURCE_FILE}.data.reads.floats &
-    ./extract_floats_from_memdatatrace.sh ${SOURCE_FILE}.data.writes ${SOURCE_FILE}.data.writes.floats &
+    ./filter_single_memdatatrace.sh $SOURCE_FILE &
 done
 
 echo "Done."
