@@ -99,9 +99,9 @@ fclose(fid);
 
 %% Parse the raw trace
 % It is in CSV format, as output by our memdatatrace version of RISCV Spike simulator of the form
-% STEP,OPERATION,MEM_ACCESS_SEQ_NUM,VADDR,PADDR,USER_PERM,SUPER_PERM,ACCESS_SIZE,PAYLOAD,CACHE_BLOCKPOS,CACHE_BLOCK0,CACHE_BLOCK1,...,
+% STEP,OPERATION,REG_TYPE,MEM_ACCESS_SEQ_NUM,VADDR,PADDR,USER_PERM,SUPER_PERM,ACCESS_SIZE,PAYLOAD,CACHE_BLOCKPOS,CACHE_BLOCK0,CACHE_BLOCK1,...,
 % like so:
-% 1805000,D$ RD fr MEM,1898719,VADDR 0x0000000000001718,PADDR 0x0000000000001718,u---,sRWX,4B,PAYLOAD 0x63900706,BLKPOS 3,0x33d424011374f41f,0x1314340033848700,0x0335040093771500,0x63900706638e0908,0xeff09ff21355c500,0x1315a50013651500,0x2330a4001355a500,0x1b0979ff9317c500,
+% 1805000,D$ RD fr MEM,INT,1898719,VADDR 0x0000000000001718,PADDR 0x0000000000001718,u---,sRWX,4B,PAYLOAD 0x63900706,BLKPOS 3,0x33d424011374f41f,0x1314340033848700,0x0335040093771500,0x63900706638e0908,0xeff09ff21355c500,0x1315a50013651500,0x2330a4001355a500,0x1b0979ff9317c500,
 % ...
 % NOTE: memdatatrace payloads and cache blocks are in NATIVE byte order for
 % the simulated architecture. For RV64G this is LITTLE-ENDIAN!
@@ -110,6 +110,7 @@ fclose(fid);
 % format.
 sampled_trace_step = cell(num_words,1);
 sampled_trace_operation = cell(num_words,1);
+sampled_trace_reg_type = cell(num_words,1);
 sampled_trace_seq_num = cell(num_words,1);
 sampled_trace_vaddr = cell(num_words,1);
 sampled_trace_paddr = cell(num_words,1);
@@ -124,6 +125,7 @@ for i=1:num_words
     remain = sampled_trace_raw{i,1};
     [sampled_trace_step{i,1}, remain] = strtok(remain,',');
     [sampled_trace_operation{i,1}, remain] = strtok(remain,',');
+    [sampled_trace_reg_type{i,1}, remain] = strtok(remain,',');
     [sampled_trace_seq_num{i,1}, remain] = strtok(remain,',');
     [sampled_trace_vaddr{i,1}, remain] = strtok(remain,',');
     [sampled_trace_paddr{i,1}, remain] = strtok(remain,',');

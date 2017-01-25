@@ -110,9 +110,9 @@ end
 % ...
 %
 % If it is in CSV format, as output by our memdatatrace version of RISCV Spike simulator of the form
-% STEP,OPERATION,MEM_ACCESS_SEQ_NUM,VADDR,PADDR,USER_PERM,SUPER_PERM,ACCESS_SIZE,PAYLOAD,CACHE_BLOCKPOS,CACHE_BLOCK0,CACHE_BLOCK1,...,
+% STEP,OPERATION,REG_TYPE,MEM_ACCESS_SEQ_NUM,VADDR,PADDR,USER_PERM,SUPER_PERM,ACCESS_SIZE,PAYLOAD,CACHE_BLOCKPOS,CACHE_BLOCK0,CACHE_BLOCK1,...,
 % like so:
-% 1805000,I$ RD fr MEM,1898719,VADDR 0x0000000000001718,PADDR 0x0000000000001718,u---,sRWX,4B,PAYLOAD 0x63900706,BLKPOS 3,0x33d424011374f41f,0x1314340033848700,0x0335040093771500,0x63900706638e0908,0xeff09ff21355c500,0x1315a50013651500,0x2330a4001355a500,0x1b0979ff9317c500,
+% 1805000,I$ RD fr MEM,INT,1898719,VADDR 0x0000000000001718,PADDR 0x0000000000001718,u---,sRWX,4B,PAYLOAD 0x63900706,BLKPOS 3,0x33d424011374f41f,0x1314340033848700,0x0335040093771500,0x63900706638e0908,0xeff09ff21355c500,0x1315a50013651500,0x2330a4001355a500,0x1b0979ff9317c500,
 % ...
 % NOTE: memdatatrace payloads and cache blocks are in NATIVE byte order for
 % the simulated architecture. For RV64G this is LITTLE-ENDIAN!
@@ -168,7 +168,7 @@ while i <= total_num_inst && j <= num_messages
             end
         elseif strcmp(trace_mode, 'dynamic') == 1 % Dynamic trace mode
             remain = line;
-            for x=1:9 % 9 iterations because payload is 9th entry in a row of the above format
+            for x=1:10 % 10 iterations because payload is 10th entry in a row of the above format
                 [token,remain] = strtok(remain,',');
             end
             [~, payload_remain] = strtok(token,'x'); % Find the part of "PAYLOAD 0xDEADBEEF" after the "0x" part.
