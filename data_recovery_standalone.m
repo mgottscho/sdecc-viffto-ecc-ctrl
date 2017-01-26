@@ -1,4 +1,4 @@
-[] = data_recovery_standalone(architecture, n, k, original_message_bin, error_pattern_bin, policy, cacheline_bin, message_blockpos, crash_threshold, verbose, code_type)
+function [] = data_recovery_standalone(architecture, n, k, original_message_bin, error_pattern_bin, policy, cacheline_bin, message_blockpos, crash_threshold, verbose, code_type)
 % This function serves as a wrapper for data_recovery() to external applications. It is meant to be compiled with mcc and invoked through a shell.
 % Relevant arguments are passed through to data_recovery. Those which are not are described below. Function output is text to stdout.
 %
