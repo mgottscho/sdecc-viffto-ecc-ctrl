@@ -212,19 +212,7 @@ end
 if verbose_recovery == 1
     display('Getting ECC encoder and decoder matrices...');
 end
-
-if strcmp(code_type, 'hsiao1970') == 1 || strcmp(code_type, 'davydov1991') == 1 % SECDED
-    [G,H] = getSECDEDCodes(n,code_type);
-elseif strcmp(code_type, 'bose1960') == 1 % DECTED
-    [G,H] = getDECTEDCodes(n);
-elseif strcmp(code_type, 'kaneda1982') == 1 % ChipKill
-    [G,H] = getChipkillCodes(n);
-elseif strcmp(code_type, 'ULEL_float') == 1 || strcmp(code_type, 'ULEL_even') == 1 % ULEL
-    [G,H] = getULELCodes(k,r,code_type);
-else
-    display(['FATAL! Unsupported code type: ' code_type]);
-end
-
+[G,H] = getECCConstruction(n,code_type);
 
 results_candidate_messages = NaN(num_words,num_sampled_error_patterns); % Init
 success = NaN(num_words, num_sampled_error_patterns); % Init

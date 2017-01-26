@@ -317,22 +317,11 @@ if verbose_recovery == 1
     sampled_error_pattern_indices
 end
 
-%% Get the G and H for our code
+%% Get our ECC encoder and decoder matrices
 if verbose_recovery == 1
     display('Getting ECC encoder and decoder matrices...');
 end
-
-if strcmp(code_type, 'hsiao1970') == 1 || strcmp(code_type, 'davydov1991') == 1 % SECDED
-    [G,H] = getSECDEDCodes(n,code_type);
-elseif strcmp(code_type, 'bose1960') == 1 % DECTED
-    [G,H] = getDECTEDCodes(n);
-elseif strcmp(code_type, 'kaneda1982') == 1 % ChipKill
-    [G,H] = getChipkillCodes(n);
-elseif strcmp(code_type, 'ULEL_float') == 1 || strcmp(code_type, 'ULEL_even') == 1 % ULEL
-    [G,H] = getULELCodes(k,r,code_type);
-else
-    display(['FATAL! Unsupported code type: ' code_type]);
-end
+[G,H] = getECCConstruction(n,code_type);
 
 %% Read mnemonic and rd distributions from files now
 display('Importing side information...');
