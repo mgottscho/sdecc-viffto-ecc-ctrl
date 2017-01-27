@@ -12,6 +12,8 @@ function [] = inst_recovery_standalone(architecture, n, k, original_message_bin,
 % Author: Mark Gottscho
 % Email: mgottscho@ucla.edu
 
+n = str2num(n);
+
 if ~isdeployed
     addpath ecc common rv64g % Add sub-folders to MATLAB search paths for calling other functions we wrote
 end
@@ -24,4 +26,4 @@ received_string_bin = my_bitxor(original_codeword_bin, error_pattern_bin);
 
 % TODO and FIXME: worry about byte ordering for specific policies like delta-pick-random and fdelta-pick-random
 
-inst_recovery('rv64g', num2str(n), num2str(k), original_message_bin, candidate_correct_messages_bin, policy, instruction_mnemonic_hotness, instruction_rd_hotness, crash_threshold, num2str(verbose_recovery)); % Don't need return values.
+inst_recovery('rv64g', num2str(n), num2str(k), original_message_bin, candidate_correct_messages_bin, policy, instruction_mnemonic_hotness, instruction_rd_hotness, crash_threshold, num2str(verbose)); % Don't need return values.

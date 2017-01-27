@@ -1,4 +1,4 @@
-[G,H] = getECCConstruction(n,code_type)
+function [G,H] = getECCConstruction(n,code_type)
 % Get the generator and parity-check matrices for the specified code.
 % The message size k is inferred by the value of n. It can either be 16, 32, 64, or 128.
 % Upon error, G and H are set to 0.
