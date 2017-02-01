@@ -1,10 +1,9 @@
-function [G, H] = getULELCodes(k,r,code_type)
+function [G, H] = getULELCodes(n,code_type)
 % This function returns the generator (G) and parity-check (H) matrices
 % for an unequal-length error-locating (ULEL) code with specified length-k message bits, number of redundancy bits, and type of code.
 %
 % Input arguments:
-%   k --                Scalar: [16|32]
-%   r --                Scalar: [1|2|3]
+%   n --                Scalar: [17|18|19|33|34|35]
 %   code_type --        String: '[ULEL_float|ULEL_ULEL_even]'. If r == 1 or 3 then this is always treated as 'ULEL_even'
 %
 % Returns:
@@ -16,16 +15,17 @@ function [G, H] = getULELCodes(k,r,code_type)
 
 
 %% First, make sure input arguments are valid.
-if (k~=16) && (k~=32)
+if (n~=17) && (n~=18) && (n~=19) && (n~=33) && (n~=34) && (n~=35)
     G=0;
     H=0;
     return;
 end
-if (r~=1) && (r~=2) && (r~=3)
-    G=0;
-    H=0;
-    return;
+if (n==17) || (n==18) || (n==19)
+    k = 16;
+elseif (n==33) || (n==34) || (n==35)   
+    k = 32;
 end
+r = n-k;
 if (~strcmp(code_type,'ULEL_float')) && (~strcmp(code_type,'ULEL_even'))
     G=0;
     H=0;

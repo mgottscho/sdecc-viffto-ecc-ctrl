@@ -21,7 +21,7 @@ elseif strcmp(code_type, 'bose1960') == 1 % DECTED
 elseif strcmp(code_type, 'kaneda1982') == 1 % ChipKill
     [G,H] = getChipkillCodes(n);
 elseif strcmp(code_type, 'ULEL_float') == 1 || strcmp(code_type, 'ULEL_even') == 1 % ULEL
-    [G,H] = getULELCodes(k,r,code_type);
+    [G,H] = getULELCodes(n,code_type);
 else
     G=0;
     H=0;
