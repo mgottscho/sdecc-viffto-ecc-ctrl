@@ -221,6 +221,8 @@ success_with_crash_option = NaN(num_words, num_sampled_error_patterns); % Init
 results_miscorrect = NaN(num_words, num_sampled_error_patterns); % Init
 avg_candidate_scores = NaN(num_words, num_sampled_error_patterns); % Init
 var_candidate_scores = NaN(num_words, num_sampled_error_patterns); % Init
+recovery_deltas = NaN(num_words, num_sampled_error_patterns); % Init
+recovery_fdeltas = NaN(num_words, num_sampled_error_patterns); % Init
 
 %% Randomly generate sampled error pattern indices
 sampled_error_pattern_indices = sortrows(randperm(num_error_patterns, num_sampled_error_patterns)'); % Increasing order of indices. This does not affect experiment correctness.
@@ -317,7 +319,7 @@ parfor j=1:num_sampled_error_patterns
 %            end
 
             %% Do heuristic recovery for this message/error pattern combo.
-            [candidate_scores, recovered_message, suggest_to_crash, recovered_successfully] = data_recovery('rv64g', num2str(n), num2str(k), original_message_bin, candidate_correct_messages, policy, serialized_cacheline_bin, sampled_blockpos_indices(i), crash_threshold, num2str(verbose_recovery));
+            [candidate_scores, recovered_message_bin, suggest_to_crash, recovered_successfully] = data_recovery('rv64g', num2str(n), num2str(k), original_message_bin, candidate_correct_messages, policy, serialized_cacheline_bin, sampled_blockpos_indices(i), crash_threshold, num2str(verbose_recovery));
 
             %% Store results for this message/error pattern pair
             success(i,j) = recovered_successfully;
@@ -332,6 +334,33 @@ parfor j=1:num_sampled_error_patterns
                 results_miscorrect(i,j) = ~success(i,j);
             end
             results_candidate_messages(i,j) = num_candidate_messages;
+
+            %% Compute recovery integer delta (measure of how much error to original message when treated as integers)
+            original_message_dec = my_bin2dec(original_message_bin); % uint64 value
+            recovered_message_dec = my_bin2dec(recovered_message_bin); % uint64 value
+
+            % uint64 in MATLAB do not overflow or underflow, they saturate. So we take abs of delta and recover sign to avoid losing information.
+            if original_message_dec >= recovered_message_dec
+                deltasign = 1;
+                delta = original_message_dec - recovered_message_dec;
+            else
+                deltasign = -1;
+                delta = recovered_message_dec - original_message_dec;
+            end
+            recovery_deltas(i,j) = deltasign*double(delta); % Cast delta back to a double and re-apply the sign
+
+            %% Compute recovery float delta
+            if k == 64
+                original_message_float = typecast(my_bin2dec(original_message_bin), 'double'); 
+                recovered_message_float = typecast(my_bin2dec(recovered_message_bin), 'double'); 
+            elseif k == 32
+                original_message_float = typecast(uint32(my_bin2dec(original_message_bin)), 'single'); 
+                recovered_message_float = typecast(uint32(my_bin2dec(recovered_message_bin)), 'single'); 
+            elseif k == 16 % TODO: support 16-bit float
+                display('ERROR TODO: support 16-bit float');
+            end
+
+            recovery_fdeltas(i,j) = original_message_float - recovered_message_float;
         end
     end
 
