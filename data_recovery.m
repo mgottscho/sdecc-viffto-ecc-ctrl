@@ -170,12 +170,12 @@ elseif strcmp(policy, 'delta-pick-random') == 1
     end
     for x=1:size(candidate_correct_messages,1) % For each candidate message
         score = Inf;
-        base = my_bin2dec(candidate_correct_messages(x,:)); % Set base. This will be decimal uint64 value.
+        base = my_bin2dec(candidate_correct_messages(x,:),k); % Set base. This will be decimal uint64 value.
         deltas = NaN(words_per_block-1,1); % Init deltas. These will be decimal uint64 values
         for blockpos=1:words_per_block % For each message in the cacheline (need to skip the message under test)
             if blockpos ~= message_blockpos % Skip the message under test
-                word = my_bin2dec(parsed_cacheline_bin{blockpos});
-                % Due to behavior of uint64 in MATLAB, underflow and overflow do not occur - they simply "saturate" at 0 and max of uint64 values. So we take the abs of deltas only to avoid losing information.
+                word = my_bin2dec(parsed_cacheline_bin{blockpos},k);
+                % Due to behavior of uint64 in MATLAB, underflow and overflow do not occur - they simply "saturate" at 0 and max of respective unsigned int values. So we take the abs of deltas only to avoid losing information.
                 if base > word
                     deltas(blockpos) = base - word;
                 else
@@ -197,9 +197,9 @@ elseif strcmp(policy, 'fdelta-pick-random') == 1
     for x=1:size(candidate_correct_messages,1) % For each candidate message
         score = Inf;
         if k == 64
-            base = typecast(my_bin2dec(candidate_correct_messages(x,:)), 'double'); 
+            base = typecast(my_bin2dec(candidate_correct_messages(x,:),k), 'double'); 
         elseif k == 32
-            base = typecast(uint32(my_bin2dec(candidate_correct_messages(x,:))), 'single');
+            base = typecast(my_bin2dec(candidate_correct_messages(x,:),k), 'single');
         elseif k == 16 % TODO: support 16-bit float
             display('ERROR TODO: support 16-bit float');
         else
@@ -209,19 +209,15 @@ elseif strcmp(policy, 'fdelta-pick-random') == 1
         for blockpos=1:words_per_block % For each message in the cacheline (need to skip the message under test)
             if blockpos ~= message_blockpos % Skip the message under test
                 if k == 64
-                    word = typecast(my_bin2dec(parsed_cacheline_bin{blockpos}), 'double');
+                    word = typecast(my_bin2dec(parsed_cacheline_bin{blockpos},k), 'double');
                 elseif k == 32
-                    word = typecast(uint32(my_bin2dec(parsed_cacheline_bin{blockpos})), 'single');
+                    word = typecast(my_bin2dec(parsed_cacheline_bin{blockpos},k), 'single');
                 elseif k == 16 % TODO: support 16-bit float
                     display('ERROR TODO: support 16-bit float');
                 else
                     display(['ERROR! Cannot use fdelta for k = ' k]);
                 end
-                if base > word
-                    deltas(blockpos) = base - word;
-                else
-                    deltas(blockpos) = word - base;
-                end
+                deltas(blockpos) = base - word;
             end
         end
 
@@ -365,13 +361,38 @@ if verbose == 1
     target_message_index
 end
 
-%% Crash policy: suggest crash if the min score is not at least crash_threshold*std dev below the mean score.
-std_dev_scores = std(candidate_correct_message_scores);
-mean_score = mean(candidate_correct_message_scores);
-if min_score <= mean_score - (crash_threshold * std_dev_scores)
+%% Floating point-specific crash policy: suggest to crash if candidate messages or cacheline neighbors do not share common sign and exponent bits
+if strcmp(policy, 'fdelta-pick-random') == 1
+    if k == 32
+        signexp_start = 1;
+        signexp_end = 9;
+    else
+        display('Error! Currently do not support floats for k ~= 32');
+        signexp_start = 0;
+        signexp_end = 0;
+    end
     suggest_to_crash = 0;
+    if strcmp(repmat(candidate_correct_messages(1,signexp_start:signexp_end),size(candidate_correct_messages,1),1), candidate_correct_messages(:,signexp_start:signexp_end)) ~= 1 % Check to see if candidate messages share common sign and exp bits
+        suggest_to_crash = 1;
+    else % Check to see if cacheline words share common sign and exponent bits
+        first_word = parsed_cacheline_bin{1};
+        for word=2:words_per_block
+           current_word = parsed_cacheline_bin{word};
+           if strcmp(first_word(signexp_start:signexp_end), current_word(signexp_start:signexp_end)) ~= 1
+               suggest_to_crash = 1;
+               break;
+           end
+        end
+    end
 else
-    suggest_to_crash = 1;
+    %% Default crash policy: suggest crash if the min score is not at least crash_threshold*std dev below the mean score.
+    std_dev_scores = std(candidate_correct_message_scores);
+    mean_score = mean(candidate_correct_message_scores);
+    if min_score <= mean_score - (crash_threshold * std_dev_scores)
+        suggest_to_crash = 0;
+    else
+        suggest_to_crash = 1;
+    end
 end
 
 %% Compute whether we got the correct answer or not for this data/error pattern pairing

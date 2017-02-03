@@ -26,7 +26,7 @@ k = size(cacheline,2);
 %% Convert each cacheline entry to decimal uint64 form
 cacheline_dec=cell(N,1);
 for blockpos=1:N
-    cacheline_dec{blockpos,1}=my_bin2dec(cacheline(blockpos,:));
+    cacheline_dec{blockpos,1}=my_bin2dec(cacheline(blockpos,:),k);
 end
 
 %% Now we get the delta matrix in decimal and convert to binary
