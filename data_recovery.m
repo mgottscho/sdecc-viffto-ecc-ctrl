@@ -9,11 +9,11 @@ function [candidate_correct_message_scores, recovered_message, suggest_to_crash,
 %
 % Input arguments:
 %   architecture --     String: '[rv64g]'
-%   n --                String: '[39|45|72|79|144]'
-%   k --                String: '[32|64|128]'
+%   n --                String: '[17|18|19|33|34|35|39|45|72|79|144]'
+%   k --                String: '[16|32|64|128]'
 %   original_message -- Binary String of length k bits/chars
 %   candidate_correct_messages -- Nx1 cell array of binary strings, each k bits/chars long
-%   policy --           String: '[hamming-pick-random|hamming-pick-longest-run|longest-run-pick-random|delta-pick-random|fdelta-pick-random|dbx-longest-run-pick-random|dbx-weight-pick-longest-run|dbx-longest-run-pick-lowest-weight]'
+%   policy --           String: '[exact-single|exact-random|hamming-pick-random|hamming-pick-longest-run|longest-run-pick-random|delta-pick-random|fdelta-pick-random|dbx-longest-run-pick-random|dbx-weight-pick-longest-run|dbx-longest-run-pick-lowest-weight]'
 %   cacheline_bin --    String: Set of words_per_block k-bit binary strings, e.g. '0001010101....00001,0000000000.....00000,...,111101010...00101'. words_per_block is inferred by the number of binary strings that are delimited by commas.
 %   message_blockpos -- String: '[0-(words_per_block-1)]' denoting the position of the message under test within the cacheline. This message should match original_message argument above.
 %   crash_threshold -- String of a scalar. Policy-defined semantics and range.
@@ -114,6 +114,30 @@ if strcmp(policy, 'baseline-pick-random') == 1
         display('RECOVERY STEP 1: Each candidate-correct message is scored equally.');
     end
     candidate_correct_message_scores = ones(size(candidate_correct_messages,1),1); % All outcomes equally scored
+elseif strcmp(policy, 'exact-single') == 1 ...
+    || strcmp(policy, 'exact-random') == 1
+    % Clayton: In this policy, if no candidate codeword exactly matches any
+    % other word in the cache-line, then we crash. If exactly 1 candidate
+    % codeword matches then we select that one. For 'exact-single' if there
+    % are multiple candidate codewords that match a cache-line word exactly
+    % then we crash. For 'exact-random' we randomly choose from the
+    % candidate codewords that match a cache-line word. Since lower scored
+    % are better we're going to set the scores initially to 100 and if
+    % there is a match then set it to 1.
+    if verbose == 1
+        display('RECOVERY STEP 1: Find candidate-codewords that exactly match a cache-line word.')
+    end
+    for x=1:size(candidate_correct_messages,1) % For each candidate message
+        score = 100;
+        for blockpos=1:words_per_block % For each message in the cacheline (need to skip the message under test)
+            if blockpos ~= message_blockpos
+                if strcmp(candidate_correct_messages(x,:),parsed_cacheline_bin{blockpos}) == 1
+                    score = 1;
+                end
+            end
+        end
+        candidate_correct_message_scores(x) = score; %Score is 100 if no match and 1 if match.
+    end
 elseif strcmp(policy, 'hamming-pick-random') == 1 ...
     || strcmp(policy, 'hamming-pick-longest-run') == 1
     %% Now compute scores for each candidate message
@@ -170,12 +194,12 @@ elseif strcmp(policy, 'delta-pick-random') == 1
     end
     for x=1:size(candidate_correct_messages,1) % For each candidate message
         score = Inf;
-        base = my_bin2dec(candidate_correct_messages(x,:)); % Set base. This will be decimal uint64 value.
+        base = my_bin2dec(candidate_correct_messages(x,:),k); % Set base. This will be decimal uint64 value.
         deltas = NaN(words_per_block-1,1); % Init deltas. These will be decimal uint64 values
         for blockpos=1:words_per_block % For each message in the cacheline (need to skip the message under test)
             if blockpos ~= message_blockpos % Skip the message under test
-                word = my_bin2dec(parsed_cacheline_bin{blockpos});
-                % Due to behavior of uint64 in MATLAB, underflow and overflow do not occur - they simply "saturate" at 0 and max of uint64 values. So we take the abs of deltas only to avoid losing information.
+                word = my_bin2dec(parsed_cacheline_bin{blockpos},k);
+                % Due to behavior of uint64 in MATLAB, underflow and overflow do not occur - they simply "saturate" at 0 and max of respective unsigned int values. So we take the abs of deltas only to avoid losing information.
                 if base > word
                     deltas(blockpos) = base - word;
                 else
@@ -197,29 +221,35 @@ elseif strcmp(policy, 'fdelta-pick-random') == 1
     for x=1:size(candidate_correct_messages,1) % For each candidate message
         score = Inf;
         if k == 64
-            base = typecast(my_bin2dec(candidate_correct_messages(x,:)), 'double'); % Set base. This will be decimal uint64 value.
+            base = typecast(my_bin2dec(candidate_correct_messages(x,:),k), 'double'); 
         elseif k == 32
-            base = typecast(uint32(bin2dec(candidate_correct_messages(x,:)), 'single'));
+            base = typecast(my_bin2dec(candidate_correct_messages(x,:),k), 'single');
+        elseif k == 16 % TODO: support 16-bit float
+            display('ERROR TODO: support 16-bit float');
         else
             display(['ERROR! Cannot use fdelta for k = ' k]);
         end
-        deltas = NaN(words_per_block-1,1); % Init deltas. These will be decimal uint64 values
+        deltas = NaN(words_per_block-1,1); % Init deltas. 
         for blockpos=1:words_per_block % For each message in the cacheline (need to skip the message under test)
             if blockpos ~= message_blockpos % Skip the message under test
                 if k == 64
-                    word = typecast(my_bin2dec(parsed_cacheline_bin{blockpos}), 'double'); % Set base. This will be decimal uint64 value.
+                    word = typecast(my_bin2dec(parsed_cacheline_bin{blockpos},k), 'double');
                 elseif k == 32
-                    word = typecast(uint32(bin2dec(parsed_cacheline_bin{blockpos}), 'single'));
+                    word = typecast(my_bin2dec(parsed_cacheline_bin{blockpos},k), 'single');
+                elseif k == 16 % TODO: support 16-bit float
+                    display('ERROR TODO: support 16-bit float');
                 else
                     display(['ERROR! Cannot use fdelta for k = ' k]);
                 end
-                if base > word
-                    deltas(blockpos) = base - word;
-                else
-                    deltas(blockpos) = word - base;
-                end
+                deltas(blockpos) = base - word;
             end
         end
+
+        if verbose == 1
+            base
+            deltas
+        end
+
         score = sum(deltas(~isnan(deltas)).^2); % Sum of squares of abs-deltas. Score is now a double.
         candidate_correct_message_scores(x) = score; % Each score is a double.
     end
@@ -299,6 +329,14 @@ target_message_score = min_score;
 target_message_index = NaN;
 if strcmp(policy, 'baseline-pick-random') == 1
     target_message_index = randi(size(candidate_correct_messages,1),1);
+elseif strcmp(policy, 'exact-single') == 1 || strcmp(policy, 'exact-random') == 1 %CLAYTON 2/12/17
+    target_message_index = min_score_indices(randi(size(min_score_indices,1),1));
+    if min_score ~= 1 %This is the case where there was no match.
+        suggest_to_crash = 1;
+    end
+    if strcmp(policy, 'exact-single') == 1 && size(min_score_indices,1) ~= 1 %This is the case where there is more than 1 CC that matches a cache-line word.
+        suggest_to_crash = 1;
+    end
 elseif strcmp(policy, 'hamming-pick-random') == 1 || strcmp(policy, 'longest-run-pick-random') == 1 || strcmp(policy, 'delta-pick-random') == 1 || strcmp(policy, 'fdelta-pick-random') == 1 || strcmp(policy, 'dbx-longest-run-pick-random') == 1
     target_message_index = min_score_indices(randi(size(min_score_indices,1),1));
 elseif strcmp(policy, 'hamming-pick-longest-run') == 1 ...
@@ -355,13 +393,38 @@ if verbose == 1
     target_message_index
 end
 
-%% Crash policy: suggest crash if the min score is not at least crash_threshold*std dev below the mean score.
-std_dev_scores = std(candidate_correct_message_scores);
-mean_score = mean(candidate_correct_message_scores);
-if min_score <= mean_score - (crash_threshold * std_dev_scores)
+%% Floating point-specific crash policy: suggest to crash if candidate messages or cacheline neighbors do not share common sign and exponent bits
+if strcmp(policy, 'fdelta-pick-random') == 1
+    if k == 32
+        signexp_start = 1;
+        signexp_end = 9;
+    else
+        display('Error! Currently do not support floats for k ~= 32');
+        signexp_start = 0;
+        signexp_end = 0;
+    end
     suggest_to_crash = 0;
+    if strcmp(repmat(candidate_correct_messages(1,signexp_start:signexp_end),size(candidate_correct_messages,1),1), candidate_correct_messages(:,signexp_start:signexp_end)) ~= 1 % Check to see if candidate messages share common sign and exp bits
+        suggest_to_crash = 1;
+    else % Check to see if cacheline words share common sign and exponent bits
+        first_word = parsed_cacheline_bin{1};
+        for word=2:words_per_block
+           current_word = parsed_cacheline_bin{word};
+           if strcmp(first_word(signexp_start:signexp_end), current_word(signexp_start:signexp_end)) ~= 1
+               suggest_to_crash = 1;
+               break;
+           end
+        end
+    end
 else
-    suggest_to_crash = 1;
+    %% Default crash policy: suggest crash if the min score is not at least crash_threshold*std dev below the mean score.
+    std_dev_scores = std(candidate_correct_message_scores);
+    mean_score = mean(candidate_correct_message_scores);
+    if min_score <= mean_score - (crash_threshold * std_dev_scores)
+        suggest_to_crash = 0;
+    else
+        suggest_to_crash = 1;
+    end
 end
 
 %% Compute whether we got the correct answer or not for this data/error pattern pairing
