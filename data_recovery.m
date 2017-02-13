@@ -25,8 +25,8 @@ function [candidate_correct_message_scores, recovered_message, suggest_to_crash,
 %   suggest_to_crash -- 0 if we are confident in recovery, 1 if we recommend crashing out instead
 %   recovered_successfully -- 1 if we matched original_message, 0 otherwise
 %
-% Author: Mark Gottscho
-% Email: mgottscho@ucla.edu
+% Authors: Mark Gottscho and Clayton Schoeny
+% Emails: mgottscho@ucla.edu, cschoeny@gmail.com
 
 n = str2double(n);
 k = str2double(k);
@@ -331,12 +331,6 @@ if strcmp(policy, 'baseline-pick-random') == 1
     target_message_index = randi(size(candidate_correct_messages,1),1);
 elseif strcmp(policy, 'exact-single') == 1 || strcmp(policy, 'exact-random') == 1 %CLAYTON 2/12/17
     target_message_index = min_score_indices(randi(size(min_score_indices,1),1));
-    if min_score ~= 1 %This is the case where there was no match.
-        suggest_to_crash = 1;
-    end
-    if strcmp(policy, 'exact-single') == 1 && size(min_score_indices,1) ~= 1 %This is the case where there is more than 1 CC that matches a cache-line word.
-        suggest_to_crash = 1;
-    end
 elseif strcmp(policy, 'hamming-pick-random') == 1 || strcmp(policy, 'longest-run-pick-random') == 1 || strcmp(policy, 'delta-pick-random') == 1 || strcmp(policy, 'fdelta-pick-random') == 1 || strcmp(policy, 'dbx-longest-run-pick-random') == 1
     target_message_index = min_score_indices(randi(size(min_score_indices,1),1));
 elseif strcmp(policy, 'hamming-pick-longest-run') == 1 ...
@@ -415,6 +409,13 @@ if strcmp(policy, 'fdelta-pick-random') == 1
                break;
            end
         end
+    end
+elseif strcmp(policy, 'exact-single') == 1 || strcmp(policy, 'exact-random') == 1
+    if min_score ~= 1 %This is the case where there was no match.
+        suggest_to_crash = 1;
+    end
+    if strcmp(policy, 'exact-single') == 1 && size(min_score_indices,1) ~= 1 %This is the case where there is more than 1 CC that matches a cache-line word.
+        suggest_to_crash = 1;
     end
 else
     %% Default crash policy: suggest crash if the min score is not at least crash_threshold*std dev below the mean score.
