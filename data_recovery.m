@@ -13,7 +13,7 @@ function [candidate_correct_message_scores, recovered_message, suggest_to_crash,
 %   k --                String: '[16|32|64|128]'
 %   original_message -- Binary String of length k bits/chars
 %   candidate_correct_messages -- Nx1 cell array of binary strings, each k bits/chars long
-%   policy --           String: '[exact-single|exact-random|hamming-pick-random|hamming-pick-longest-run|longest-run-pick-random|delta-pick-random|fdelta-pick-random|dbx-longest-run-pick-random|dbx-weight-pick-longest-run|dbx-longest-run-pick-lowest-weight]'
+%   policy --           String: '[hamming-pick-random|hamming-pick-longest-run|longest-run-pick-random|delta-pick-random|fdelta-pick-random|dbx-longest-run-pick-random|dbx-weight-pick-longest-run|dbx-longest-run-pick-lowest-weight]'
 %   cacheline_bin --    String: Set of words_per_block k-bit binary strings, e.g. '0001010101....00001,0000000000.....00000,...,111101010...00101'. words_per_block is inferred by the number of binary strings that are delimited by commas.
 %   message_blockpos -- String: '[0-(words_per_block-1)]' denoting the position of the message under test within the cacheline. This message should match original_message argument above.
 %   crash_threshold -- String of a scalar. Policy-defined semantics and range.
@@ -114,30 +114,6 @@ if strcmp(policy, 'baseline-pick-random') == 1
         display('RECOVERY STEP 1: Each candidate-correct message is scored equally.');
     end
     candidate_correct_message_scores = ones(size(candidate_correct_messages,1),1); % All outcomes equally scored
-elseif strcmp(policy, 'exact-single') == 1 ...
-    || strcmp(policy, 'exact-random') == 1
-    % Clayton: In this policy, if no candidate codeword exactly matches any
-    % other word in the cache-line, then we crash. If exactly 1 candidate
-    % codeword matches then we select that one. For 'exact-single' if there
-    % are multiple candidate codewords that match a cache-line word exactly
-    % then we crash. For 'exact-random' we randomly choose from the
-    % candidate codewords that match a cache-line word. Since lower scored
-    % are better we're going to set the scores initially to 100 and if
-    % there is a match then set it to 1.
-    if verbose == 1
-        display('RECOVERY STEP 1: Find candidate-codewords that exactly match a cache-line word.')
-    end
-    for x=1:size(candidate_correct_messages,1) % For each candidate message
-        score = 100;
-        for blockpos=1:words_per_block % For each message in the cacheline (need to skip the message under test)
-            if blockpos ~= message_blockpos
-                if strcmp(candidate_correct_messages(x,:),parsed_cacheline_bin{blockpos}) == 1
-                    score = 1;
-                end
-            end
-        end
-        candidate_correct_message_scores(x) = score; %Score is 100 if no match and 1 if match.
-    end
 elseif strcmp(policy, 'hamming-pick-random') == 1 ...
     || strcmp(policy, 'hamming-pick-longest-run') == 1
     %% Now compute scores for each candidate message
@@ -329,14 +305,6 @@ target_message_score = min_score;
 target_message_index = NaN;
 if strcmp(policy, 'baseline-pick-random') == 1
     target_message_index = randi(size(candidate_correct_messages,1),1);
-elseif strcmp(policy, 'exact-single') == 1 || strcmp(policy, 'exact-random') == 1 %CLAYTON 2/12/17
-    target_message_index = min_score_indices(randi(size(min_score_indices,1),1));
-    if min_score ~= 1 %This is the case where there was no match.
-        suggest_to_crash = 1;
-    end
-    if strcmp(policy, 'exact-single') == 1 && size(min_score_indices,1) ~= 1 %This is the case where there is more than 1 CC that matches a cache-line word.
-        suggest_to_crash = 1;
-    end
 elseif strcmp(policy, 'hamming-pick-random') == 1 || strcmp(policy, 'longest-run-pick-random') == 1 || strcmp(policy, 'delta-pick-random') == 1 || strcmp(policy, 'fdelta-pick-random') == 1 || strcmp(policy, 'dbx-longest-run-pick-random') == 1
     target_message_index = min_score_indices(randi(size(min_score_indices,1),1));
 elseif strcmp(policy, 'hamming-pick-longest-run') == 1 ...
