@@ -369,7 +369,7 @@ target_message_score = min_score;
 target_message_index = NaN;
 if strcmp(policy, 'baseline-pick-random') == 1
     target_message_index = randi(size(candidate_correct_messages,1),1);
-elseif strcmp(policy, 'exact-single') == 1 || strcmp(policy, 'exact-random') == 1 || strcmp(policy, 'cluster3') == 1 || strcmp(policy, 'hamming-pick-random') == 1 || strcmp(policy, 'longest-run-pick-random') == 1 || strcmp(policy, 'delta-pick-random') == 1 || strcmp(policy, 'fdelta-pick-random') == 1 || strcmp(policy, 'dbx-longest-run-pick-random') == 1
+elseif strcmp(policy, 'exact-single') == 1 || strcmp(policy, 'exact-random') == 1 || strcmp(policy, 'cluster3') == 1 || strcmp(policy, 'cluster7') == 1|| strcmp(policy, 'hamming-pick-random') == 1 || strcmp(policy, 'longest-run-pick-random') == 1 || strcmp(policy, 'delta-pick-random') == 1 || strcmp(policy, 'fdelta-pick-random') == 1 || strcmp(policy, 'dbx-longest-run-pick-random') == 1
     target_message_index = min_score_indices(randi(size(min_score_indices,1),1));
 elseif strcmp(policy, 'hamming-pick-longest-run') == 1 ...
     || strcmp(policy, 'dbx-weight-pick-longest-run') == 1
