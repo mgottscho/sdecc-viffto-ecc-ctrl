@@ -1,4 +1,4 @@
-function [candidate_correct_message_scores, recovered_message, suggest_to_crash, recovered_successfully] = data_recovery(architecture, n, k, original_message, candidate_correct_messages, policy, cacheline_bin, message_blockpos, crash_threshold, verbose)
+function [candidate_correct_message_scores, recovered_message, suggest_to_crash, recovered_successfully] = data_recovery(architecture, n, k, original_message, candidate_correct_messages_bin, policy, cacheline_bin, message_blockpos, crash_threshold, verbose)
 % This function attempts to heuristically recover from a DUE affecting a single received string.
 % The message is assumed to be data of arbitrary type stored in memory.
 % To compute candidate codewords, we trial flip bits and decode using specified ECC decoder.
@@ -12,7 +12,7 @@ function [candidate_correct_message_scores, recovered_message, suggest_to_crash,
 %   n --                String: '[17|18|19|33|34|35|39|45|72|79|144]'
 %   k --                String: '[16|32|64|128]'
 %   original_message -- Binary String of length k bits/chars
-%   candidate_correct_messages -- Nx1 cell array of binary strings, each k bits/chars long
+%   candidate_correct_messages_bin -- Set of k-bit binary strings, e.g. '00001111000...10010,0000000....00000,...'.
 %   policy --           String: '[hamming-pick-random|hamming-pick-longest-run|longest-run-pick-random|delta-pick-random|fdelta-pick-random|dbx-longest-run-pick-random|dbx-weight-pick-longest-run|dbx-longest-run-pick-lowest-weight]'
 %   cacheline_bin --    String: Set of words_per_block k-bit binary strings, e.g. '0001010101....00001,0000000000.....00000,...,111101010...00101'. words_per_block is inferred by the number of binary strings that are delimited by commas.
 %   message_blockpos -- String: '[0-(words_per_block-1)]' denoting the position of the message under test within the cacheline. This message should match original_message argument above.
@@ -38,7 +38,7 @@ if verbose == 1
     n
     k
     original_message
-    candidate_correct_messages
+    candidate_correct_messages_bin
     policy
     cacheline_bin
     message_blockpos
@@ -46,7 +46,7 @@ if verbose == 1
     verbose
 end
 
-%rng('shuffle'); % Seed RNG based on current time -- FIXME: comment out for speed? If we RNG in swd_ecc_offline_data_heuristic_recovery then we shouldn't need to do it again...
+rng('shuffle'); % Seed RNG based on current time
 
 %% Init some return values
 recovered_message = repmat('X',1,k);
@@ -55,6 +55,35 @@ recovered_successfully = 0;
 
 if ~isdeployed
     addpath ecc common rv64g % Add sub-folders to MATLAB search paths for calling other functions we wrote
+end
+
+%% Parse candidate_correct_messages_bin to convert into char matrix
+candidate_correct_messages = repmat('X',1,k);
+done_parsing = 0;
+i = 1;
+while done_parsing == 0
+   [token,remain] = strtok(remain,',');
+
+   % Check input validity of token to ensure k-bits of '0' or '1' and no other value
+   if (sum(token == '1')+sum(token == '0')) ~= size(token,2)
+       display(['FATAL! Candidate entry ' num2str(i) ' has non-binary character: ' token]);
+       return;
+   end
+   if size(token,2) ~= k
+       display(['FATAL! Candidate entry ' num2str(i) ' has ' num2str(size(token,2)) ' bits, but ' num2str(k) ' bits are needed.']);
+       return;
+   end
+
+   candidate_correct_messages(i,:) = token;
+   i = i+1;
+
+   if size(remain,2) == 0
+       done_parsing = 1;
+   end
+end
+
+if verbose == 1
+    candidate_correct_messages
 end
 
 %% Parse cacheline_bin to convert into cell array

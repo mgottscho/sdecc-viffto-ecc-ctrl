@@ -232,6 +232,12 @@ parfor j=1:num_sampled_error_patterns
             end
             candidate_correct_messages = unique(candidate_correct_messages,'rows','sorted'); % Sort feature is important
 
+            %% Serialize candidate messages into a string, as data_recovery() requires this instead of cell array.
+            serialized_candidate_correct_messages_bin = candidate_correct_messages(1,:); % init
+            for x=2:size(candidate_correct_messages,1)
+                serialized_candidate_correct_messages_bin = [serialized_candidate_correct_messages_bin ',' candidate_correct_messages(x,:)];
+            end
+
             %% Serialize cacheline_bin into a string, as data_recovery() requires this instead of cell array.
             serialized_cacheline_bin = cacheline_bin{1,1}; % init
             for x=2:size(cacheline_bin,2)
@@ -272,7 +278,7 @@ parfor j=1:num_sampled_error_patterns
 %            end
 
             %% Do heuristic recovery for this message/error pattern combo.
-            [candidate_scores, recovered_message_bin, suggest_to_crash, recovered_successfully] = data_recovery('rv64g', num2str(n), num2str(k), original_message_bin, candidate_correct_messages, policy, serialized_cacheline_bin, sampled_blockpos_indices(i), crash_threshold, num2str(verbose_recovery));
+            [candidate_scores, recovered_message_bin, suggest_to_crash, recovered_successfully] = data_recovery('rv64g', num2str(n), num2str(k), original_message_bin, serialized_candidate_correct_messages_bin, policy, serialized_cacheline_bin, sampled_blockpos_indices(i), crash_threshold, num2str(verbose_recovery));
 
             %% Store results for this message/error pattern pair
             success(i,j) = recovered_successfully;

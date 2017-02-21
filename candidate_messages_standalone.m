@@ -12,6 +12,8 @@ n = str2num(n);
 k = str2num(k);
 verbose = str2num(verbose);
 
+rng('shuffle'); % Seed RNG based on current time
+
 if ~isdeployed
     addpath ecc common rv64g % Add sub-folders to MATLAB search paths for calling other functions we wrote
 end
