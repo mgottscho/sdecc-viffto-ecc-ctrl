@@ -1,4 +1,4 @@
-function [candidate_correct_message_scores, recovered_message, suggest_to_crash, recovered_successfully] = data_recovery(architecture, n, k, original_message, candidate_correct_messages_bin, policy, cacheline_bin, message_blockpos, crash_threshold, verbose)
+function [candidate_correct_message_scores, recovered_message, suggest_to_crash, recovered_successfully] = data_recovery(architecture, k, original_message, candidate_correct_messages_bin, policy, cacheline_bin, message_blockpos, crash_threshold, verbose)
 % This function attempts to heuristically recover from a DUE affecting a single received string.
 % The message is assumed to be data of arbitrary type stored in memory.
 % To compute candidate codewords, we trial flip bits and decode using specified ECC decoder.
@@ -9,7 +9,6 @@ function [candidate_correct_message_scores, recovered_message, suggest_to_crash,
 %
 % Input arguments:
 %   architecture --     String: '[rv64g]'
-%   n --                String: '[17|18|19|33|34|35|39|45|72|79|144]'
 %   k --                String: '[16|32|64|128]'
 %   original_message -- Binary String of length k bits/chars
 %   candidate_correct_messages_bin -- Set of k-bit binary strings, e.g. '00001111000...10010,0000000....00000,...'.
@@ -28,14 +27,12 @@ function [candidate_correct_message_scores, recovered_message, suggest_to_crash,
 % Author: Mark Gottscho
 % Email: mgottscho@ucla.edu
 
-n = str2double(n);
 k = str2double(k);
 crash_threshold = str2double(crash_threshold);
 verbose = str2double(verbose);
 
 if verbose == 1
     architecture
-    n
     k
     original_message
     candidate_correct_messages_bin
@@ -61,6 +58,7 @@ end
 candidate_correct_messages = repmat('X',1,k);
 done_parsing = 0;
 i = 1;
+remain = candidate_correct_messages_bin;
 while done_parsing == 0
    [token,remain] = strtok(remain,',');
 

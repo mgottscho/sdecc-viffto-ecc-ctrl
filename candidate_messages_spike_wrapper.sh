@@ -6,7 +6,7 @@ N=$2
 K=$3
 CODE_TYPE=$4
 POLICY=$5
-VERBOSE=$5
+VERBOSE=0
 
 if [[ "$MWG_MACHINE_NAME" == "hoffman" ]]; then
     MY_PRELOAD=$GCC5/lib64/libstdc++.so.6

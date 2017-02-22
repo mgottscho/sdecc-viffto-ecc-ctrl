@@ -278,7 +278,7 @@ parfor j=1:num_sampled_error_patterns
 %            end
 
             %% Do heuristic recovery for this message/error pattern combo.
-            [candidate_scores, recovered_message_bin, suggest_to_crash, recovered_successfully] = data_recovery('rv64g', num2str(n), num2str(k), original_message_bin, serialized_candidate_correct_messages_bin, policy, serialized_cacheline_bin, sampled_blockpos_indices(i), crash_threshold, num2str(verbose_recovery));
+            [candidate_scores, recovered_message_bin, suggest_to_crash, recovered_successfully] = data_recovery('rv64g', num2str(k), original_message_bin, serialized_candidate_correct_messages_bin, policy, serialized_cacheline_bin, sampled_blockpos_indices(i), crash_threshold, num2str(verbose_recovery));
 
             %% Store results for this message/error pattern pair
             success(i,j) = recovered_successfully;
