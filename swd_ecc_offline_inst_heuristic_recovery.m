@@ -361,6 +361,12 @@ parfor j=1:num_sampled_error_patterns % Parallelize loop across separate threads
                 candidate_correct_messages(x,:) = my_bitxor(candidate_correct_messages_zero_message(x,:),original_message_bin); 
             end
             candidate_correct_messages = unique(candidate_correct_messages,'rows','sorted'); % Sort feature is important
+            
+            %% Serialize candidate messages into a string, as data_recovery() requires this instead of cell array.
+            serialized_candidate_correct_messages_bin = candidate_correct_messages(1,:); % init
+            for x=2:size(candidate_correct_messages,1)
+                serialized_candidate_correct_messages_bin = [serialized_candidate_correct_messages_bin ',' candidate_correct_messages(x,:)];
+            end
 
             if verbose_recovery == 1
                 original_message_hex
@@ -400,7 +406,7 @@ parfor j=1:num_sampled_error_patterns % Parallelize loop across separate threads
             %    return;
             %end
 
-            [num_valid_messages, recovered_message, estimated_prob_correct, suggest_to_crash, recovered_successfully] = inst_recovery('rv64g', num2str(k), original_message_bin, candidate_correct_messages, policy, instruction_mnemonic_hotness, instruction_rd_hotness, num2str(crash_threshold), num2str(verbose_recovery));
+            [num_valid_messages, recovered_message, estimated_prob_correct, suggest_to_crash, recovered_successfully] = inst_recovery('rv64g', num2str(k), original_message_bin, serialized_candidate_correct_messages_bin, policy, instruction_mnemonic_hotness, instruction_rd_hotness, num2str(crash_threshold), num2str(verbose_recovery));
 
             %% Store results for this instruction/error pattern pair
             results_candidate_messages(i,j) = num_candidate_messages;

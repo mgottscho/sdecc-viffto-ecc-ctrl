@@ -1,4 +1,4 @@
-function [num_valid_messages, recovered_message, estimated_prob_correct, suggest_to_crash, recovered_successfully] = inst_recovery(architecture, k, original_message, candidate_correct_messages, policy, instruction_mnemonic_hotness, instruction_rd_hotness, crash_threshold, verbose)
+function [num_valid_messages, recovered_message, estimated_prob_correct, suggest_to_crash, recovered_successfully] = inst_recovery(architecture, k, original_message, candidate_correct_messages_bin, policy, instruction_mnemonic_hotness, instruction_rd_hotness, crash_threshold, verbose)
 % This function attempts to heuristically recover from a DUE affecting a single received string.
 % The message is assumed to be an instruction of the given architecture in big endian format.
 % To compute candidate codewords, we flip a single bit one at a time and decode using specified ECC decoder.
@@ -10,7 +10,7 @@ function [num_valid_messages, recovered_message, estimated_prob_correct, suggest
 %   architecture --     String: '[rv64g]'
 %   k --                String: '[32|64|128]'
 %   original_message -- Binary String of length k bits/chars. Note that k might not be 32 which is the instruction size! We will treat original_message as being a set of packed 32-bit instructions. TODO: support k < 32!!
-%   candidate_correct_messages -- Nx1 cell array of binary strings, each k bits/chars long
+%   candidate_correct_messages_bin -- Set of k-bit binary strings, e.g. '00001111000...10010,0000000....00000,...'.
 %   policy --           String: '[  baseline-pick-random 
 %                                 | filter-pick-random
 %                                 | filter-rank-pick-random
@@ -52,7 +52,7 @@ if verbose == 1
     architecture
     k
     original_message
-    candidate_correct_messages
+    candidate_correct_messages_bin
     policy
     instruction_mnemonic_hotness
     instruction_rd_hotness
@@ -70,6 +70,36 @@ recovered_successfully = 0;
 
 if ~isdeployed
     addpath ecc common rv64g % Add sub-folders to MATLAB search paths for calling other functions we wrote
+end
+
+%% Parse candidate_correct_messages_bin to convert into char matrix
+candidate_correct_messages = repmat('X',1,k);
+done_parsing = 0;
+i = 1;
+remain = candidate_correct_messages_bin;
+while done_parsing == 0
+   [token,remain] = strtok(remain,',');
+
+   % Check input validity of token to ensure k-bits of '0' or '1' and no other value
+   if (sum(token == '1')+sum(token == '0')) ~= size(token,2)
+       display(['FATAL! Candidate entry ' num2str(i) ' has non-binary character: ' token]);
+       return;
+   end
+   if size(token,2) ~= k
+       display(['FATAL! Candidate entry ' num2str(i) ' has ' num2str(size(token,2)) ' bits, but ' num2str(k) ' bits are needed.']);
+       return;
+   end
+
+   candidate_correct_messages(i,:) = token;
+   i = i+1;
+
+   if size(remain,2) == 0
+       done_parsing = 1;
+   end
+end
+
+if verbose == 1
+    candidate_correct_messages
 end
 
 num_candidate_messages = size(candidate_correct_messages,1);
@@ -582,5 +612,5 @@ if verbose == 1
     suggest_to_crash
 end
 
-fprintf(1, '%s\n', recovered_message);
+%fprintf(1, '%s\n', recovered_message);
 
