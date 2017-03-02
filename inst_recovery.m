@@ -1,4 +1,4 @@
-function [num_valid_messages, recovered_message, estimated_prob_correct, suggest_to_crash, recovered_successfully] = inst_recovery(architecture, n, k, original_message, candidate_correct_messages, policy, instruction_mnemonic_hotness, instruction_rd_hotness, crash_threshold, verbose)
+function [num_valid_messages, recovered_message, estimated_prob_correct, suggest_to_crash, recovered_successfully] = inst_recovery(architecture, k, original_message, candidate_correct_messages, policy, instruction_mnemonic_hotness, instruction_rd_hotness, crash_threshold, verbose)
 % This function attempts to heuristically recover from a DUE affecting a single received string.
 % The message is assumed to be an instruction of the given architecture in big endian format.
 % To compute candidate codewords, we flip a single bit one at a time and decode using specified ECC decoder.
@@ -8,9 +8,8 @@ function [num_valid_messages, recovered_message, estimated_prob_correct, suggest
 %
 % Input arguments:
 %   architecture --     String: '[rv64g]'
-%   n --                String: '[33|34|35|39|45|72|79|144]'
 %   k --                String: '[32|64|128]'
-%   original_message -- Binary String of length k bits/chars. Note that k might not be 32 which is the instruction size! We will treat original_message as being a set of packed 32-bit instructions.
+%   original_message -- Binary String of length k bits/chars. Note that k might not be 32 which is the instruction size! We will treat original_message as being a set of packed 32-bit instructions. TODO: support k < 32!!
 %   candidate_correct_messages -- Nx1 cell array of binary strings, each k bits/chars long
 %   policy --           String: '[  baseline-pick-random 
 %                                 | filter-pick-random
@@ -45,14 +44,12 @@ function [num_valid_messages, recovered_message, estimated_prob_correct, suggest
 % Author: Mark Gottscho
 % Email: mgottscho@ucla.edu
 
-n = str2double(n);
 k = str2double(k);
 crash_threshold = str2double(crash_threshold);
 verbose = str2double(verbose);
 
 if verbose == 1
     architecture
-    n
     k
     original_message
     candidate_correct_messages

@@ -400,7 +400,7 @@ parfor j=1:num_sampled_error_patterns % Parallelize loop across separate threads
             %    return;
             %end
 
-            [num_valid_messages, recovered_message, estimated_prob_correct, suggest_to_crash, recovered_successfully] = inst_recovery('rv64g', num2str(n), num2str(k), original_message_bin, candidate_correct_messages, policy, instruction_mnemonic_hotness, instruction_rd_hotness, num2str(crash_threshold), num2str(verbose_recovery));
+            [num_valid_messages, recovered_message, estimated_prob_correct, suggest_to_crash, recovered_successfully] = inst_recovery('rv64g', num2str(k), original_message_bin, candidate_correct_messages, policy, instruction_mnemonic_hotness, instruction_rd_hotness, num2str(crash_threshold), num2str(verbose_recovery));
 
             %% Store results for this instruction/error pattern pair
             results_candidate_messages(i,j) = num_candidate_messages;
