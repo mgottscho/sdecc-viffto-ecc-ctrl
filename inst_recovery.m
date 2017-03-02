@@ -98,11 +98,12 @@ while done_parsing == 0
    end
 end
 
+num_candidate_messages = size(candidate_correct_messages,1);
+
 if verbose == 1
     candidate_correct_messages
+    num_candidate_messages
 end
-
-num_candidate_messages = size(candidate_correct_messages,1);
 
 if verbose == 1
     display('Attempting heuristic recovery...');
@@ -200,6 +201,10 @@ elseif strcmp(policy, 'filter-rank-pick-random') == 1 ...
                 candidate_message_packed_inst_disassemblies{packed_inst}
             end
         end
+    end
+
+    if verbose == 1
+        num_valid_messages
     end
 
     if strcmp(policy, 'filter-pick-random') == 1
