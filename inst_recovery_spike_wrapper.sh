@@ -6,8 +6,8 @@ K=$1
 ORIGINAL_MESSAGE_BIN=$2
 CANDIDATE_CORRECT_MESSAGES=$3
 POLICY=filter-frequency-sort-pick-longest-pad
-MNEMONIC_HOTNESS_FILENAME=$MWG_DATA_PATH/swd_ecc_data/rv64g/program-statistics/static/rv64g-mnemonic-hotness-export.csv
-RD_HOTNESS_FILENAME=$MWG_DATA_PATH/swd_ecc_data/rv64g/program-statistics/static/rv64g-rd-hotness-export.csv
+MNEMONIC_HOTNESS_FILENAME=$MWG_DATA_PATH/swd_ecc_data/$ISA/program-statistics/dynamic/$ISA-joint-mnemonic-reg-hotness-dyn-all.csv
+RD_HOTNESS_FILENAME=$MWG_DATA_PATH/swd_ecc_data/$ISA/program-statistics/dynamic/$ISA-rd-hotness-dyn-all.csv
 CRASH_THRESHOLD=0.5
 VERBOSE=0
 
