@@ -12,7 +12,7 @@ function [candidate_correct_message_scores, recovered_message, suggest_to_crash,
 %   k --                String: '[16|32|64|128]'
 %   original_message -- Binary String of length k bits/chars
 %   candidate_correct_messages_bin -- Set of k-bit binary strings, e.g. '00001111000...10010,0000000....00000,...'.
-%   policy --           String: '[hamming-pick-random|hamming-pick-longest-run|longest-run-pick-random|delta-pick-random|fdelta-pick-random|dbx-longest-run-pick-random|dbx-weight-pick-longest-run|dbx-longest-run-pick-lowest-weight]'
+%   policy --           String: '[baseline-pick-random|exact-single|exact-random|cluster3|cluster7|hamming-pick-random|hamming-pick-longest-run|longest-run-pick-random|delta-pick-random|fdelta-pick-random|dbx-longest-run-pick-random|dbx-weight-pick-longest-run|dbx-longest-run-pick-lowest-weight]'
 %   cacheline_bin --    String: Set of words_per_block k-bit binary strings, e.g. '0001010101....00001,0000000000.....00000,...,111101010...00101'. words_per_block is inferred by the number of binary strings that are delimited by commas.
 %   message_blockpos -- String: '[0-(words_per_block-1)]' denoting the position of the message under test within the cacheline. This message should match original_message argument above.
 %   crash_threshold -- String of a scalar. Policy-defined semantics and range.
@@ -141,6 +141,70 @@ if strcmp(policy, 'baseline-pick-random') == 1
         display('RECOVERY STEP 1: Each candidate-correct message is scored equally.');
     end
     candidate_correct_message_scores = ones(size(candidate_correct_messages,1),1); % All outcomes equally scored
+elseif strcmp(policy, 'exact-single') == 1 ...
+    || strcmp(policy, 'exact-random') == 1
+    % Clayton: In this policy, if no candidate codeword exactly matches any
+    % other word in the cache-line, then we crash. If exactly 1 candidate
+    % codeword matches then we select that one. For 'exact-single' if there
+    % are multiple candidate codewords that match a cache-line word exactly
+    % then we crash. For 'exact-random' we randomly choose from the
+    % candidate codewords that match a cache-line word. Since lower scores
+    % are better we're going to set the scores initially to 100 and if
+    % there is a match then set it to 1.
+    if verbose == 1
+        display('RECOVERY STEP 1: Find candidate-codewords that exactly match a cache-line word.')
+    end
+    for x=1:size(candidate_correct_messages,1) % For each candidate message
+        score = 100;
+        for blockpos=1:words_per_block % For each message in the cacheline (need to skip the message under test)
+            if blockpos ~= message_blockpos
+                if strcmp(candidate_correct_messages(x,:),parsed_cacheline_bin{blockpos}) == 1
+                    score = 1;
+                end
+            end
+        end
+        candidate_correct_message_scores(x) = score; %Score is 100 if no match and 1 if match.
+    end
+elseif strcmp(policy, 'cluster3') == 1
+    %Clayton: For this policy, the score starts at words_per_block-1. We decrease the score
+    %by 1 for each cache-line word that is within a Hamming distance of 3
+    %from the candidate codeword. If all candidate codewords end up having
+    %a score of words_per_block-1, the we suggest to crash.
+    if verbose == 1
+        display('RECOVERY STEP 1: Score candidate codewords by how many cache-line words are within a Hamming distance of 3.')
+    end
+    for x=1:size(candidate_correct_messages,1) % For each candidate message
+        score = words_per_block-1; %The default score is words_per_block-1, means that we are far from all neighbors.  The best score is 0.
+        for blockpos=1:words_per_block % For each message in the cacheline (need to skip the message under test)
+            if blockpos ~= message_blockpos
+                hamming_distance = sum(candidate_correct_messages(x,:) ~= parsed_cacheline_bin{blockpos});
+                if hamming_distance <= 3
+                    score= score-1;
+                end
+            end
+        end
+        candidate_correct_message_scores(x) = score;
+    end
+elseif strcmp(policy, 'cluster7') == 1
+    %Clayton: For this policy, the score starts at words_per_block-1. We decrease the score
+    %by 1 for each cache-line word that is within a Hamming distance of 7
+    %from the candidate codeword. If all candidate codewords end up having
+    %a score of words_per_block-1, the we suggest to crash.
+    if verbose == 1
+        display('RECOVERY STEP 1: Score candidate codewords by how many cache-line words are within a Hamming distance of 3.')
+    end
+    for x=1:size(candidate_correct_messages,1) % For each candidate message
+        score = words_per_block-1; %The default score is words_per_block-1, means that we are far from all neighbors.  The best score is 0.
+        for blockpos=1:words_per_block % For each message in the cacheline (need to skip the message under test)
+            if blockpos ~= message_blockpos
+                hamming_distance = sum(candidate_correct_messages(x,:) ~= parsed_cacheline_bin{blockpos});
+                if hamming_distance <= 7
+                    score= score-1;
+                end
+            end
+        end
+        candidate_correct_message_scores(x) = score;
+    end
 elseif strcmp(policy, 'hamming-pick-random') == 1 ...
     || strcmp(policy, 'hamming-pick-longest-run') == 1
     %% Now compute scores for each candidate message
@@ -332,6 +396,10 @@ target_message_score = min_score;
 target_message_index = NaN;
 if strcmp(policy, 'baseline-pick-random') == 1
     target_message_index = randi(size(candidate_correct_messages,1),1);
+elseif strcmp(policy, 'cluster3') == 1 || strcmp(policy, 'cluster7') == 1 %CLAYTON 2/13/2017
+    target_message_index = min_score_indices(randi(size(min_score_indices,1),1));
+elseif strcmp(policy, 'exact-single') == 1 || strcmp(policy, 'exact-random') == 1 %CLAYTON 2/12/17
+    target_message_index = min_score_indices(randi(size(min_score_indices,1),1));
 elseif strcmp(policy, 'hamming-pick-random') == 1 || strcmp(policy, 'longest-run-pick-random') == 1 || strcmp(policy, 'delta-pick-random') == 1 || strcmp(policy, 'fdelta-pick-random') == 1 || strcmp(policy, 'dbx-longest-run-pick-random') == 1
     target_message_index = min_score_indices(randi(size(min_score_indices,1),1));
 elseif strcmp(policy, 'hamming-pick-longest-run') == 1 ...
@@ -410,6 +478,17 @@ if strcmp(policy, 'fdelta-pick-random') == 1
                break;
            end
         end
+    end
+elseif strcmp(policy, 'cluster3') == 1 || strcmp(policy, 'cluster7') == 1 %CLAYTON 2/13/2017
+    if min_score == words_per_block-1 %This is the case where no candidate codeword was within the given Hamming distance from any cache_line word.
+        suggest_to_crash = 1;
+    end
+elseif strcmp(policy, 'exact-single') == 1 || strcmp(policy, 'exact-random') == 1 %CLAYTON 2/12/17
+    if min_score ~= 1 %This is the case where there was no match.
+        suggest_to_crash = 1;
+    end
+    if strcmp(policy, 'exact-single') == 1 && size(min_score_indices,1) ~= 1 %This is the case where there is more than 1 CC that matches a cache-line word.
+        suggest_to_crash = 1;
     end
 else
     %% Default crash policy: suggest crash if the min score is not at least crash_threshold*std dev below the mean score.
