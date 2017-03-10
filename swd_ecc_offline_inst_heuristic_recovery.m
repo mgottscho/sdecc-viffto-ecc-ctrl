@@ -1,4 +1,4 @@
-function swd_ecc_offline_inst_heuristic_recovery(architecture, benchmark, n, k, num_messages, num_sampled_error_patterns, input_filename, output_filename, n_threads, code_type, policy, mnemonic_hotness_filename, rd_hotness_filename, crash_threshold, verbose_recovery)
+function swd_ecc_offline_inst_heuristic_recovery(architecture, benchmark, n, k, num_messages, num_sampled_error_patterns, input_filename, output_filename, n_threads, code_type, policy, mnemonic_hotness_filename, rd_hotness_filename, crash_threshold, verbose_recovery, file_version)
 % This function evaluates heuristic recovery from corrupted instructions in an offline manner.
 %
 % It iterates over a series of instructions that are statically extracted from a compiled program.
@@ -46,6 +46,7 @@ function swd_ecc_offline_inst_heuristic_recovery(architecture, benchmark, n, k, 
 %   rd_hotness_filename -- String: full path to CSV file containing the relative frequency of each destination register address to use for ranking
 %   crash_threshold -- fraction from 0 to 1, expressed as a string, e.g. '0.5'.
 %   verbose_recovery -- String: '[0|1]'
+%   file_version --     String: '[isca17|micro17]'
 %
 % Returns:
 %   Nothing.
@@ -68,6 +69,7 @@ mnemonic_hotness_filename
 rd_hotness_filename
 crash_threshold = str2double(crash_threshold)
 verbose_recovery = str2double(verbose_recovery)
+file_version
 
 rng('shuffle'); % Seed RNG based on current time
 
@@ -109,6 +111,7 @@ end
 % 0000abcd
 % ...
 %
+% (micro17 format shown)
 % If it is in CSV format, as output by our memdatatrace version of RISCV Spike simulator of the form
 % STEP,OPERATION,REG_TYPE,MEM_ACCESS_SEQ_NUM,VADDR,PADDR,USER_PERM,SUPER_PERM,ACCESS_SIZE,PAYLOAD,CACHE_BLOCKPOS,CACHE_BLOCK0,CACHE_BLOCK1,...,
 % like so:
@@ -137,7 +140,7 @@ if fid == -1
     return;
 end
 
-num_messages_in_cacheline = 512 / k;
+num_messages_in_cacheline = 512 / k; % FIXME: hardcoded cacheline size
 sampled_trace_raw = cell(num_messages,1);
 i = 1;
 j = 1;
@@ -168,7 +171,11 @@ while i <= total_num_inst && j <= num_messages
             end
         elseif strcmp(trace_mode, 'dynamic') == 1 % Dynamic trace mode
             remain = line;
-            for x=1:10 % 10 iterations because payload is 10th entry in a row of the above format
+            skip = 10;
+            if strcmp(file_version, 'isca17') == 1
+                skip = 9;
+            end
+            for x=1:skip % payload is skipth entry in a row of the above format
                 [token,remain] = strtok(remain,',');
             end
             [~, payload_remain] = strtok(token,'x'); % Find the part of "PAYLOAD 0xDEADBEEF" after the "0x" part.

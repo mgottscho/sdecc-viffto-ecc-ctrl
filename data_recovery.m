@@ -517,7 +517,7 @@ elseif strcmp(policy, 'exact-single') == 1 || strcmp(policy, 'exact-random') == 
 elseif strcmp(policy, 'min-entropy4-pick-longest-run') == 1 ...
        || strcmp(policy, 'min-entropy8-pick-longest-run') == 1 ...
        || strcmp(policy, 'min-entropy16-pick-longest-run') == 1
-    if size(min_score_indices,1) > 1
+    if size(min_score_indices,1) > 1 || mean(candidate_correct_message_scores) > crash_threshold
         suggest_to_crash = 1;
     end
 else

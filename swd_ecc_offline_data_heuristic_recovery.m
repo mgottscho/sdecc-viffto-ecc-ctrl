@@ -1,4 +1,4 @@
-function swd_ecc_offline_data_heuristic_recovery(architecture, benchmark, n, k, num_words, num_sampled_error_patterns, words_per_block, input_filename, output_filename, n_threads, code_type, policy, crash_threshold, verbose_recovery)
+function swd_ecc_offline_data_heuristic_recovery(architecture, benchmark, n, k, num_words, num_sampled_error_patterns, words_per_block, input_filename, output_filename, n_threads, code_type, policy, crash_threshold, verbose_recovery, file_version)
 % This function iterates over a series of data cache lines that are statically extracted
 % from a compiled program that was executed and produced a dynamic memory trace.
 % We choose a cache line and word within a cache line randomly.
@@ -27,6 +27,7 @@ function swd_ecc_offline_data_heuristic_recovery(architecture, benchmark, n, k, 
 %   policy --           String: '[baseline-pick-random|exact-single|exact-random|cluster3|cluster7|hamming-pick-random|hamming-pick-longest-run|longest-run-pick-random|delta-pick-random|fdelta-pick-random||dbx-longest-run-pick-random|dbx-weight-pick-longest-run|dbx-longest-run-pick-lowest-weight]'
 %   crash_threshold -- String of a scalar. Policy-defined semantics and range.
 %   verbose_recovery -- String: '[0|1]'
+%   file_version --     String: '[isca17|micro17]'
 %
 % Returns:
 %   Nothing.
@@ -48,6 +49,7 @@ code_type
 policy
 crash_threshold
 verbose_recovery = str2num(verbose_recovery);
+file_version
 
 rng('shuffle'); % Seed RNG based on current time
 
@@ -97,7 +99,7 @@ for i=1:total_num_cachelines
 end
 fclose(fid);
 
-%% Parse the raw trace
+%% Parse the raw trace (micro17 format shown)
 % It is in CSV format, as output by our memdatatrace version of RISCV Spike simulator of the form
 % STEP,OPERATION,REG_TYPE,MEM_ACCESS_SEQ_NUM,VADDR,PADDR,USER_PERM,SUPER_PERM,ACCESS_SIZE,PAYLOAD,CACHE_BLOCKPOS,CACHE_BLOCK0,CACHE_BLOCK1,...,
 % like so:
@@ -110,7 +112,9 @@ fclose(fid);
 % format.
 sampled_trace_step = cell(num_words,1);
 sampled_trace_operation = cell(num_words,1);
-sampled_trace_reg_type = cell(num_words,1);
+if strcmp(file_version, 'isca17') ~= 1
+    sampled_trace_reg_type = cell(num_words,1);
+end
 sampled_trace_seq_num = cell(num_words,1);
 sampled_trace_vaddr = cell(num_words,1);
 sampled_trace_paddr = cell(num_words,1);
@@ -125,7 +129,9 @@ for i=1:num_words
     remain = sampled_trace_raw{i,1};
     [sampled_trace_step{i,1}, remain] = strtok(remain,',');
     [sampled_trace_operation{i,1}, remain] = strtok(remain,',');
-    [sampled_trace_reg_type{i,1}, remain] = strtok(remain,',');
+    if strcmp(file_version, 'isca17') ~= 1
+        [sampled_trace_reg_type{i,1}, remain] = strtok(remain,',');
+    end
     [sampled_trace_seq_num{i,1}, remain] = strtok(remain,',');
     [sampled_trace_vaddr{i,1}, remain] = strtok(remain,',');
     [sampled_trace_paddr{i,1}, remain] = strtok(remain,',');
