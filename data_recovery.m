@@ -12,7 +12,7 @@ function [candidate_correct_message_scores, recovered_message, suggest_to_crash,
 %   k --                String: '[16|32|64|128]'
 %   original_message -- Binary String of length k bits/chars
 %   candidate_correct_messages_bin -- Set of k-bit binary strings, e.g. '00001111000...10010,0000000....00000,...'.
-%   policy --           String: '[baseline-pick-random|min-entropy-pick-longest-run|exact-single|exact-random|cluster3|cluster7|hamming-pick-random|hamming-pick-longest-run|longest-run-pick-random|delta-pick-random|fdelta-pick-random|dbx-longest-run-pick-random|dbx-weight-pick-longest-run|dbx-longest-run-pick-lowest-weight]'
+%   policy --           String: '[baseline-pick-random|min-entropy[4|8|16]-pick-longest-run|exact-single|exact-random|cluster3|cluster7|hamming-pick-random|hamming-pick-longest-run|longest-run-pick-random|delta-pick-random|fdelta-pick-random|dbx-longest-run-pick-random|dbx-weight-pick-longest-run|dbx-longest-run-pick-lowest-weight]'
 %   cacheline_bin --    String: Set of words_per_block k-bit binary strings, e.g. '0001010101....00001,0000000000.....00000,...,111101010...00101'. words_per_block is inferred by the number of binary strings that are delimited by commas.
 %   message_blockpos -- String: '[0-(words_per_block-1)]' denoting the position of the message under test within the cacheline. This message should match original_message argument above.
 %   crash_threshold -- String of a scalar. Policy-defined semantics and range.
@@ -141,7 +141,9 @@ if strcmp(policy, 'baseline-pick-random') == 1
         display('RECOVERY STEP 1: Each candidate-correct message is scored equally.');
     end
     candidate_correct_message_scores = ones(size(candidate_correct_messages,1),1); % All outcomes equally scored
-elseif strcmp(policy, 'min-entropy-pick-longest-run') == 1 ...
+elseif strcmp(policy, 'min-entropy4-pick-longest-run') == 1 ...
+       || strcmp(policy, 'min-entropy8-pick-longest-run') == 1 ...
+       || strcmp(policy, 'min-entropy16-pick-longest-run') == 1
     cacheline_clayton = zeros(1,(words_per_block-1)*k);
     x = 1;
     for blockpos=1:words_per_block
@@ -150,7 +152,13 @@ elseif strcmp(policy, 'min-entropy-pick-longest-run') == 1 ...
             x = x+1;
         end
     end
-    symbol_size = 4;
+    if strcmp(policy, 'min-entropy4-pick-longest-run') == 1
+        symbol_size = 4;
+    elseif strcmp(policy, 'min-entropy8-pick-longest-run') == 1
+        symbol_size = 8;
+    else % 16
+        symbol_size = 16;
+    end
     candidates_clayton = candidate_correct_messages - '0';
     candidate_correct_message_scores = entropy_list(symbol_size, cacheline_clayton, candidates_clayton);
 
@@ -417,7 +425,9 @@ elseif strcmp(policy, 'hamming-pick-random') == 1 || strcmp(policy, 'longest-run
     target_message_index = min_score_indices(randi(size(min_score_indices,1),1));
 elseif strcmp(policy, 'hamming-pick-longest-run') == 1 ...
     || strcmp(policy, 'dbx-weight-pick-longest-run') == 1 ...
-    || strcmp(policy, 'min-entropy-pick-longest-run') == 1
+    || strcmp(policy, 'min-entropy4-pick-longest-run') == 1 ...
+    || strcmp(policy, 'min-entropy8-pick-longest-run') == 1 ...
+    || strcmp(policy, 'min-entropy16-pick-longest-run') == 1
     if verbose == 1
         display('LAST STEP: CHOOSE TARGET. Pick the target that has the longest run of 0s or 1s. In a tie, pick first in sorted order.');
     end
@@ -504,7 +514,9 @@ elseif strcmp(policy, 'exact-single') == 1 || strcmp(policy, 'exact-random') == 
     if strcmp(policy, 'exact-single') == 1 && size(min_score_indices,1) ~= 1 %This is the case where there is more than 1 CC that matches a cache-line word.
         suggest_to_crash = 1;
     end
-elseif strcmp(policy, 'min-entropy-pick-longest-run') == 1
+elseif strcmp(policy, 'min-entropy4-pick-longest-run') == 1 ...
+       || strcmp(policy, 'min-entropy8-pick-longest-run') == 1 ...
+       || strcmp(policy, 'min-entropy16-pick-longest-run') == 1
     if size(min_score_indices,1) > 1
         suggest_to_crash = 1;
     end
