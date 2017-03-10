@@ -3,10 +3,10 @@ function [dec] = my_bin2dec(bin,k)
 %
 % Arguments:
 %   bin --   String of k characters, where each is either '0' or '1'.
-%   k --     Scalar: [32|64]
+%   k --     Scalar: [16|32|64]
 %
 % Returns:
-%   dec --   unsigned integer value (uint64 if k = 64, uint32 if k = 32) represented by the binary input string. NaN on error or if k is invalid
+%   dec --   unsigned integer value (uint64 if k = 64, uint32 if k = 32 or 16) represented by the binary input string. NaN on error or if k is invalid
 %
 % Code based on that from http://stackoverflow.com/questions/32334748/convert-64-bit-numbers-from-binary-to-decimal-using-uint64
 %
@@ -24,11 +24,11 @@ function [dec] = my_bin2dec(bin,k)
 
 %% Check input validity to ensure k is OK
 % commented out for speed
-%if size(bin,2) ~= k || k ~= 32 || k ~= 64
+%if size(bin,2) ~= k || k ~= 16 || k ~= 32 || k ~= 64
 %    return;
 %end
 
-if k == 32
+if k == 16 || k == 32
     v = uint32(length(bin)-1:-1:0);
     base = uint32(2).^v;
     dec = sum(uint32(base.*(uint32(bin-'0'))), 'native');

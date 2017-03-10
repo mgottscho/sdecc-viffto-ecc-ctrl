@@ -24,7 +24,7 @@ ent_list = zeros(size(cc_list,1),1);
 %Now we convert cache_line to symbols
 sym_cache = zeros(1,length(cache_line)/sym_size);
 for k = 1:length(cache_line)/sym_size
-    sym_cache(k) = bi2de(cache_line((k-1)*sym_size+1:k*sym_size));
+    sym_cache(k) = my_bi2de(cache_line((k-1)*sym_size+1:k*sym_size));
 end
 
 
@@ -42,7 +42,7 @@ for cc_idx=1:size(cc_list,1)
     %First conver to symbols
     cc_sym = zeros(1,size(cc_list,2)/sym_size);
     for k = 1:size(cc_list,2)/sym_size
-        cc_sym(k) = bi2de(cc_list(cc_idx,(k-1)*sym_size+1:k*sym_size));
+        cc_sym(k) = my_bi2de(cc_list(cc_idx,(k-1)*sym_size+1:k*sym_size));
     end
     
     %Now create temporary tally
@@ -57,7 +57,7 @@ for cc_idx=1:size(cc_list,1)
     end
     
     %Now run entropy function
-    ent_list(cc_idx) = entropy_tally(tmp_tally);
+    ent_list(cc_idx) = entropy(tmp_tally);
 end
 
 end

@@ -150,6 +150,7 @@ if verbose_recovery == 1
     display('Constructing error-pattern matrix...');
 end
 error_patterns = construct_error_pattern_matrix(n, code_type);
+num_error_patterns = size(error_patterns,1);
 
 if num_sampled_error_patterns < 0 || num_sampled_error_patterns > num_error_patterns
     num_sampled_error_patterns = num_error_patterns;
