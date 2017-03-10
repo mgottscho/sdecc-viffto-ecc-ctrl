@@ -76,8 +76,8 @@ for SPEC_BENCHMARK in $SPEC_BENCHMARKS; do
         INPUT_FILE="$INPUT_DIRECTORY/${ISA}-${SPEC_BENCHMARK}-data.txt" # For static analysis
         # TODO
     elif [[ "$INPUT_TYPE" == "dynamic" ]]; then # Dynamic evaluation
-        #INPUT_FILE="$INPUT_DIRECTORY/spike_mem_data_trace_${SPEC_BENCHMARK}.txt.data.reads" # For dynamic analysis
-        INPUT_FILE="$INPUT_DIRECTORY/spike_mem_data_trace_${SPEC_BENCHMARK}.txt.data.reads.floats" # For dynamic analysis
+        INPUT_FILE="$INPUT_DIRECTORY/spike_mem_data_trace_${SPEC_BENCHMARK}.txt.data.reads" # For dynamic analysis
+        #INPUT_FILE="$INPUT_DIRECTORY/spike_mem_data_trace_${SPEC_BENCHMARK}.txt.data.reads.floats" # For dynamic analysis
     fi
     
     OUTPUT_FILE="$OUTPUT_DIRECTORY/${ISA}-${SPEC_BENCHMARK}-data-heuristic-recovery.mat"
