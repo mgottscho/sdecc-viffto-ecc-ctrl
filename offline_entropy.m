@@ -56,6 +56,12 @@ end
 total_num_cachelines = str2num(strtok(wc_output));
 display(['Number of words: ' num2str(num_cachelines) '. Total cache lines in trace: ' num2str(total_num_cachelines) '.']);
 
+if total_num_cachelines < num_cachelines || num_cachelines < 1
+    num_cachelines = total_num_cachelines;
+    display('Overriding num_cachelines');
+    num_cachelines
+end
+
 %% Randomly choose cache lines from the trace, and load them
 sampled_cacheline_indices = sortrows(randperm(total_num_cachelines, num_cachelines)'); % Randomly permute the indices of cachelines. We will choose the first num_cachelines of the permuted list to evaluate. Then, from each of these cachelines, we randomly pick one word from within it.
 
