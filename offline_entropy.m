@@ -1,4 +1,4 @@
-function offline_entropy(num_cachelines, k, words_per_block, input_filename, output_filename, n_threads, file_version, symbol_size)
+function [entropies] = offline_entropy(num_cachelines, k, words_per_block, input_filename, output_filename, n_threads, file_version, symbol_size)
 % This function iterates over a series of data cache lines that are statically extracted
 % from a compiled program that was executed and produced a dynamic memory trace.
 % We choose a cache line and word within a cache line randomly.
@@ -23,7 +23,8 @@ function offline_entropy(num_cachelines, k, words_per_block, input_filename, out
 %   symbol_size --      String: '[4|8|16]'
 %
 % Returns:
-%   Nothing.
+%   entropies --        num_cachelines X 2 matrix. First column is
+%       cacheline sampled index, second column is measured cacheline entropy.
 %
 % Author: Mark Gottscho
 % Email: mgottscho@ucla.edu
@@ -47,7 +48,7 @@ end
 % Instead, we get the number of instructions by using the 'wc' command, with the assumption that each line in the file will
 % contain a cache line.
 display('Reading inputs...');
-[wc_return_code, wc_output] = system(['wc -l ' input_filename]);
+[wc_return_code, wc_output] = system(['wc -l "' input_filename '"']);
 if wc_return_code ~= 0
     display(['FATAL! Could not get line count (# cache lines) from ' input_filename '.']);
     return;
@@ -138,6 +139,8 @@ mycluster = parcluster('local');
 mycluster.NumWorkers = n_threads;
 mypool = parpool(mycluster,n_threads);
 
+entropy_indices = NaN(num_cachelines,1);
+entropy = NaN(num_cachelines,1);
 %% Iterate over cachelines
 parfor i=1:num_cachelines
     cacheline_clayton = zeros(1,(words_per_block-1)*k);
@@ -145,10 +148,13 @@ parfor i=1:num_cachelines
         cacheline_clayton(1,1+(blockpos-1)*k:blockpos*k) = sampled_trace_cachelines_bin{i,blockpos} - '0';
     end
 
-    candidates_clayton = candidate_correct_messages - '0';
-    entropies(i,1) = sampled_cacheline_indices(i);
-    entropies(i,2) = entropy_list(symbol_size, cacheline_clayton, sampled_trace_cachelines_bin{i,1});
+    entropy_indices(i) = sampled_cacheline_indices(i);
+    entropy(i) = entropy_list(symbol_size, cacheline_clayton, sampled_trace_cachelines_bin{i,1} - '0');
 end
+
+entropies = NaN(num_cachelines,2);
+entropies(:,1) = entropy_indices;
+entropies(:,2) = entropy;
 
 %% Save all variables
 display('Saving outputs...');
