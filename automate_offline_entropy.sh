@@ -78,7 +78,7 @@ for SPEC_BENCHMARK in $SPEC_BENCHMARKS; do
 #        JOB_NAME="swdecc_datarecov_${SPEC_BENCHMARK}"
 #        qsub -V -N $JOB_NAME -l h_data=$MAX_MEM_PER_RUN,time=$MAX_TIME_PER_RUN,highp -M $MAILING_LIST -o $JOB_STDOUT -e $JOB_STDERR -m as -pe shared $NUM_THREADS swd_ecc_offline_data_heuristic_recovery_wrapper.sh $PWD $ISA $SPEC_BENCHMARK $N $K $NUM_WORDS $NUM_SAMPLED_ERROR_PATTERNS $WORDS_PER_BLOCK $INPUT_FILE $OUTPUT_FILE $NUM_THREADS $CODE_TYPE $POLICY $VERBOSE_RECOVERY
 #    elif [[ "$MWG_MACHINE_NAME" == "nanocad-server-testbed" ]]; then
-        ./offline_entropy_wrapper.sh $PWD $NUM_CACHELINES $K $WORDS_PER_BLOCK $INPUT_FILE $OUTPUT_FILE $NUM_THREADS $FILE_VERSION > $JOB_STDOUT 2> $JOB_STDERR
+        ./offline_entropy_wrapper.sh $PWD $NUM_CACHELINES $K $WORDS_PER_BLOCK $INPUT_FILE $OUTPUT_FILE $NUM_THREADS $FILE_VERSION $SYMBOL_SIZE > $JOB_STDOUT 2> $JOB_STDERR
 #    fi
 done
 
