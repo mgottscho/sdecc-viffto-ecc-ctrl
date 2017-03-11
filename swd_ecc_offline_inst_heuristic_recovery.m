@@ -83,7 +83,7 @@ end
 % Instead, we get the number of instructions by using the 'wc' command, with the assumption that each line in the file will
 % contain an instruction.
 display('Reading inputs...');
-[wc_return_code, wc_output] = system(['wc -l ' input_filename]);
+[wc_return_code, wc_output] = system(['wc -l "' input_filename '"']);
 if wc_return_code ~= 0
     display(['FATAL! Could not get line count (# inst) from ' input_filename '.']);
     return;
