@@ -2,7 +2,7 @@
 % Author: Mark Gottscho <mgottscho@ucla.edu>
 
 %%%%%%%% CHANGE ME AS NEEDED %%%%%%%%%%%%
-input_directory = '/Users/mark/Dropbox/SoftwareDefinedELC/data/rv64g/data-recovery/offline-dynamic/ULEL_even/35,32/hamming-pick-random/crash-threshold-0.5/2017-1-19';
+input_directory = 'D:\Dropbox\SoftwareDefinedECC\data\rv64g\data-recovery\offline-dynamic\hsiao1970\72,64\min-entropy8-pick-longest-run\crash-threshold-5\2017-03-10';
 output_directory = [input_directory filesep 'postprocessed'];
 num_words = 1000;
 %num_error_patterns = 741; % For (39,32) SECDED
@@ -10,11 +10,11 @@ num_words = 1000;
 %num_error_patterns = 14190; % For (45,32) DECTED
 %num_error_patterns = 79079; % For (79,64) DECTED
 %num_error_patterns = 141750; % For (144,128) ChipKill
-num_error_patterns = 35; % (18,16) ULELC
-%num_error_patterns = 1000; % sampled
+%num_error_patterns = 35; % (18,16) ULELC
+num_error_patterns = 1000; % sampled
 architecture = 'rv64g';
-code_type = 'ULEL\_even';
-policy = 'hamming-pick-random';
+code_type = 'hsiao1970';
+policy = 'min-entropy8-pick-longest-run';
 
 mkdir(output_directory);
 
@@ -49,7 +49,7 @@ benchmark_success_with_crash_option = NaN(num_words,num_error_patterns,num_bench
 
 for bench=1:num_benchmarks
     benchmark = benchmark_names{bench};
-    load([input_directory filesep architecture '-' benchmark '-data-heuristic-recovery.mat'], 'results_candidate_messages', 'results_miscorrect', 'success', 'could_have_crashed', 'success_with_crash_option','n','k');
+    load([input_directory filesep architecture '-' benchmark '-data-heuristic-recovery.mat'], 'results_candidate_messages', 'results_miscorrect', 'success', 'could_have_crashed', 'success_with_crash_option','n','k','avg_candidate_scores');
     benchmark_successes(:,:,bench) = success;
     benchmark_could_have_crashed(:,:,bench) = could_have_crashed;
     benchmark_success_with_crash_option(:,:,bench) = success_with_crash_option;
