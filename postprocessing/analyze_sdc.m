@@ -1,10 +1,12 @@
-input_dir = '/Users/mark/Dropbox/SoftwareDefinedELC/data/rv64g/app_driven_recovery/data-recovery/sim_injection/SYSTEM-hamming-pick-random/hsiao1970/72,64/2017-03-09/fft';
-output_dir = [input_dir '/postprocessed'];
-sdc_file = [input_dir '/recovered_sdc.csv'];
-benign_file = [input_dir '/recovered_benign.csv'];
-correct_file = [input_dir '/recovered_correct.csv'];
+input_dir = 'D:\Dropbox\SoftwareDefinedECC\data\rv64g\data-recovery\online-dynamic-sim\hsiao1970\72,64\SYSTEM-min-entropy8-pick-longest-run\2017-03-11\fft';
+output_dir = [input_dir filesep 'postprocessed'];
+sdc_file = [input_dir filesep 'recovered_sdc.csv'];
+benign_file = [input_dir filesep 'recovered_benign.csv'];
+correct_file = [input_dir filesep 'recovered_correct.csv'];
 tolerable_error_threshold = 0.1;
 num_runs = 10000;
+
+mkdir(output_dir);
 
 sdc_input = dlmread(sdc_file);
 benign_input = dlmread(benign_file);
@@ -60,4 +62,4 @@ set(gca,'FontSize',14,'FontName','Arial');
 title('(72,64) Hsiao, hamming-pick-random, FFT 10,000 runs, crashes and hangs excluded');
 
 
-save([output_dir '/results.mat'], '-v7.3');
+save([output_dir filesep 'results.mat'], '-v7.3');

@@ -14,7 +14,7 @@ function [bin] = my_dec2bin(dec,k)
 bin = repmat('X',1,k);
 if k <= 32
     mask = uint32(1);
-else if k <= 64
+elseif k <= 64
     mask = uint64(1);
 else
     display(['Bad k = ' num2str(k)]);
