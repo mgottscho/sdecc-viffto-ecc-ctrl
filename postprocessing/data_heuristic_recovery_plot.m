@@ -39,7 +39,7 @@ print(gcf, '-depsc2', [output_directory filesep architecture '-' benchmark '-suc
 savefig(gcf, [output_directory filesep architecture '-' benchmark '-success-vs-score-histogram.fig']);
 %close(gcf);
 
-if strcmp(code_type,'hsiao1970') == 1 || strcmp(code_type,'davydov1991') == 1
+if (strcmp(code_type,'hsiao1970') == 1 || strcmp(code_type,'davydov1991') == 1) && ((n == 72 && num_error_patterns == 2556) || (n == 39 && num_error_patterns == 741))
     z=1;
     success_2d = NaN(n+1,n+1);
     mean_success = mean(success);
