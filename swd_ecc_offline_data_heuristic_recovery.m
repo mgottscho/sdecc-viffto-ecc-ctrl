@@ -182,7 +182,7 @@ var_candidate_scores = NaN(num_words, num_sampled_error_patterns); % Init
 recovery_deltas = NaN(num_words, num_sampled_error_patterns); % Init
 recovery_fdeltas = NaN(num_words, num_sampled_error_patterns); % Init
 recovery_deltas_relative = NaN(num_words, num_sampled_error_patterns); % Init
-recovery_deltas_frelative = NaN(num_words, num_sampled_error_patterns); % Init
+recovery_fdeltas_relative = NaN(num_words, num_sampled_error_patterns); % Init
 
 %% Randomly generate sampled error pattern indices
 sampled_error_pattern_indices = sortrows(randperm(num_error_patterns, num_sampled_error_patterns)'); % Increasing order of indices. This does not affect experiment correctness.
