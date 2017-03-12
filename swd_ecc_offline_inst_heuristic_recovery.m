@@ -1,4 +1,4 @@
-function swd_ecc_offline_inst_heuristic_recovery(architecture, benchmark, n, k, num_messages, num_sampled_error_patterns, input_filename, output_filename, n_threads, code_type, policy, mnemonic_hotness_filename, rd_hotness_filename, crash_threshold, verbose_recovery, file_version)
+function swd_ecc_offline_inst_heuristic_recovery(architecture, benchmark, n, k, num_messages, num_sampled_error_patterns, input_filename, output_filename, n_threads, code_type, policy, mnemonic_hotness_filename, rd_hotness_filename, crash_threshold, verbose_recovery, file_version, hash_mode)
 % This function evaluates heuristic recovery from corrupted instructions in an offline manner.
 %
 % It iterates over a series of instructions that are statically extracted from a compiled program.
@@ -47,6 +47,7 @@ function swd_ecc_offline_inst_heuristic_recovery(architecture, benchmark, n, k, 
 %   crash_threshold -- fraction from 0 to 1, expressed as a string, e.g. '0.5'.
 %   verbose_recovery -- String: '[0|1]'
 %   file_version --     String: '[isca17|micro17]'
+%   hash_mode --        String: '[none|4|8|16]'
 %
 % Returns:
 %   Nothing.
@@ -70,6 +71,7 @@ rd_hotness_filename
 crash_threshold = str2double(crash_threshold)
 verbose_recovery = str2double(verbose_recovery)
 file_version
+hash_mode
 
 rng('shuffle'); % Seed RNG based on current time
 
@@ -347,7 +349,7 @@ parfor j=1:num_sampled_error_patterns % Parallelize loop across separate threads
     %    display(['Computing candidate codewords for the zero codeword corrupted by error pattern ' error '...']);
     %end
 
-    [candidate_correct_messages_zero_message, retval] = compute_candidate_correct_messages(received_string_zero_message,H,code_type);
+    [candidate_correct_messages_zero_message, retval] = compute_candidate_correct_messages(received_string_zero_message,H,code_type, hash_mode);
     num_candidate_messages = size(candidate_correct_messages_zero_message,1);
 
     if retval ~= 0
@@ -368,6 +370,25 @@ parfor j=1:num_sampled_error_patterns % Parallelize loop across separate threads
                 candidate_correct_messages(x,:) = my_bitxor(candidate_correct_messages_zero_message(x,:),original_message_bin); 
             end
             candidate_correct_messages = unique(candidate_correct_messages,'rows','sorted'); % Sort feature is important
+            
+            %% Optional: filter candidates using a hash
+            if strcmp(hash_mode, 'none') ~= 1
+                if strcmp(hash_mode, '4') == 1
+                    hash_size = 4;
+                elseif strcmp(hash_mode, '8') == 1
+                    hash_size = 8;
+                elseif strcmp(hash_mode, '16') == 1
+                    hash_size = 16;
+                end
+                tmp = cacheline_bin{1,1};
+                for x=2:size(cacheline_bin,2)
+                    tmp(x,:) = cacheline_bin{1,x};
+                end
+                tmp(sampled_blockpos_indices(i),:) = original_message_bin;
+                tmp = reshape(tmp',1,size(tmp,1)*size(tmp,2));
+                correct_hash = pearson_hash(tmp-'0',hash_size);
+                candidate_correct_messages = hash_filter_candidates(candidate_correct_messages, cacheline_bin, sampled_blockpos_indices(i), hash_size, correct_hash);
+            end
             
             %% Serialize candidate messages into a string, as data_recovery() requires this instead of cell array.
             serialized_candidate_correct_messages_bin = candidate_correct_messages(1,:); % init

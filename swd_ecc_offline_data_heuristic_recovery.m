@@ -1,4 +1,4 @@
-function swd_ecc_offline_data_heuristic_recovery(architecture, benchmark, n, k, num_words, num_sampled_error_patterns, words_per_block, input_filename, output_filename, n_threads, code_type, policy, crash_threshold, verbose_recovery, file_version)
+function swd_ecc_offline_data_heuristic_recovery(architecture, benchmark, n, k, num_words, num_sampled_error_patterns, words_per_block, input_filename, output_filename, n_threads, code_type, policy, crash_threshold, verbose_recovery, file_version, hash_mode)
 % This function iterates over a series of data cache lines that are statically extracted
 % from a compiled program that was executed and produced a dynamic memory trace.
 % We choose a cache line and word within a cache line randomly.
@@ -28,6 +28,7 @@ function swd_ecc_offline_data_heuristic_recovery(architecture, benchmark, n, k, 
 %   crash_threshold -- String of a scalar. Policy-defined semantics and range.
 %   verbose_recovery -- String: '[0|1]'
 %   file_version --     String: '[isca17|micro17]'
+%   hash_mode --        String: '[none|4|8|16]'
 %
 % Returns:
 %   Nothing.
@@ -50,6 +51,7 @@ policy
 crash_threshold
 verbose_recovery = str2num(verbose_recovery);
 file_version
+hash_mode
 
 rng('shuffle'); % Seed RNG based on current time
 
@@ -238,6 +240,26 @@ parfor j=1:num_sampled_error_patterns
                 candidate_correct_messages(x,:) = my_bitxor(candidate_correct_messages_zero_message(x,:),original_message_bin); 
             end
             candidate_correct_messages = unique(candidate_correct_messages,'rows','sorted'); % Sort feature is important
+            
+            %% Optional: filter candidates using a hash
+            if strcmp(hash_mode, 'none') ~= 1
+                if strcmp(hash_mode, '4') == 1
+                    hash_size = 4;
+                elseif strcmp(hash_mode, '8') == 1
+                    hash_size = 8;
+                elseif strcmp(hash_mode, '16') == 1
+                    hash_size = 16;
+                end
+                tmp = cacheline_bin{1,1};
+                for x=2:size(cacheline_bin,2)
+                    tmp(x,:) = cacheline_bin{1,x};
+                end
+                tmp(sampled_blockpos_indices(i),:) = original_message_bin;
+                tmp = reshape(tmp',1,size(tmp,1)*size(tmp,2));
+                correct_hash = pearson_hash(tmp-'0',hash_size);
+                candidate_correct_messages = hash_filter_candidates(candidate_correct_messages, cacheline_bin, sampled_blockpos_indices(i), hash_size, correct_hash);
+            end
+
 
             %% Serialize candidate messages into a string, as data_recovery() requires this instead of cell array.
             serialized_candidate_correct_messages_bin = candidate_correct_messages(1,:); % init
@@ -262,27 +284,6 @@ parfor j=1:num_sampled_error_patterns
                     cacheline_bin{1,x}
                 end
             end
-
-%            %% Attempt to recover the original message. This could actually succeed depending on the code used and how many bits are in the error pattern.
-%            if verbose == 1
-%                display('Attempting to decode the received string...');
-%            end
-%
-%            if strcmp(code_type, 'hsiao1970') == 1 || strcmp(code_type, 'davydov1991') == 1 % SECDED
-%                [recovered_message, num_error_bits] = secded_decoder(received_string, H, code_type);
-%            elseif strcmp(code_type, 'bose1960') == 1 % DECTED
-%                [recovered_message, num_error_bits] = dected_decoder(received_string, H);
-%            elseif strcmp(code_type, 'kaneda1982') == 1 % ChipKill
-%                [recovered_message, num_error_bits, num_error_symbols] = chipkill_decoder(received_string, H, 4);
-%            end % didn't check bad code type error condition because we should have caught it earlier anyway
-%
-%            if verbose == 1
-%                display(['Sanity check: ECC decoder determined that there are ' num2str(num_error_bits) ' bits in error. The input error pattern had ' num2str(sum(error_pattern=='1')) ' bits flipped.']);
-%
-%                if strcmp(code_type, 'kaneda1982') == 1 % ChipKill
-%                    display(['This is a ChipKill code with symbol size of 4 bits. The decoder found ' num2str(num_error_symbols) ' symbols in error.']);
-%                end
-%            end
 
             %% Do heuristic recovery for this message/error pattern combo.
             [candidate_scores, recovered_message_bin, suggest_to_crash, recovered_successfully] = data_recovery('rv64g', num2str(k), original_message_bin, serialized_candidate_correct_messages_bin, policy, serialized_cacheline_bin, sampled_blockpos_indices(i), crash_threshold, num2str(verbose_recovery));
