@@ -1,4 +1,4 @@
-function [filtered_candidates, retval] = hash_filter_candidates(candidates, cacheline, blockpos, hash_size, correct_hash)
+function [hash_filtered_candidates, retval] = hash_filter_candidates(candidates, cacheline, blockpos, hash_size, correct_hash)
 % Arguments:
 %    candidates -- Binary string matrix
 %    cacheline -- Binary string matrix
@@ -15,6 +15,7 @@ function [filtered_candidates, retval] = hash_filter_candidates(candidates, cach
 
 retval = -1;
 num_candidates = size(candidates,1);
+k = size(candidates,2); % TODO: should this include parity bits, and hence be n?
 hash_filtered_candidates = repmat('X',1,k);
 x = 1;
 candidate_cacheline = cacheline;

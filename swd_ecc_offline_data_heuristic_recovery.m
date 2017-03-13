@@ -257,7 +257,7 @@ parfor j=1:num_sampled_error_patterns
                 tmp(sampled_blockpos_indices(i),:) = original_message_bin;
                 tmp = reshape(tmp',1,size(tmp,1)*size(tmp,2));
                 correct_hash = pearson_hash(tmp-'0',hash_size);
-                candidate_correct_messages = hash_filter_candidates(candidate_correct_messages, cacheline_bin, sampled_blockpos_indices(i), hash_size, correct_hash);
+                candidate_correct_messages = hash_filter_candidates(candidate_correct_messages, char(cacheline_bin), sampled_blockpos_indices(i), hash_size, correct_hash);
             end
 
 
