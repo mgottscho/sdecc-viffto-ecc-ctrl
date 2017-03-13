@@ -259,6 +259,7 @@ parfor j=1:num_sampled_error_patterns
                 correct_hash = pearson_hash(tmp-'0',hash_size);
                 candidate_correct_messages = hash_filter_candidates(candidate_correct_messages, char(cacheline_bin), sampled_blockpos_indices(i), hash_size, correct_hash);
             end
+            actual_num_candidate_messages = size(candidate_correct_messages,1);
 
 
             %% Serialize candidate messages into a string, as data_recovery() requires this instead of cell array.
@@ -300,7 +301,7 @@ parfor j=1:num_sampled_error_patterns
                 success_with_crash_option(i,j) = success(i,j); % If we decide not to crash, success rate is same.
                 results_miscorrect(i,j) = ~success(i,j);
             end
-            results_candidate_messages(i,j) = num_candidate_messages;
+            results_candidate_messages(i,j) = actual_num_candidate_messages;
 
             %% Compute recovery integer delta (measure of how much error to original message when treated as integers)
             if k == 32 || k == 64

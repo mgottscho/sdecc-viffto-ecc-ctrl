@@ -389,6 +389,7 @@ parfor j=1:num_sampled_error_patterns % Parallelize loop across separate threads
                 correct_hash = pearson_hash(tmp-'0',hash_size);
                 candidate_correct_messages = hash_filter_candidates(candidate_correct_messages, char(cacheline_bin), sampled_blockpos_indices(i), hash_size, correct_hash);
             end
+            actual_num_candidate_messages = size(candidate_correct_messages,1);
             
             %% Serialize candidate messages into a string, as data_recovery() requires this instead of cell array.
             serialized_candidate_correct_messages_bin = candidate_correct_messages(1,:); % init
@@ -437,7 +438,7 @@ parfor j=1:num_sampled_error_patterns % Parallelize loop across separate threads
             [num_valid_messages, recovered_message, estimated_prob_correct, suggest_to_crash, recovered_successfully] = inst_recovery('rv64g', num2str(k), original_message_bin, serialized_candidate_correct_messages_bin, policy, instruction_mnemonic_hotness, instruction_rd_hotness, num2str(crash_threshold), num2str(verbose_recovery));
 
             %% Store results for this instruction/error pattern pair
-            results_candidate_messages(i,j) = num_candidate_messages;
+            results_candidate_messages(i,j) = actual_num_candidate_messages;
             results_valid_messages(i,j) = num_valid_messages;
             success(i,j) = recovered_successfully;
             could_have_crashed(i,j) = suggest_to_crash;

@@ -618,7 +618,7 @@ if verbose == 1
 end
 
 if suggest_to_crash == 1
-    fprintf(1, 'SUGGEST_TO_CRASH\n');
+    fprintf(1, '%s SUGGEST_TO_CRASH\n', recovered_message);
 else
     fprintf(1,'%s\n', recovered_message);
 end
