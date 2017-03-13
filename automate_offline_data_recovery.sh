@@ -43,11 +43,11 @@ NUM_SAMPLED_ERROR_PATTERNS=1000 # sampled
 #NUM_SAMPLED_ERROR_PATTERNS=79079 # Max for (79,64) DECTED
 #NUM_SAMPLED_ERROR_PATTERNS=141750 # Max for (144,128) ChipKill
 POLICY=min-entropy8-pick-longest-run
-CRASH_THRESHOLD=5
+CRASH_THRESHOLD=4.5
 HASH_MODE=8
 VERBOSE_RECOVERY=0
 
-OUTPUT_DIRECTORY=$MWG_DATA_PATH/swd_ecc_data/$ISA/data-recovery/offline-$INPUT_TYPE/$CODE_TYPE/$N,$K/$POLICY/crash-threshold-$CRASH_THRESHOLD
+OUTPUT_DIRECTORY=$MWG_DATA_PATH/swd_ecc_data/$ISA/data-recovery/offline-$INPUT_TYPE/$CODE_TYPE/$N,$K/hash-$HASH_MODE/$POLICY/crash-threshold-$CRASH_THRESHOLD/`date -I`
 
 #if [[ "$MWG_MACHINE_NAME" == "hoffman" ]]; then
 #    NUM_THREADS=16 # Override above.

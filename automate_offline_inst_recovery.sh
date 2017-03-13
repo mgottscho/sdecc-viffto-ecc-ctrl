@@ -84,7 +84,7 @@ CRASH_THRESHOLD=0.9
 HASH_MODE=8
 VERBOSE_RECOVERY=0
 
-OUTPUT_DIRECTORY=$MWG_DATA_PATH/swd_ecc_data/$ISA/inst-recovery/offline-$INPUT_TYPE/$CODE_TYPE/$N,$K/$POLICY/crash-threshold-$CRASH_THRESHOLD
+OUTPUT_DIRECTORY=$MWG_DATA_PATH/swd_ecc_data/$ISA/inst-recovery/offline-$INPUT_TYPE/$CODE_TYPE/$N,$K/hash-$HASH_MODE/$POLICY/crash-threshold-$CRASH_THRESHOLD/`date -I`
 
 #if [[ "$MWG_MACHINE_NAME" == "hoffman" ]]; then
 #    NUM_THREADS=16 # Override above.
