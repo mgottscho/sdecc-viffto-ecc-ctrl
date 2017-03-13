@@ -550,7 +550,11 @@ if verbose == 1
     suggest_to_crash
 end
 
-fprintf(1,'%s\n', recovered_message);
+if suggest_to_crash == 1
+    fprintf(1, 'SUGGEST_TO_CRASH\n');
+else
+    fprintf(1,'%s\n', recovered_message);
+end
 
 
 
