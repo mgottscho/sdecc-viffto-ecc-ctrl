@@ -545,6 +545,11 @@ recovered_message = candidate_correct_messages(target_message_index,:);
 recovered_successfully = (strcmp(recovered_message, original_message) == 1);% ...
 %                         || (strcmp(recovered_message_backup, original_message) == 1);
 
+% Override all crash policies if there is only one candidate
+if size(candidate_correct_messages,1) == 1
+    suggest_to_crash = 0;
+end
+
 if verbose == 1
     recovered_successfully
     suggest_to_crash
