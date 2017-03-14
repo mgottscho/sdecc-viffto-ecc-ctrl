@@ -30,12 +30,13 @@ else
     exit 1
 fi
 
-N=39
-K=32
+N=144
+K=128
 NUM_WORDS=1000
-WORDS_PER_BLOCK=16
-NUM_THREADS=$(cat /proc/cpuinfo | grep ^processor | wc -l ) 
-CODE_TYPE=davydov1991
+WORDS_PER_BLOCK=4
+#NUM_THREADS=$(cat /proc/cpuinfo | grep ^processor | wc -l ) 
+NUM_THREADS=20
+CODE_TYPE=kaneda1982
 NUM_SAMPLED_ERROR_PATTERNS=1000 # sampled
 #NUM_SAMPLED_ERROR_PATTERNS=741 # Max for (39,32) SECDED
 #NUM_SAMPLED_ERROR_PATTERNS=2556 # Max for (72,64) SECDED
@@ -44,7 +45,7 @@ NUM_SAMPLED_ERROR_PATTERNS=1000 # sampled
 #NUM_SAMPLED_ERROR_PATTERNS=141750 # Max for (144,128) ChipKill
 POLICY=min-entropy8-pick-longest-run
 CRASH_THRESHOLD=4.5
-HASH_MODE=none
+HASH_MODE=8
 VERBOSE_RECOVERY=0
 
 OUTPUT_DIRECTORY=$MWG_DATA_PATH/swd_ecc_data/$ISA/data-recovery/offline-$INPUT_TYPE/$CODE_TYPE/$N,$K/hash-$HASH_MODE/$POLICY/crash-threshold-$CRASH_THRESHOLD/`date -I`
