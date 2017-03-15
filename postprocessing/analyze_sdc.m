@@ -1,12 +1,12 @@
-input_dir = 'D:\Dropbox\SoftwareDefinedECC\data\rv64g\data-recovery\online-dynamic-sim\kaneda1982\144,128\SYSTEM-min-entropy8-pick-longest-run\2017-03-11\fft';
+input_dir = '/Users/mark/Dropbox/SoftwareDefinedECC/data/rv64g/data-recovery/online-dynamic-sim/hsiao1970/72,64/SYSTEM-min-entropy8-pick-longest-run/crash-threshold-4.5/2017-03-13/jpeg';
 output_dir = [input_dir filesep 'postprocessed'];
 sdc_file = [input_dir filesep 'recovered_sdc.csv'];
 benign_file = [input_dir filesep 'recovered_benign.csv'];
 correct_file = [input_dir filesep 'recovered_correct.csv'];
 policy = 'min-entropy8-pick-longest-run';
 hash_mode = 'hash-none';
-code = 'kaneda1982'
-benchmark = 'fft';
+code = 'hsiao1970 (72,64)'
+benchmark = 'jpeg';
 tolerable_error_threshold = 0.1;
 num_runs = 1000;
 
@@ -51,6 +51,8 @@ plot(x,y2);
 
 legend('Overall','SDCs only');
 title([code ' ' hash_mode ' ' policy ' ' benchmark ' ' num2str(num_runs) ', crashes and hangs excluded']);
+savefig(gcf,[output_dir filesep 'output_error_overall.fig']);
+print(gcf, '-depsc2', [output_dir filesep 'output_error_overall.eps']);
 
 figure; 
 [y,x] = hist(overall_input(:,2),1000);
@@ -64,6 +66,8 @@ ylabel('Fraction of Runs Below Output Error', 'FontSize', 14, 'FontName', 'Arial
 xlabel('Normalized Application Output Error', 'FontSize', 14, 'FontName', 'Arial');
 set(gca,'FontSize',14,'FontName','Arial');
 title([code ' ' hash_mode ' ' policy ' ' benchmark ' ' num2str(num_runs) ', crashes and hangs excluded']);
-
+savefig(gcf,[output_dir filesep 'output_error_sdc.fig']);
+print(gcf, '-depsc2', [output_dir filesep 'output_error_sdc.eps']);
+    
 
 save([output_dir filesep 'results.mat'], '-v7.3');
