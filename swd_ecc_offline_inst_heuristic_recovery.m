@@ -373,6 +373,7 @@ parfor j=1:num_sampled_error_patterns % Parallelize loop across separate threads
             candidate_correct_messages = unique(candidate_correct_messages,'rows','sorted'); % Sort feature is important
             
             %% Optional: filter candidates using a hash
+            % FIXME: we don't have support for cachelines in inst recovery!! This will definitely break.
             if strcmp(hash_mode, 'none') ~= 1
                 if strcmp(hash_mode, '4') == 1
                     hash_size = 4;
