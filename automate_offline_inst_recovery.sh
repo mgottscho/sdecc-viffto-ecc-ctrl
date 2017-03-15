@@ -34,7 +34,9 @@ elif [[ "$INPUT_TYPE" == "dynamic-static-side-info" ]]; then # Dynamic evaluatio
 
 elif [[ "$INPUT_TYPE" == "dynamic" ]]; then # Dynamic
     SPEC_BENCHMARKS="400.perlbench 401.bzip2 403.gcc 410.bwaves 435.gromacs 436.cactusADM 444.namd 447.dealII 450.soplex 453.povray 454.calculix 456.hmmer 458.sjeng 459.GemsFDTD 462.libquantum 464.h264ref 465.tonto 470.lbm 471.omnetpp 473.astar" # Dynamic -- working
-    INPUT_DIRECTORY=$MWG_DATA_PATH/swd_ecc_data/$ISA/spike # For dynamic
+    INPUT_DIRECTORY=$MWG_DATA_PATH/swd_ecc_data/$ISA/spike_isca17 # For dynamic
+    FILE_VERSION="isca17"
+    #FILE_VERSION="micro17"
     #MNEMONIC_HOTNESS_FILENAME=$MWG_DATA_PATH/swd_ecc_data/$ISA/program-statistics/dynamic/$ISA-mnemonic-hotness-dyn-all.csv
     MNEMONIC_HOTNESS_FILENAME=$MWG_DATA_PATH/swd_ecc_data/$ISA/program-statistics/dynamic/$ISA-joint-mnemonic-reg-hotness-dyn-all.csv
     RD_HOTNESS_FILENAME=$MWG_DATA_PATH/swd_ecc_data/$ISA/program-statistics/dynamic/$ISA-rd-hotness-dyn-all.csv
@@ -42,7 +44,9 @@ elif [[ "$INPUT_TYPE" == "dynamic" ]]; then # Dynamic
 elif [[ "$INPUT_TYPE" == "dynamic-split-int-float" ]]; then # Dynamic
     INT_SPEC_BENCHMARKS="400.perlbench 401.bzip2 403.gcc 456.hmmer 458.sjeng 462.libquantum 464.h264ref 471.omnetpp 473.astar"
     FLOAT_SPEC_BENCHMARKS="410.bwaves 435.gromacs 436.cactusADM 444.namd 447.dealII 450.soplex 453.povray 454.calculix 459.GemsFDTD 465.tonto 470.lbm"
-    INPUT_DIRECTORY=$MWG_DATA_PATH/swd_ecc_data/$ISA/spike # For dynamic
+    INPUT_DIRECTORY=$MWG_DATA_PATH/swd_ecc_data/$ISA/spike_isca17 # For dynamic
+    FILE_VERSION="isca17"
+    #FILE_VERSION="micro17"
     #INT_MNEMONIC_HOTNESS_FILENAME=$MWG_DATA_PATH/swd_ecc_data/$ISA/program-statistics/dynamic/$ISA-mnemonic-hotness-dyn-int.csv
     INT_MNEMONIC_HOTNESS_FILENAME=$MWG_DATA_PATH/swd_ecc_data/$ISA/program-statistics/dynamic/$ISA-joint-mnemonic-reg-hotness-dyn-int.csv
     INT_RD_HOTNESS_FILENAME=$MWG_DATA_PATH/swd_ecc_data/$ISA/program-statistics/dynamic/$ISA-rd-hotness-dyn-int.csv
@@ -52,13 +56,17 @@ elif [[ "$INPUT_TYPE" == "dynamic-split-int-float" ]]; then # Dynamic
 
 elif [[ "$INPUT_TYPE" == "dynamic-perfect" ]]; then # Dynamic
     SPEC_BENCHMARKS="400.perlbench 401.bzip2 403.gcc 410.bwaves 435.gromacs 436.cactusADM 444.namd 447.dealII 450.soplex 453.povray 454.calculix 456.hmmer 458.sjeng 459.GemsFDTD 462.libquantum 464.h264ref 465.tonto 470.lbm 471.omnetpp 473.astar" # Dynamic -- working
-    INPUT_DIRECTORY=$MWG_DATA_PATH/swd_ecc_data/$ISA/spike # For dynamic
+    INPUT_DIRECTORY=$MWG_DATA_PATH/swd_ecc_data/$ISA/spike_isca17 # For dynamic
+    FILE_VERSION=isca17
+    #FILE_VERSION=micro17
     #MNEMONIC_HOTNESS_PREFIX=$MWG_DATA_PATH/swd_ecc_data/$ISA/program-statistics/dynamic/$ISA-mnemonic-hotness-dyn
     MNEMONIC_HOTNESS_PREFIX=$MWG_DATA_PATH/swd_ecc_data/$ISA/program-statistics/dynamic/$ISA-joint-mnemonic-reg-hotness-dyn
     RD_HOTNESS_FILENAME=$MWG_DATA_PATH/swd_ecc_data/$ISA/program-statistics/dynamic/$ISA-rd-hotness-dyn-all.csv # FIXME Don't use rd-based policy with dynamic-perfect SI, this is placeholder
 elif [[ "$INPUT_TYPE" == "dynamic-baseline" ]]; then # Baseline, all are equally likely frequencies
     SPEC_BENCHMARKS="400.perlbench 401.bzip2 403.gcc 410.bwaves 435.gromacs 436.cactusADM 444.namd 447.dealII 450.soplex 453.povray 454.calculix 456.hmmer 458.sjeng 459.GemsFDTD 462.libquantum 464.h264ref 465.tonto 470.lbm 471.omnetpp 473.astar" # Dynamic -- working
-    INPUT_DIRECTORY=$MWG_DATA_PATH/swd_ecc_data/$ISA/spike # For dynamic
+    INPUT_DIRECTORY=$MWG_DATA_PATH/swd_ecc_data/$ISA/spike_isca17 # For dynamic
+    FILE_VERSION=isca17
+    #FILE_VERSION=micro17
     #MNEMONIC_HOTNESS_FILENAME=$MWG_DATA_PATH/swd_ecc_data/$ISA/program-statistics/dynamic/$ISA-mnemonic-hotness-dyn-baseline.csv
     MNEMONIC_HOTNESS_FILENAME=$MWG_DATA_PATH/swd_ecc_data/$ISA/program-statistics/dynamic/$ISA-joint-mnemonic-reg-hotness-dyn-baseline.csv
     RD_HOTNESS_FILENAME=$MWG_DATA_PATH/swd_ecc_data/$ISA/program-statistics/dynamic/$ISA-rd-hotness-dyn-baseline.csv
@@ -71,7 +79,8 @@ fi
 N=144
 K=128
 NUM_MESSAGES=1000
-NUM_THREADS=$(cat /proc/cpuinfo | grep ^processor | wc -l ) 
+#NUM_THREADS=$(cat /proc/cpuinfo | grep ^processor | wc -l ) 
+NUM_THREADS=20
 CODE_TYPE=kaneda1982
 NUM_SAMPLED_ERROR_PATTERNS=1000
 #NUM_SAMPLED_ERROR_PATTERNS=741 # Max for (39,32) SECDED
