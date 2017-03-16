@@ -178,7 +178,7 @@ print(gcf, '-depsc2', [output_directory filesep 'due_breakdown.eps']);
 
 
 if strcmp(code_type,'hsiao1970') == 1 || strcmp(code_type,'davydov1991') == 1
-    secded_candidate_codewords_heatmap
+    secded_heatmap(results_candidate_messages);
     savefig(gcf, [output_directory filesep code_type '-' num2str(n) '-' num2str(k) '-cc-heatmap.fig']);
     print(gcf, '-depsc2', [output_directory filesep code_type '-' num2str(n) '-' num2str(k) '-cc-heatmap.eps']);
 end
