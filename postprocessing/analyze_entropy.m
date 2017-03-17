@@ -1,4 +1,4 @@
-input_directory = '/Users/mark/Dropbox/SoftwareDefinedECC/data/rv64g/entropy/clayton';
+input_directory = '/Users/mark/Dropbox/SoftwareDefinedECC/data/rv64g/entropy';
 output_directory = [input_directory filesep 'postprocessed'];
 mkdir(output_directory);
 
@@ -28,10 +28,10 @@ end
 fig_handles = NaN(size(benchmark_filenames,1),1);
 mean_benchmark_entropies = NaN(size(benchmark_filenames,1),1);
 for i=1:size(benchmark_filenames,1)
-    load([input_directory filesep benchmark_filenames{i}]);
-    mean_benchmark_entropies(i) = mean(entropy_vals);
+    load([input_directory filesep benchmark_filenames{i}],'entropy');
+    mean_benchmark_entropies(i) = mean(entropy);
     figure;
-    histogram(entropy_vals,50);
+    histogram(entropy,50);
     title(benchmark_names{i}, 'FontSize', 14, 'FontName', 'Arial');
     xlabel('Mean Cacheline Entropy (bits per byte)', 'FontSize', 14, 'FontName', 'Arial');
     ylabel('Count', 'FontSize', 14, 'FontName', 'Arial');
