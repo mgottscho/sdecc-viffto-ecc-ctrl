@@ -31,10 +31,16 @@ for i=1:size(benchmark_filenames,1)
     load([input_directory filesep benchmark_filenames{i}],'entropy');
     mean_benchmark_entropies(i) = mean(entropy);
     figure;
-    histogram(entropy,50);
-    title(benchmark_names{i}, 'FontSize', 14, 'FontName', 'Arial');
-    xlabel('Mean Cacheline Entropy (bits per byte)', 'FontSize', 14, 'FontName', 'Arial');
-    ylabel('Count', 'FontSize', 14, 'FontName', 'Arial');
+    histogram(entropy,50,'FaceColor','Black','EdgeColor','Black');
+    xlim([0 6]);
+    set(gca,'XTick',[0:1:6]);
+    pos = get(gca,'Position');
+    pos(3) = 0.25;
+    pos(4) = 0.25;
+    set(gca,'Position',pos,'XColor','Black','YColor','Black');
+    %title(benchmark_names{i}, 'FontSize', 9, 'FontName', 'Arial');
+    xlabel('Mean Intra-Cacheline Entropy (bits/byte)', 'FontSize', 9, 'FontName', 'Arial','Color','Black');
+    ylabel('Count', 'FontSize', 9, 'FontName', 'Arial','Color','Black');
     set(gca, 'YTick', []);
     tmp = gcf;
     fig_handles(i) = tmp.Number;
@@ -43,6 +49,6 @@ for i=1:size(benchmark_filenames,1)
 end
 tilefig(fig_handles);
 clear fig_handles;
-close all;
-save([output_directory '/postprocessed.mat'], '-v7.3');
+%close all;
+%save([output_directory '/postprocessed.mat'], '-v7.3');
 mean_benchmark_entropies
