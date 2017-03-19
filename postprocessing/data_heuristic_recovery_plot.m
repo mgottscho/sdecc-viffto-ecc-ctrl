@@ -25,7 +25,7 @@ savefig(gcf, [output_directory filesep architecture '-' benchmark '-data-heurist
 close(gcf);
 
 figure;
-histogram(avg_candidate_scores,[0:0.05:6]); % Change range for different policies
+histogram(avg_candidate_scores,[0:0.05:max(avg_candidate_scores)]); % Change range for different policies
 hold on;
 tmp = avg_candidate_scores.*success;
 tmp((avg_candidate_scores ~= 0) & (success == 0)) = NaN;

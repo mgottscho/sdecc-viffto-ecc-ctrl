@@ -144,10 +144,10 @@ set(gca,'XTickLabel',[int_benchmark_names(int_benchmark_indices); float_benchmar
 
 set(gca,'ylim',[0 1])
 set(gca,'ytick',0:0.2:1);
-ylabel('Fraction of Crashes','FontSize',12,'Color','Black');
+ylabel('Fraction of Crashes','FontSize',9,'Color','Black');
 
 set(gca,'FontSize',12,'FontName','Arial','XColor','Black','YColor','Black')
-xticklabel_rotate([],45,[],'fontsize',12)
+xticklabel_rotate([],45,[],'fontsize',9)
 pos = get(gca,'Position');
 pos(3) = 0.80;
 pos(4) = 0.15;

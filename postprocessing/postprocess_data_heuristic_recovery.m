@@ -2,7 +2,7 @@
 % Author: Mark Gottscho <mgottscho@ucla.edu>
 
 %%%%%%%% CHANGE ME AS NEEDED %%%%%%%%%%%%
-input_directory = 'D:\Dropbox\SoftwareDefinedECC\data\rv64g\data-recovery\offline-dynamic\hsiao1970\72,64\hash-8\min-entropy8-pick-longest-run\crash-threshold-4.5\2017-03-13';
+input_directory = '/Users/mark/Dropbox/SoftwareDefinedECC/data/rv64g/data-recovery/offline-dynamic/hsiao1970/72,64/hash-none/hamming-pick-longest-run/crash-threshold-0.5/2017-03-18';
 output_directory = [input_directory filesep 'postprocessed'];
 num_words = 1000;
 %num_error_patterns = 741; % For (39,32) SECDED
@@ -14,8 +14,8 @@ num_words = 1000;
 num_error_patterns = 1000; % sampled
 architecture = 'rv64g';
 code_type = 'hsiao1970';
-hash_mode = 'hash-8';
-policy = 'min-entropy8-pick-longest-run';
+hash_mode = 'hash-none';
+policy = 'hamming-pick-longest-run';
 
 mkdir(output_directory);
 
