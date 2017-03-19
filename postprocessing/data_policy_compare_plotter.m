@@ -12,19 +12,19 @@ mean_success(policy,code) = geomean(avg_benchmark_successes);
 %mean_miscorrect(policy,code) = geomean(avg_benchmark_miscorrect);
 %mean_panic(policy,code) = geomean(avg_benchmark_could_have_crashed);
 
-%% Entropy4 Bose (79,64) -- RUNNING ON HOFFMAN
+%% Entropy4 Bose (79,64)
 policy=1;
 code=2;
-%load('/Users/mark/Dropbox/SoftwareDefinedECC/data/rv64g/data-recovery/offline-dynamic/bose1960/79,64/hash-none/min-entropy4-pick-longest-run/crash-threshold-3/2017-03-13/postprocessed/postprocessed.mat','avg_benchmark_successes');%,'avg_benchmark_miscorrect','avg_benchmark_could_have_crashed');
-%mean_success(policy,code) = geomean(avg_benchmark_successes);
+load('/Users/mark/Dropbox/SoftwareDefinedECC/data/rv64g/data-recovery/offline-dynamic/bose1960/79,64/hash-none/min-entropy4-pick-longest-run/crash-threshold-3/2017-03-19/postprocessed/postprocessed.mat','avg_benchmark_successes');%,'avg_benchmark_miscorrect','avg_benchmark_could_have_crashed');
+mean_success(policy,code) = geomean(avg_benchmark_successes);
 %mean_miscorrect(policy,code) = geomean(avg_benchmark_miscorrect);
 %mean_panic(policy,code) = geomean(avg_benchmark_could_have_crashed);
 
-%% Entropy4 Kaneda (144,128) -- TODO RUN ME
+%% Entropy4 Kaneda (144,128)
 policy=1;
 code=3;
-%load('/Users/mark/Dropbox/SoftwareDefinedECC/data/rv64g/data-recovery/offline-dynamic/kaneda1982/144,128/hash-none/min-entropy4-pick-longest-run/crash-threshold-3/2017-03-16/postprocessed/postprocessed.mat','avg_benchmark_successes');%,'avg_benchmark_miscorrect','avg_benchmark_could_have_crashed');
-%mean_success(policy,code) = geomean(avg_benchmark_successes);
+load('/Users/mark/Dropbox/SoftwareDefinedECC/data/rv64g/data-recovery/offline-dynamic/kaneda1982/144,128/hash-none/min-entropy4-pick-longest-run/crash-threshold-3/2017-03-18/postprocessed/postprocessed.mat','avg_benchmark_successes');%,'avg_benchmark_miscorrect','avg_benchmark_could_have_crashed');
+mean_success(policy,code) = geomean(avg_benchmark_successes);
 %mean_miscorrect(policy,code) = geomean(avg_benchmark_miscorrect);
 %mean_panic(policy,code) = geomean(avg_benchmark_could_have_crashed);
 
@@ -60,11 +60,11 @@ mean_success(policy,code) = geomean(avg_benchmark_successes);
 %mean_miscorrect(policy,code) = geomean(avg_benchmark_miscorrect);
 %mean_panic(policy,code) = geomean(avg_benchmark_could_have_crashed);
 
-%% Entropy16 Bose (79,64) -- RUNNING ON server
+%% Entropy16 Bose (79,64)
 policy=3;
 code=2;
-%load('/Users/mark/Dropbox/SoftwareDefinedECC/data/rv64g/data-recovery/offline-dynamic/bose1960/79,64/hash-none/min-entropy16-pick-longest-run/crash-threshold-3.75/2017-03-13/postprocessed/postprocessed.mat','avg_benchmark_successes');%,'avg_benchmark_miscorrect','avg_benchmark_could_have_crashed');
-%mean_success(policy,code) = geomean(avg_benchmark_successes);
+load('/Users/mark/Dropbox/SoftwareDefinedECC/data/rv64g/data-recovery/offline-dynamic/bose1960/79,64/hash-none/min-entropy16-pick-longest-run/crash-threshold-3.75/2017-03-18/postprocessed/postprocessed.mat','avg_benchmark_successes');%,'avg_benchmark_miscorrect','avg_benchmark_could_have_crashed');
+mean_success(policy,code) = geomean(avg_benchmark_successes);
 %mean_miscorrect(policy,code) = geomean(avg_benchmark_miscorrect);
 %mean_panic(policy,code) = geomean(avg_benchmark_could_have_crashed);
 
@@ -84,12 +84,11 @@ mean_success(policy,code) = geomean(avg_benchmark_successes);
 %mean_miscorrect(policy,code) = geomean(avg_benchmark_miscorrect);
 %mean_panic(policy,code) = geomean(avg_benchmark_could_have_crashed);
 
-%% Hamming-Pick-Longest-Run Bose (79,64) -- TODO RUN ME (currently on
-% DFM)
+%% Hamming-Pick-Longest-Run Bose (79,64)
 policy=4;
 code=2;
-%load('/Users/mark/Dropbox/SoftwareDefinedECC/data/rv64g/data-recovery/offline-dynamic/bose1960/79,64/hash-none/hamming-pick-longest-run/crash-threshold-0.5/2017-03-13/postprocessed/postprocessed.mat','avg_benchmark_successes');%,'avg_benchmark_miscorrect','avg_benchmark_could_have_crashed');
-%mean_success(policy,code) = geomean(avg_benchmark_successes);
+load('/Users/mark/Dropbox/SoftwareDefinedECC/data/rv64g/data-recovery/offline-dynamic/bose1960/79,64/hash-none/hamming-pick-longest-run/crash-threshold-0.5/2017-03-18/postprocessed/postprocessed.mat','avg_benchmark_successes');%,'avg_benchmark_miscorrect','avg_benchmark_could_have_crashed');
+mean_success(policy,code) = geomean(avg_benchmark_successes);
 %mean_miscorrect(policy,code) = geomean(avg_benchmark_miscorrect);
 %mean_panic(policy,code) = geomean(avg_benchmark_could_have_crashed);
 
