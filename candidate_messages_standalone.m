@@ -1,4 +1,4 @@
-function [] = candidate_messages_standalone(original_message_bin, n, k, code_type, verbose)
+function [] = candidate_messages_standalone(original_message_bin, n, k, code_type, verbose, hash_mode)
 % This function serves as a wrapper for compute_candidate_correct_messages() to external applications. It is meant to be compiled with mcc and invoked through a shell.
 % Relevant arguments are passed through. Those which are not are described below. Function output is text to stdout.
 %
@@ -37,6 +37,29 @@ if verbose == 1
 end
 
 [candidate_correct_messages_bin, retval] = compute_candidate_correct_messages(received_string_bin, H, code_type);
+            
+%% Optional: filter candidates using a hash
+if strcmp(hash_mode, 'none') ~= 1
+    if strcmp(hash_mode, '4') == 1
+        hash_size = 4;
+    elseif strcmp(hash_mode, '8') == 1
+        hash_size = 8;
+    elseif strcmp(hash_mode, '16') == 1
+        hash_size = 16;
+    end
+
+    correct_hash = pearson_hash(original_message_bin-'0',hash_size);
+    x=1;
+    hash_filtered_candidates = repmat('X',1,k);
+    for i=1:size(candidate_correct_messages_bin,1)
+        hash = pearson_hash(candidate_correct_messages_bin(i,:)-'0',hash_size);
+        if hash == correct_hash
+            hash_filtered_candidates(x,:) = candidate_correct_messages_bin(i,:);
+            x=x+1;
+        end
+    end
+    candidate_correct_messages_bin = hash_filtered_candidates;
+end
 
 for i=1:size(candidate_correct_messages_bin)
     fprintf(1, '%s\n', candidate_correct_messages_bin(i,:));
