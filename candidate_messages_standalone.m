@@ -23,6 +23,9 @@ end
 if verbose == 1
     G
     H
+    n
+    k
+    hash_mode
 end
 
 original_codeword_bin = ecc_encoder(original_message_bin,G);
@@ -49,6 +52,11 @@ if strcmp(hash_mode, 'none') ~= 1
     end
 
     correct_hash = pearson_hash(original_message_bin-'0',hash_size);
+    if verbose == 1
+        hash_size
+        correct_hash
+        candidate_correct_messages_bin
+    end
     x=1;
     hash_filtered_candidates = repmat('X',1,k);
     for i=1:size(candidate_correct_messages_bin,1)
@@ -57,6 +65,9 @@ if strcmp(hash_mode, 'none') ~= 1
             hash_filtered_candidates(x,:) = candidate_correct_messages_bin(i,:);
             x=x+1;
         end
+    end
+    if verbose == 1
+        hash_filtered_candidates
     end
     candidate_correct_messages_bin = hash_filtered_candidates;
 end
