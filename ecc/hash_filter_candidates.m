@@ -22,7 +22,8 @@ candidate_cacheline = cacheline;
 for i=1:num_candidates
     candidate_cacheline(blockpos,:) = candidates(i,:);
     serialized_cc = reshape(candidate_cacheline',1,size(candidate_cacheline,1)*size(candidate_cacheline,2));
-    hash = pearson_hash(serialized_cc-'0',hash_size);
+    %hash = pearson_hash(serialized_cc-'0',hash_size);
+    hash = parity_hash_uneven(serialized_cc-'0',hash_size);
     if hash == correct_hash
         hash_filtered_candidates(x,:) = candidates(i,:);
         x = x+1;

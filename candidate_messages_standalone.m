@@ -51,7 +51,8 @@ if strcmp(hash_mode, 'none') ~= 1
         hash_size = 16;
     end
 
-    correct_hash = pearson_hash(original_message_bin-'0',hash_size);
+    %correct_hash = pearson_hash(original_message_bin-'0',hash_size);
+    correct_hash = parity_hash_uneven(original_message_bin-'0',hash_size);
     if verbose == 1
         hash_size
         correct_hash
@@ -60,7 +61,8 @@ if strcmp(hash_mode, 'none') ~= 1
     x=1;
     hash_filtered_candidates = repmat('X',1,k);
     for i=1:size(candidate_correct_messages_bin,1)
-        hash = pearson_hash(candidate_correct_messages_bin(i,:)-'0',hash_size);
+        %hash = pearson_hash(candidate_correct_messages_bin(i,:)-'0',hash_size);
+        hash = parity_hash_uneven(candidate_correct_messages_bin(i,:)-'0',hash_size);
         if hash == correct_hash
             hash_filtered_candidates(x,:) = candidate_correct_messages_bin(i,:);
             x=x+1;
