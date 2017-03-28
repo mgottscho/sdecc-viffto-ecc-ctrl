@@ -5,9 +5,9 @@
 %The entry itself is the probability.
 
 %% Load (72,64) Hsiao Code
-total_cc = nchoosek(72,2); %2556
-num_cc = [8 14 17 20 24 27];
-prob_cc = [8 168 272 1400 384 324]./total_cc;
+% total_cc = nchoosek(72,2); %2556
+% num_cc = [8 14 17 20 24 27];
+% prob_cc = [8 168 272 1400 384 324]./total_cc;
 
 %% Load (72,64) Davydov Code
 % total_cc = nchoosek(72,2); %2556
@@ -20,9 +20,9 @@ prob_cc = [8 168 272 1400 384 324]./total_cc;
 % prob_cc = [148 1648 6255 15548 20095 16938 10885 4800 1773 800 165 24]./total_cc;
 
 %% Load Chipkill
-% total_cc = nchoosek(36,2)*15*15; %161280
-% num_cc = (1:9);
-% prob_cc = [18120 28440 32940 28860 18750 8640 3780 1680 540]./total_cc;
+total_cc = nchoosek(36,2)*15*15; %161280
+num_cc = (1:9);
+prob_cc = [18120 28440 32940 28860 18750 8640 3780 1680 540]./total_cc;
 
 %% Create table
 table = zeros(8,5); %so this is 1:8 down and 1,2,4,8,16 across
@@ -36,3 +36,18 @@ for c=1:length(hash_size);
         end
     end
 end
+
+%% This is to create the baseline probability (both 1/mu and the actual one)
+hash_s = 16;
+h_idx = log2(hash_s)+1;
+mu=0;
+for k=1:8
+    mu = mu+table(k,h_idx)*k;
+end
+bound = 1/mu
+
+actual = 0;
+for m=1:8
+    actual = actual+table(m,h_idx)/m;
+end
+actual
