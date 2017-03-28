@@ -1,4 +1,4 @@
-[parity] = vertical_parity(cacheline)
+function [parity] = vertical_parity(cacheline)
 % Author: Mark Gottscho <mgottscho@ucla.edu>
 
 words_per_block = size(cacheline,1);
