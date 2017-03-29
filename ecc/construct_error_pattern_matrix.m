@@ -4,7 +4,7 @@ function [error_patterns] = construct_error_pattern_matrix(n, code_type)
 % Input arguments:
 %
 %   n --                String: '[17|18|19|33|34|35|39|45|72|79|144]'
-%   code_type --        String: '[hsiao|davydov1991|bose1960|kaneda1982|ULEL_float|ULEL_even]'
+%   code_type --        String: '[hsiao|davydov1991|bose1960|kaneda1982|ULEL_float|ULEL_even|ULEL_riscv]'
 %
 % Returns:
 %   error_patterns --   num_error_patterns list of n-char binary patterns 
@@ -53,7 +53,7 @@ elseif strcmp(code_type,'kaneda1982') == 1 % ChipKill: DUE is t+1 symbol error
             end
         end
     end
-elseif strcmp(code_type,'ULEL_float') == 1 || strcmp(code_type,'ULEL_even') == 1 % ULEL: DUE is 1-bit error
+elseif strcmp(code_type,'ULEL_float') == 1 || strcmp(code_type,'ULEL_even') == 1 || strcmp(code_type,'ULEL_riscv') == 1 % ULEL: DUE is 1-bit error
     % Identity matrix
     error_patterns = repmat('0',n,n);
     for i=1:n
