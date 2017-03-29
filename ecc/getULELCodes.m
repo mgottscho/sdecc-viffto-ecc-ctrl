@@ -4,7 +4,7 @@ function [G, H] = getULELCodes(n,code_type)
 %
 % Input arguments:
 %   n --                Scalar: [17|18|19|33|34|35]
-%   code_type --        String: '[ULEL_float|ULEL_ULEL_even]'. If r == 1 or 3 then this is always treated as 'ULEL_even'
+%   code_type --        String: '[ULEL_float|ULEL_even|ULEL_riscv]'. If r == 1 or 3 then this is always treated as 'ULEL_even'
 %
 % Returns:
 %   G --                Matrix: k x n over GF(2)
@@ -26,7 +26,7 @@ elseif (n==33) || (n==34) || (n==35)
     k = 32;
 end
 r = n-k;
-if (~strcmp(code_type,'ULEL_float')) && (~strcmp(code_type,'ULEL_even'))
+if (~strcmp(code_type,'ULEL_float')) && (~strcmp(code_type,'ULEL_even')) && (~strcmp(code_type,'ULEL_riscv'))
     G=0;
     H=0;
     return;
@@ -49,6 +49,9 @@ elseif (r==2)
         elseif strcmp(code_type,'ULEL_float')
             H = [c a a a a a b b b b b b b b b b eye(2)];
             G = [eye(16) H(:,1:16)'];
+        elseif strcmp(code_type,'ULEL_riscv') % Not supported
+            H = 0;
+            G = 0;
         end
     elseif (k==32)
         if strcmp(code_type,'ULEL_even')
@@ -56,6 +59,9 @@ elseif (r==2)
             G = [eye(32) H(:,1:32)'];
         elseif strcmp(code_type,'ULEL_float')
             H = [c a a a a a a a a b b b b b b b b b b b b b b b b b b b b b b b eye(2)];
+            G = [eye(32) H(:,1:32)'];
+        elseif strcmp(code_type,'ULEL_riscv')
+            H = [a a a a a a a a a a a a a a a a a a a a b b b b b c c c c c c c eye(2)];
             G = [eye(32) H(:,1:32)'];
         end
     end
@@ -72,11 +78,24 @@ elseif (r==3)
 
     % We assume always even sizes
     if (k==16)
-        H = [e e c c d d b b a a f f f g g g eye(3)];
-        G = [eye(16) H(:,1:16)'];
+        if strcmp(code_type,'ULEL_even')
+            H = [e e c c d d b b a a f f f g g g eye(3)];
+            G = [eye(16) H(:,1:16)'];
+        else % Unsupported
+            H = 0;
+            G = 0;
+        end
     elseif (k==32)
-        H = [a a a a b b b b d d d d c c c c c e e e e e f f f f f g g g g g eye(3)];
-        G = [eye(32) H(:,1:32)'];
+        if strcmp(code_type,'ULEL_even')
+            H = [a a a a b b b b d d d d c c c c c e e e e e f f f f f g g g g g eye(3)];
+            G = [eye(32) H(:,1:32)'];
+        elseif strcmp(code_type,'ULEL_riscv')
+            H = [a a a a a b b d d d d d c c c c c e e e f f f f f g g g g g g g eye(3)];
+            G = [eye(32) H(:,1:32)'];
+        else % Unsupported
+            H = 0;
+            G = 0;
+        end
     end
 end
 

@@ -23,7 +23,7 @@ function swd_ecc_offline_inst_heuristic_recovery(architecture, benchmark, n, k, 
 %   input_filename --   String
 %   output_filename --  String
 %   n_threads --        String: '[1|2|3|...]'
-%   code_type --        String: '[hsiao|davydov1991|bose1960|kaneda1982|ULEL_float|ULEL_even]'
+%   code_type --        String: '[hsiao|davydov1991|bose1960|kaneda1982|ULEL_even|ULEL_riscv]'
 %   policy --           String: '[  baseline-pick-random 
 %                                 | filter-pick-random
 %                                 | filter-rank-pick-random
