@@ -5,9 +5,8 @@ ORIGINAL_MESSAGE_BIN=$1
 N=$2
 K=$3
 CODE_TYPE=$4
-POLICY=$5
 VERBOSE=0
-HASH_MODE=8
+HASH_MODE=none
 
 if [[ "$MWG_MACHINE_NAME" == "hoffman" ]]; then
     MY_PRELOAD=$GCC5/lib64/libstdc++.so.6
