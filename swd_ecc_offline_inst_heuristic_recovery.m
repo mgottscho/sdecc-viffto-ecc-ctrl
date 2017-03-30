@@ -142,7 +142,7 @@ if fid == -1
     return;
 end
 
-num_messages_in_cacheline = 512 / k; % FIXME: hardcoded cacheline size
+%num_messages_in_cacheline = 512 / k; % FIXME: hardcoded cacheline size TODO: implement hash/cachelines for instructions
 sampled_trace_raw = cell(num_messages,1);
 i = 1;
 j = 1;
@@ -184,18 +184,18 @@ while i <= total_num_inst && j <= num_messages
             payload = payload_remain(2:end);
             % Now we have target instruction of interest, but have to find its packed message representation.
             [token, remain] = strtok(remain,','); % Throw away blockpos
-            cacheline = repmat('X',1,128);
-            for x=1:8 % 8 iterations, one per word in cacheline. Assume 64 bits per word. This is 128 hex symbols per cacheline
+            file_cacheline = repmat('X',1,128);
+            for x=1:8 % 8 iterations, one per word in file_cacheline. Assume 64 bits per word. This is 128 hex symbols per file_cacheline
                 [token, remain] = strtok(remain,',');
                 [~, word_remain] = strtok(token,'x'); % Find the part of "0x000000000DEADBEEF" after the "0x" part.
-                cacheline(1,(x-1)*16+1:(x-1)*16+16) = word_remain(2:end);
+                file_cacheline(1,(x-1)*16+1:(x-1)*16+16) = word_remain(2:end);
             end
 
-            % Find starting hexpos of payload in cacheline
-            payload_start_hexpos = strfind(cacheline,payload);
+            % Find starting hexpos of payload in file_cacheline
+            payload_start_hexpos = strfind(file_cacheline,payload);
             payload_start_hexpos = payload_start_hexpos(1); % If multiple payloads appear, choose the first one FIXME
             payload_offset_in_message = mod(payload_start_hexpos,k/4);
-            packed_message = cacheline(1,payload_start_hexpos-payload_offset_in_message+1:payload_start_hexpos-payload_offset_in_message+k/4);
+            packed_message = file_cacheline(1,payload_start_hexpos-payload_offset_in_message+1:payload_start_hexpos-payload_offset_in_message+k/4);
 
             for packed_inst=1:num_packed_inst
                 packed_message((packed_inst-1)*8+1:(packed_inst-1)*8+8) = reverse_byte_order(packed_message((packed_inst-1)*8+1:(packed_inst-1)*8+8)); % Put the packed instruction in big-endian format.
@@ -350,7 +350,7 @@ parfor j=1:num_sampled_error_patterns % Parallelize loop across separate threads
     %    display(['Computing candidate codewords for the zero codeword corrupted by error pattern ' error '...']);
     %end
 
-    [candidate_correct_messages_zero_message, retval] = compute_candidate_correct_messages(received_string_zero_message,H,code_type, hash_mode);
+    [candidate_correct_messages_zero_message, retval] = compute_candidate_correct_messages(received_string_zero_message,H,code_type);
     num_candidate_messages = size(candidate_correct_messages_zero_message,1);
 
     if retval ~= 0
@@ -373,30 +373,30 @@ parfor j=1:num_sampled_error_patterns % Parallelize loop across separate threads
             candidate_correct_messages = unique(candidate_correct_messages,'rows','sorted'); % Sort feature is important
             
             %% Optional: filter candidates using a hash
-            % FIXME: we don't have support for cachelines in inst recovery!! This will definitely break.
-            if strcmp(hash_mode, 'none') ~= 1
-                if strcmp(hash_mode, '4') == 1
-                    hash_size = 4;
-                elseif strcmp(hash_mode, '8') == 1
-                    hash_size = 8;
-                elseif strcmp(hash_mode, '16') == 1
-                    hash_size = 16;
-                end
-                tmp = cacheline_bin{1,1};
-                for x=2:size(cacheline_bin,2)
-                    tmp(x,:) = cacheline_bin{1,x};
-                end
-                tmp(sampled_blockpos_indices(i),:) = original_message_bin;
-                % Pearson hash only
-                %tmp = reshape(tmp',1,size(tmp,1)*size(tmp,2));
-                %correct_hash = pearson_hash(tmp-'0',hash_size);
-                
-                % Parity hash only
-                tmp = vertical_parity(tmp);
-                correct_hash = parity_hash_uneven(tmp-'0',hash_size);
+            % TODO: we don't have support for cachelines in inst recovery!! This will definitely break.
+            %if strcmp(hash_mode, 'none') ~= 1
+            %    if strcmp(hash_mode, '4') == 1
+            %        hash_size = 4;
+            %    elseif strcmp(hash_mode, '8') == 1
+            %        hash_size = 8;
+            %    elseif strcmp(hash_mode, '16') == 1
+            %        hash_size = 16;
+            %    end
+            %    tmp = cacheline_bin{1,1};
+            %    for x=2:size(cacheline_bin,2)
+            %        tmp(x,:) = cacheline_bin{1,x};
+            %    end
+            %    tmp(sampled_blockpos_indices(i),:) = original_message_bin;
+            %    % Pearson hash only
+            %    %tmp = reshape(tmp',1,size(tmp,1)*size(tmp,2));
+            %    %correct_hash = pearson_hash(tmp-'0',hash_size);
+            %    
+            %    % Parity hash only
+            %    tmp = vertical_parity(tmp);
+            %    correct_hash = parity_hash_uneven(tmp-'0',hash_size);
 
-                candidate_correct_messages = hash_filter_candidates(candidate_correct_messages, char(cacheline_bin), sampled_blockpos_indices(i), hash_size, correct_hash);
-            end
+            %    candidate_correct_messages = hash_filter_candidates(candidate_correct_messages, char(cacheline_bin), sampled_blockpos_indices(i), hash_size, correct_hash);
+            %end
             actual_num_candidate_messages = size(candidate_correct_messages,1);
             
             %% Serialize candidate messages into a string, as data_recovery() requires this instead of cell array.
