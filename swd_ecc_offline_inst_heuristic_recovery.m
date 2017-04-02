@@ -1,4 +1,4 @@
-function swd_ecc_offline_inst_heuristic_recovery(architecture, benchmark, n, k, num_messages, num_sampled_error_patterns, input_filename, output_filename, n_threads, code_type, policy, mnemonic_hotness_filename, rd_hotness_filename, crash_threshold, verbose_recovery, file_version, hash_mode)
+function swd_ecc_offline_inst_heuristic_recovery(architecture, benchmark, n, k, num_messages, num_sampled_error_patterns, words_per_block, input_filename, output_filename, n_threads, code_type, policy, mnemonic_hotness_filename, rd_hotness_filename, crash_threshold, verbose_recovery, file_version, hash_mode)
 % This function evaluates heuristic recovery from corrupted instructions in an offline manner.
 %
 % It iterates over a series of instructions that are statically extracted from a compiled program.
@@ -20,6 +20,7 @@ function swd_ecc_offline_inst_heuristic_recovery(architecture, benchmark, n, k, 
 %   k --                String: '[32|64|128]'
 %   num_messages --     String: '[1|2|3|...]'
 %   num_sampled_error_patterns -- String: '[1|2|3|...|number of possible ways for given code to have DUE|-1 for all possible (automatic)]'
+%   words_per_block --  String: '[1|2|3|...]'
 %   input_filename --   String
 %   output_filename --  String
 %   n_threads --        String: '[1|2|3|...]'
@@ -61,6 +62,7 @@ n = str2double(n)
 k = str2double(k)
 num_messages = str2double(num_messages)
 num_sampled_error_patterns = str2double(num_sampled_error_patterns)
+words_per_block = str2num(words_per_block)
 input_filename
 output_filename
 n_threads = str2double(n_threads)
@@ -184,12 +186,11 @@ while i <= total_num_inst && j <= num_messages
             payload = payload_remain(2:end);
             % Now we have target instruction of interest, but have to find its packed message representation.
             [token, remain] = strtok(remain,','); % Throw away blockpos
-            file_cacheline = repmat('X',1,128);
-            for x=1:8 % 8 iterations, one per word in file_cacheline. Assume 64 bits per word. This is 128 hex symbols per file_cacheline
-            % FIXME: if cachelines are not 8x8 bytes this breaks
+            file_cacheline = repmat('X',1,words_per_block*(k/8)*2);
+            for x=1:words_per_block % 8 iterations, one per word in file_cacheline. Assume 64 bits per word. This is 128 hex symbols per file_cacheline
                 [token, remain] = strtok(remain,',');
                 [~, word_remain] = strtok(token,'x'); % Find the part of "0x000000000DEADBEEF" after the "0x" part.
-                file_cacheline(1,(x-1)*16+1:(x-1)*16+16) = word_remain(2:end);
+                file_cacheline(1,(x-1)*(k/8)*2+1:x*(k/8)*2) = word_remain(2:end);
             end
 
             % Find starting hexpos of payload in file_cacheline
@@ -373,31 +374,21 @@ parfor j=1:num_sampled_error_patterns % Parallelize loop across separate threads
             end
             candidate_correct_messages = unique(candidate_correct_messages,'rows','sorted'); % Sort feature is important
             
-            %% Optional: filter candidates using a hash
-            % TODO: we don't have support for cachelines in inst recovery!! This will definitely break.
-            %if strcmp(hash_mode, 'none') ~= 1
-            %    if strcmp(hash_mode, '4') == 1
-            %        hash_size = 4;
-            %    elseif strcmp(hash_mode, '8') == 1
-            %        hash_size = 8;
-            %    elseif strcmp(hash_mode, '16') == 1
-            %        hash_size = 16;
-            %    end
-            %    tmp = cacheline_bin{1,1};
-            %    for x=2:size(cacheline_bin,2)
-            %        tmp(x,:) = cacheline_bin{1,x};
-            %    end
-            %    tmp(sampled_blockpos_indices(i),:) = original_message_bin;
-            %    % Pearson hash only
-            %    %tmp = reshape(tmp',1,size(tmp,1)*size(tmp,2));
-            %    %correct_hash = pearson_hash(tmp-'0',hash_size);
-            %    
-            %    % Parity hash only
-            %    tmp = vertical_parity(tmp);
-            %    correct_hash = parity_hash_uneven(tmp-'0',hash_size);
-
-            %    candidate_correct_messages = hash_filter_candidates(candidate_correct_messages, char(cacheline_bin), sampled_blockpos_indices(i), hash_size, correct_hash);
-            %end
+            % Optional: filter candidates using a hash
+            if strcmp(hash_mode, 'none') ~= 1
+                if strcmp(hash_mode, '4') == 1
+                    hash_size = 4;
+                elseif strcmp(hash_mode, '8') == 1
+                    hash_size = 8;
+                elseif strcmp(hash_mode, '16') == 1
+                    hash_size = 16;
+                end
+                % Pearson hash only
+                %correct_hash = pearson_hash(original_message_bin-'0',hash_size);
+                correct_hash = parity_hash_uneven(original_message_bin-'0',hash_size);
+                fake_cacheline = original_message_bin;
+                candidate_correct_messages = hash_filter_candidates(candidate_correct_messages, fake_cacheline, 1, hash_size, correct_hash);
+            end
             actual_num_candidate_messages = size(candidate_correct_messages,1);
             
             %% Serialize candidate messages into a string, as data_recovery() requires this instead of cell array.

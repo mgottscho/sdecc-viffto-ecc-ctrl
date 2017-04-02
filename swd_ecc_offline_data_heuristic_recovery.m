@@ -142,13 +142,13 @@ for i=1:num_words
     [sampled_trace_payload_size{i,1}, remain] = strtok(remain,',');
     [sampled_trace_payload{i,1}, remain] = strtok(remain,',');
     [sampled_trace_demand_blockpos{i,1}, remain] = strtok(remain,',');
-    cacheline_stream_hex = repmat('X',1,128);
-    for j=1:8
+    cacheline_stream_hex = repmat('X',1,words_per_block*(k/8)*2);
+    for j=1:words_per_block
         [chunk, remain] = strtok(remain,',');
-        cacheline_stream_hex((j-1)*16+1:(j-1)*16+16) = chunk(3:end); % FIXME: if cachelines are not 8x8 bytes this breaks
+        cacheline_stream_hex((j-1)*(k/8)*2+1:j*(k/8)*2) = chunk(3:end); 
     end
     for j=1:words_per_block
-        sampled_trace_cachelines_hex{i,j} = cacheline_stream_hex((j-1)*(k/4)+1:(j-1)*(k/4)+(k/4));
+        sampled_trace_cachelines_hex{i,j} = cacheline_stream_hex((j-1)*(k/4)+1:j*(k/4));
         sampled_trace_cachelines_bin{i,j} = my_hex2bin(sampled_trace_cachelines_hex{i,j});
     end
 end
