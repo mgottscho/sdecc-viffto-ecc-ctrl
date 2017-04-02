@@ -186,6 +186,7 @@ while i <= total_num_inst && j <= num_messages
             [token, remain] = strtok(remain,','); % Throw away blockpos
             file_cacheline = repmat('X',1,128);
             for x=1:8 % 8 iterations, one per word in file_cacheline. Assume 64 bits per word. This is 128 hex symbols per file_cacheline
+            % FIXME: if cachelines are not 8x8 bytes this breaks
                 [token, remain] = strtok(remain,',');
                 [~, word_remain] = strtok(token,'x'); % Find the part of "0x000000000DEADBEEF" after the "0x" part.
                 file_cacheline(1,(x-1)*16+1:(x-1)*16+16) = word_remain(2:end);

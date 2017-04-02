@@ -145,7 +145,7 @@ for i=1:num_words
     cacheline_stream_hex = repmat('X',1,128);
     for j=1:8
         [chunk, remain] = strtok(remain,',');
-        cacheline_stream_hex((j-1)*16+1:(j-1)*16+16) = chunk(3:end);
+        cacheline_stream_hex((j-1)*16+1:(j-1)*16+16) = chunk(3:end); % FIXME: if cachelines are not 8x8 bytes this breaks
     end
     for j=1:words_per_block
         sampled_trace_cachelines_hex{i,j} = cacheline_stream_hex((j-1)*(k/4)+1:(j-1)*(k/4)+(k/4));
