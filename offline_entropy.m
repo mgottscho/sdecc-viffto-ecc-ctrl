@@ -19,7 +19,7 @@ function [entropies] = offline_entropy(num_cachelines, k, words_per_block, input
 %   input_filename --   String
 %   output_filename --  String
 %   n_threads --        String: '[1|2|3|...]'
-%   file_version --     String: '[isca17|micro17]'
+%   file_version --     String: '[micro17|cases17]'
 %   symbol_size --      String: '[4|8|16]'
 %
 % Returns:
@@ -87,7 +87,7 @@ for i=1:total_num_cachelines
 end
 fclose(fid);
 
-%% Parse the raw trace (micro17 format shown)
+%% Parse the raw trace (cases17 format shown)
 % It is in CSV format, as output by our memdatatrace version of RISCV Spike simulator of the form
 % STEP,OPERATION,REG_TYPE,MEM_ACCESS_SEQ_NUM,VADDR,PADDR,USER_PERM,SUPER_PERM,ACCESS_SIZE,PAYLOAD,CACHE_BLOCKPOS,CACHE_BLOCK0,CACHE_BLOCK1,...,
 % like so:
@@ -100,7 +100,7 @@ fclose(fid);
 % format.
 sampled_trace_step = cell(num_cachelines,1);
 sampled_trace_operation = cell(num_cachelines,1);
-if strcmp(file_version, 'isca17') ~= 1
+if strcmp(file_version, 'micro17') ~= 1
     sampled_trace_reg_type = cell(num_cachelines,1);
 end
 sampled_trace_seq_num = cell(num_cachelines,1);
@@ -117,7 +117,7 @@ for i=1:num_cachelines
     remain = sampled_trace_raw{i,1};
     [sampled_trace_step{i,1}, remain] = strtok(remain,',');
     [sampled_trace_operation{i,1}, remain] = strtok(remain,',');
-    if strcmp(file_version, 'isca17') ~= 1
+    if strcmp(file_version, 'micro17') ~= 1
         [sampled_trace_reg_type{i,1}, remain] = strtok(remain,',');
     end
     [sampled_trace_seq_num{i,1}, remain] = strtok(remain,',');

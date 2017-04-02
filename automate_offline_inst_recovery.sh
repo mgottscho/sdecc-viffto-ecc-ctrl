@@ -25,18 +25,19 @@ if [[ "$INPUT_TYPE" == "static" ]]; then # Static evaluation
 elif [[ "$INPUT_TYPE" == "dynamic-static-side-info" ]]; then # Dynamic evaluation with static side info
     # TODO FIXME: this won't work with filter-joint-frequency-sort-pick-longest-pad since we did not collect the relevant data yet.
     SPEC_BENCHMARKS="400.perlbench 401.bzip2 403.gcc 410.bwaves 435.gromacs 436.cactusADM 444.namd 447.dealII 450.soplex 453.povray 454.calculix 456.hmmer 458.sjeng 459.GemsFDTD 462.libquantum 464.h264ref 465.tonto 470.lbm 471.omnetpp 473.astar" # Dynamic -- working
-    INPUT_DIRECTORY=$MWG_DATA_PATH/swd_ecc_data/$ISA/spike_isca17 # For dynamic
-    FILE_VERSION="isca17"
-    #INPUT_DIRECTORY=$MWG_DATA_PATH/swd_ecc_data/$ISA/spike_micro17 # For dynamic
-    #FILE_VERSION="micro17"
+    INPUT_DIRECTORY=$MWG_DATA_PATH/swd_ecc_data/$ISA/spike_micro17 # For dynamic
+    FILE_VERSION="micro17"
+    #INPUT_DIRECTORY=$MWG_DATA_PATH/swd_ecc_data/$ISA/spike_cases17 # For dynamic
+    #FILE_VERSION="cases17"
     MNEMONIC_HOTNESS_FILENAME=$MWG_DATA_PATH/swd_ecc_data/$ISA/program-statistics/static/$ISA-mnemonic-hotness-static-all.csv
     RD_HOTNESS_FILENAME=$MWG_DATA_PATH/swd_ecc_data/$ISA/program-statistics/static/$ISA-rd-hotness-static-all.csv
 
 elif [[ "$INPUT_TYPE" == "dynamic" ]]; then # Dynamic
     SPEC_BENCHMARKS="400.perlbench 401.bzip2 403.gcc 410.bwaves 435.gromacs 436.cactusADM 444.namd 447.dealII 450.soplex 453.povray 454.calculix 456.hmmer 458.sjeng 459.GemsFDTD 462.libquantum 464.h264ref 465.tonto 470.lbm 471.omnetpp 473.astar" # Dynamic -- working
-    INPUT_DIRECTORY=$MWG_DATA_PATH/swd_ecc_data/$ISA/spike_isca17 # For dynamic
-    FILE_VERSION="isca17"
-    #FILE_VERSION="micro17"
+    INPUT_DIRECTORY=$MWG_DATA_PATH/swd_ecc_data/$ISA/spike_micro17 # For dynamic
+    FILE_VERSION="micro17"
+    #INPUT_DIRECTORY=$MWG_DATA_PATH/swd_ecc_data/$ISA/spike_cases17 # For dynamic
+    #FILE_VERSION="cases17"
     #MNEMONIC_HOTNESS_FILENAME=$MWG_DATA_PATH/swd_ecc_data/$ISA/program-statistics/dynamic/$ISA-mnemonic-hotness-dyn-all.csv
     MNEMONIC_HOTNESS_FILENAME=$MWG_DATA_PATH/swd_ecc_data/$ISA/program-statistics/dynamic/$ISA-joint-mnemonic-reg-hotness-dyn-all.csv
     RD_HOTNESS_FILENAME=$MWG_DATA_PATH/swd_ecc_data/$ISA/program-statistics/dynamic/$ISA-rd-hotness-dyn-all.csv
@@ -44,9 +45,10 @@ elif [[ "$INPUT_TYPE" == "dynamic" ]]; then # Dynamic
 elif [[ "$INPUT_TYPE" == "dynamic-split-int-float" ]]; then # Dynamic
     INT_SPEC_BENCHMARKS="400.perlbench 401.bzip2 403.gcc 456.hmmer 458.sjeng 462.libquantum 464.h264ref 471.omnetpp 473.astar"
     FLOAT_SPEC_BENCHMARKS="410.bwaves 435.gromacs 436.cactusADM 444.namd 447.dealII 450.soplex 453.povray 454.calculix 459.GemsFDTD 465.tonto 470.lbm"
-    INPUT_DIRECTORY=$MWG_DATA_PATH/swd_ecc_data/$ISA/spike_isca17 # For dynamic
-    FILE_VERSION="isca17"
-    #FILE_VERSION="micro17"
+    INPUT_DIRECTORY=$MWG_DATA_PATH/swd_ecc_data/$ISA/spike_micro17 # For dynamic
+    FILE_VERSION="micro17"
+    #INPUT_DIRECTORY=$MWG_DATA_PATH/swd_ecc_data/$ISA/spike_cases17 # For dynamic
+    #FILE_VERSION="cases17"
     #INT_MNEMONIC_HOTNESS_FILENAME=$MWG_DATA_PATH/swd_ecc_data/$ISA/program-statistics/dynamic/$ISA-mnemonic-hotness-dyn-int.csv
     INT_MNEMONIC_HOTNESS_FILENAME=$MWG_DATA_PATH/swd_ecc_data/$ISA/program-statistics/dynamic/$ISA-joint-mnemonic-reg-hotness-dyn-int.csv
     INT_RD_HOTNESS_FILENAME=$MWG_DATA_PATH/swd_ecc_data/$ISA/program-statistics/dynamic/$ISA-rd-hotness-dyn-int.csv
@@ -56,17 +58,19 @@ elif [[ "$INPUT_TYPE" == "dynamic-split-int-float" ]]; then # Dynamic
 
 elif [[ "$INPUT_TYPE" == "dynamic-perfect" ]]; then # Dynamic
     SPEC_BENCHMARKS="400.perlbench 401.bzip2 403.gcc 410.bwaves 435.gromacs 436.cactusADM 444.namd 447.dealII 450.soplex 453.povray 454.calculix 456.hmmer 458.sjeng 459.GemsFDTD 462.libquantum 464.h264ref 465.tonto 470.lbm 471.omnetpp 473.astar" # Dynamic -- working
-    INPUT_DIRECTORY=$MWG_DATA_PATH/swd_ecc_data/$ISA/spike_isca17 # For dynamic
-    FILE_VERSION=isca17
-    #FILE_VERSION=micro17
+    INPUT_DIRECTORY=$MWG_DATA_PATH/swd_ecc_data/$ISA/spike_micro17 # For dynamic
+    FILE_VERSION=micro17
+    #INPUT_DIRECTORY=$MWG_DATA_PATH/swd_ecc_data/$ISA/spike_cases17 # For dynamic
+    #FILE_VERSION=cases17
     #MNEMONIC_HOTNESS_PREFIX=$MWG_DATA_PATH/swd_ecc_data/$ISA/program-statistics/dynamic/$ISA-mnemonic-hotness-dyn
     MNEMONIC_HOTNESS_PREFIX=$MWG_DATA_PATH/swd_ecc_data/$ISA/program-statistics/dynamic/$ISA-joint-mnemonic-reg-hotness-dyn
     RD_HOTNESS_FILENAME=$MWG_DATA_PATH/swd_ecc_data/$ISA/program-statistics/dynamic/$ISA-rd-hotness-dyn-all.csv # FIXME Don't use rd-based policy with dynamic-perfect SI, this is placeholder
 elif [[ "$INPUT_TYPE" == "dynamic-baseline" ]]; then # Baseline, all are equally likely frequencies
     SPEC_BENCHMARKS="400.perlbench 401.bzip2 403.gcc 410.bwaves 435.gromacs 436.cactusADM 444.namd 447.dealII 450.soplex 453.povray 454.calculix 456.hmmer 458.sjeng 459.GemsFDTD 462.libquantum 464.h264ref 465.tonto 470.lbm 471.omnetpp 473.astar" # Dynamic -- working
-    INPUT_DIRECTORY=$MWG_DATA_PATH/swd_ecc_data/$ISA/spike_isca17 # For dynamic
-    FILE_VERSION=isca17
-    #FILE_VERSION=micro17
+    INPUT_DIRECTORY=$MWG_DATA_PATH/swd_ecc_data/$ISA/spike_micro17 # For dynamic
+    FILE_VERSION=micro17
+    #INPUT_DIRECTORY=$MWG_DATA_PATH/swd_ecc_data/$ISA/spike_cases17 # For dynamic
+    #FILE_VERSION=cases17
     #MNEMONIC_HOTNESS_FILENAME=$MWG_DATA_PATH/swd_ecc_data/$ISA/program-statistics/dynamic/$ISA-mnemonic-hotness-dyn-baseline.csv
     MNEMONIC_HOTNESS_FILENAME=$MWG_DATA_PATH/swd_ecc_data/$ISA/program-statistics/dynamic/$ISA-joint-mnemonic-reg-hotness-dyn-baseline.csv
     RD_HOTNESS_FILENAME=$MWG_DATA_PATH/swd_ecc_data/$ISA/program-statistics/dynamic/$ISA-rd-hotness-dyn-baseline.csv

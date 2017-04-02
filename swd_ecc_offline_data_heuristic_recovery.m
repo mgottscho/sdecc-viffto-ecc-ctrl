@@ -27,7 +27,7 @@ function swd_ecc_offline_data_heuristic_recovery(architecture, benchmark, n, k, 
 %   policy --           String: '[baseline-pick-random|exact-single|exact-random|cluster3|cluster7|hamming-pick-random|hamming-pick-longest-run|longest-run-pick-random|delta-pick-random|fdelta-pick-random||dbx-longest-run-pick-random|dbx-weight-pick-longest-run|dbx-longest-run-pick-lowest-weight]'
 %   crash_threshold -- String of a scalar. Policy-defined semantics and range.
 %   verbose_recovery -- String: '[0|1]'
-%   file_version --     String: '[isca17|micro17]'
+%   file_version --     String: '[micro17|cases17]'
 %   hash_mode --        String: '[none|4|8|16]'
 %
 % Returns:
@@ -101,7 +101,7 @@ for i=1:total_num_cachelines
 end
 fclose(fid);
 
-%% Parse the raw trace (micro17 format shown)
+%% Parse the raw trace (cases17 format shown)
 % It is in CSV format, as output by our memdatatrace version of RISCV Spike simulator of the form
 % STEP,OPERATION,REG_TYPE,MEM_ACCESS_SEQ_NUM,VADDR,PADDR,USER_PERM,SUPER_PERM,ACCESS_SIZE,PAYLOAD,CACHE_BLOCKPOS,CACHE_BLOCK0,CACHE_BLOCK1,...,
 % like so:
@@ -114,7 +114,7 @@ fclose(fid);
 % format.
 sampled_trace_step = cell(num_words,1);
 sampled_trace_operation = cell(num_words,1);
-if strcmp(file_version, 'isca17') ~= 1
+if strcmp(file_version, 'micro17') ~= 1
     sampled_trace_reg_type = cell(num_words,1);
 end
 sampled_trace_seq_num = cell(num_words,1);
@@ -131,7 +131,7 @@ for i=1:num_words
     remain = sampled_trace_raw{i,1};
     [sampled_trace_step{i,1}, remain] = strtok(remain,',');
     [sampled_trace_operation{i,1}, remain] = strtok(remain,',');
-    if strcmp(file_version, 'isca17') ~= 1
+    if strcmp(file_version, 'micro17') ~= 1
         [sampled_trace_reg_type{i,1}, remain] = strtok(remain,',');
     end
     [sampled_trace_seq_num{i,1}, remain] = strtok(remain,',');

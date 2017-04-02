@@ -46,7 +46,7 @@ function swd_ecc_offline_inst_heuristic_recovery(architecture, benchmark, n, k, 
 %   rd_hotness_filename -- String: full path to CSV file containing the relative frequency of each destination register address to use for ranking
 %   crash_threshold -- fraction from 0 to 1, expressed as a string, e.g. '0.5'.
 %   verbose_recovery -- String: '[0|1]'
-%   file_version --     String: '[isca17|micro17]'
+%   file_version --     String: '[micro17|cases17]'
 %   hash_mode --        String: '[none|4|8|16]'
 %
 % Returns:
@@ -113,7 +113,7 @@ end
 % 0000abcd
 % ...
 %
-% (micro17 format shown)
+% (cases17 format shown)
 % If it is in CSV format, as output by our memdatatrace version of RISCV Spike simulator of the form
 % STEP,OPERATION,REG_TYPE,MEM_ACCESS_SEQ_NUM,VADDR,PADDR,USER_PERM,SUPER_PERM,ACCESS_SIZE,PAYLOAD,CACHE_BLOCKPOS,CACHE_BLOCK0,CACHE_BLOCK1,...,
 % like so:
@@ -174,7 +174,7 @@ while i <= total_num_inst && j <= num_messages
         elseif strcmp(trace_mode, 'dynamic') == 1 % Dynamic trace mode
             remain = line;
             skip = 10;
-            if strcmp(file_version, 'isca17') == 1
+            if strcmp(file_version, 'micro17') == 1
                 skip = 9;
             end
             for x=1:skip % payload is skipth entry in a row of the above format

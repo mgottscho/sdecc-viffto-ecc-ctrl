@@ -21,10 +21,10 @@ if [[ "$INPUT_TYPE" == "static" ]]; then # Static evaluation
 elif [[ "$INPUT_TYPE" == "dynamic" ]]; then # Dynamic
     SPEC_BENCHMARKS="400.perlbench 401.bzip2 403.gcc 410.bwaves 435.gromacs 436.cactusADM 444.namd 447.dealII 450.soplex 453.povray 454.calculix 456.hmmer 458.sjeng 459.GemsFDTD 462.libquantum 464.h264ref 465.tonto 470.lbm 471.omnetpp 473.astar" # Dynamic -- working
     #SPEC_BENCHMARKS="410.bwaves 435.gromacs 436.cactusADM 444.namd 447.dealII 450.soplex 453.povray 454.calculix 459.GemsFDTD 465.tonto 470.lbm" # Dynamic -- working floats
-    INPUT_DIRECTORY=$MWG_DATA_PATH/swd_ecc_data/$ISA/spike_isca17 # For dynamic
-    FILE_VERSION="isca17"
-    #INPUT_DIRECTORY=$MWG_DATA_PATH/swd_ecc_data/$ISA/spike_micro17 # For dynamic
-    #FILE_VERSION="current"
+    INPUT_DIRECTORY=$MWG_DATA_PATH/swd_ecc_data/$ISA/spike_micro17 # For dynamic
+    FILE_VERSION="micro17"
+    #INPUT_DIRECTORY=$MWG_DATA_PATH/swd_ecc_data/$ISA/spike_cases17 # For dynamic
+    #FILE_VERSION="cases17"
 else
     echo "ERROR, bad INPUT_TYPE: $INPUT_TYPE"
     exit 1
