@@ -31,8 +31,9 @@ else
 fi
 
 AXBENCH_BENCHMARKS="blackscholes fft inversek2j jmeint jpeg sobel" # kmeans not working
+FAULTLINK_BENCHMARKS="blowfish dhrystone matmult_int sha whetstone"
 
-N=35
+N=33
 K=32
 NUM_WORDS=1000
 WORDS_PER_BLOCK=16
@@ -44,7 +45,7 @@ CODE_TYPE=ULEL_even
 #NUM_SAMPLED_ERROR_PATTERNS=14190 # Max for (45,32) DECTED
 #NUM_SAMPLED_ERROR_PATTERNS=79079 # Max for (79,64) DECTED
 #NUM_SAMPLED_ERROR_PATTERNS=141750 # Max for (144,128) ChipKill
-NUM_SAMPLED_ERROR_PATTERNS=35 # Max for (35,32) ULEL
+NUM_SAMPLED_ERROR_PATTERNS=33 # Max for (35,32) ULEL
 POLICY=hamming-pick-longest-run
 CRASH_THRESHOLD=0.5
 HASH_MODE=none

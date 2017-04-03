@@ -83,20 +83,23 @@ fi
 AXBENCH_INT_BENCHMARKS="" # kmeans not working
 AXBENCH_FLOAT_BENCHMARKS="blackscholes fft inversek2j jmeint jpeg sobel" # kmeans not working
 AXBENCH_BENCHMARKS="blackscholes fft inversek2j jmeint jpeg sobel" # kmeans not working
+FAULTLINK_INT_BENCHMARKS="blowfish dhrystone matmult_int sha"
+FAULTLINK_FLOAT_BENCHMARKS="whetstone"
+FAULTLINK_BENCHMARKS="blowfish dhrystone matmult_int sha whetstone"
 
-N=35
+N=33
 K=32
 NUM_MESSAGES=1000
 WORDS_PER_BLOCK=16
 NUM_THREADS=$(cat /proc/cpuinfo | grep ^processor | wc -l ) 
-CODE_TYPE=ULEL_riscv
+CODE_TYPE=ULEL_even
 #NUM_SAMPLED_ERROR_PATTERNS=1000
 #NUM_SAMPLED_ERROR_PATTERNS=741 # Max for (39,32) SECDED
 #NUM_SAMPLED_ERROR_PATTERNS=2556 # Max for (72,64) SECDED
 #NUM_SAMPLED_ERROR_PATTERNS=14190 # Max for (45,32) DECTED
 #NUM_SAMPLED_ERROR_PATTERNS=79079 # Max for (79,64) DECTED
 #NUM_SAMPLED_ERROR_PATTERNS=141750 # Max for (144,128) ChipKill
-NUM_SAMPLED_ERROR_PATTERNS=35 # Max for (35,32) ULEL
+NUM_SAMPLED_ERROR_PATTERNS=33 # Max for (35,32) ULEL
 POLICY=filter-joint-frequency-sort-pick-longest-pad
 CRASH_THRESHOLD=0.9
 HASH_MODE=none
