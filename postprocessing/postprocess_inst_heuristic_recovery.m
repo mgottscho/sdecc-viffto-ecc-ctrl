@@ -2,18 +2,19 @@
 % Author: Mark Gottscho <mgottscho@ucla.edu>
 
 %%%%%%%% CHANGE ME AS NEEDED %%%%%%%%%%%%
-input_directory = 'D:\Dropbox\SoftwareDefinedECC\data\rv64g\inst-recovery\offline-dynamic-split-int-float\kaneda1982\144,128\filter-joint-frequency-sort-pick-longest-pad\crash-threshold-0.9\2016-11-10';
+input_directory = 'D:\Dropbox\SoftwareDefinedECC\data\rv64g\inst-recovery\offline-dynamic-split-int-float\ULEL_riscv\35,32\hash-none\filter-joint-frequency-sort-pick-longest-pad\crash-threshold-0.9\2017-04-01';
 output_directory = [input_directory filesep 'postprocessed'];
-inst_fields_file = ['D:\Dropbox' filesep 'SoftwareDefinedECC' filesep 'data' filesep 'rv64g' filesep 'rv64g_inst_field_bitmasks_revised.mat'];
+inst_fields_file = ['D:\Dropbox' filesep 'SoftwareDefinedECC' filesep 'data' filesep 'rv64g' filesep 'disassembly' filesep 'rv64g_inst_field_bitmasks_revised.mat'];
 num_inst = 1000;
 %num_error_patterns = 741; % For (39,32) SECDED
 %num_error_patterns = 2556; % For (72,64) SECDED
 %num_error_patterns = 14190; % For (45,32) DECTED
 %num_error_patterns = 79079; % For (79,64) DECTED
 %num_error_patterns = 141750; % For (144,128) ChipKill
-num_error_patterns = 1000; % sampled
+%num_error_patterns = 1000; % sampled
+num_error_patterns = 35; % ULEL
 architecture = 'rv64g';
-code_type = 'kaneda1982';
+code_type = 'ULEL_riscv';
 hash_mode = 'hash-none';
 policy = 'Filter-Joint-Frequency-Sort-Pick-Longest-Pad';
 

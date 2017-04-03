@@ -29,7 +29,7 @@ histogram(avg_candidate_scores,[0:0.05:max(avg_candidate_scores)]); % Change ran
 hold on;
 tmp = avg_candidate_scores.*success;
 tmp((avg_candidate_scores ~= 0) & (success == 0)) = NaN;
-histogram(tmp,[0:0.05:6]);
+histogram(tmp,[0:0.05:max(avg_candidate_scores)]);
 xlabel('Mean Candidate Score', 'FontSize', 12, 'FontName', 'Arial');
 ylabel('Count', 'FontSize', 12, 'FontName', 'Arial');
 set(gca,'YTick',[]);

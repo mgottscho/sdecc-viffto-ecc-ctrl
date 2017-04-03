@@ -2,7 +2,7 @@
 % Author: Mark Gottscho <mgottscho@ucla.edu>
 
 %%%%%%%% CHANGE ME AS NEEDED %%%%%%%%%%%%
-input_directory = '/Users/mark/Dropbox/SoftwareDefinedECC/data/rv64g/data-recovery/offline-dynamic/hsiao1970/72,64/hash-none/hamming-pick-longest-run/crash-threshold-0.5/2017-03-18';
+input_directory = 'D:\Dropbox\SoftwareDefinedECC\data\rv64g\data-recovery\offline-dynamic\ULEL_even\35,32\hamming-pick-longest-run\crash-threshold-0.5\2017-04-01';
 output_directory = [input_directory filesep 'postprocessed'];
 num_words = 1000;
 %num_error_patterns = 741; % For (39,32) SECDED
@@ -10,10 +10,10 @@ num_words = 1000;
 %num_error_patterns = 14190; % For (45,32) DECTED
 %num_error_patterns = 79079; % For (79,64) DECTED
 %num_error_patterns = 141750; % For (144,128) ChipKill
-%num_error_patterns = 35; % (18,16) ULELC
-num_error_patterns = 1000; % sampled
+num_error_patterns = 35; % (18,16) ULELC
+%num_error_patterns = 1000; % sampled
 architecture = 'rv64g';
-code_type = 'hsiao1970';
+code_type = 'ULEL_even';
 hash_mode = 'hash-none';
 policy = 'hamming-pick-longest-run';
 
