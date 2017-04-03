@@ -8,7 +8,7 @@ mean_success = zeros(num_policies,num_codes);
 policy=1;
 code=1;
 load('/Users/mark/Dropbox/SoftwareDefinedECC/data/rv64g/data-recovery/offline-dynamic/hsiao1970/72,64/hash-none/min-entropy4-pick-longest-run/crash-threshold-3/2017-03-16/postprocessed/postprocessed.mat','avg_benchmark_successes');%,'avg_benchmark_miscorrect','avg_benchmark_could_have_crashed');
-mean_success(policy,code) = geomean(avg_benchmark_successes);
+mean_success(policy,code) = 1-geomean(1-avg_benchmark_successes);
 %mean_miscorrect(policy,code) = geomean(avg_benchmark_miscorrect);
 %mean_panic(policy,code) = geomean(avg_benchmark_could_have_crashed);
 
@@ -16,7 +16,7 @@ mean_success(policy,code) = geomean(avg_benchmark_successes);
 policy=1;
 code=2;
 load('/Users/mark/Dropbox/SoftwareDefinedECC/data/rv64g/data-recovery/offline-dynamic/bose1960/79,64/hash-none/min-entropy4-pick-longest-run/crash-threshold-3/2017-03-19/postprocessed/postprocessed.mat','avg_benchmark_successes');%,'avg_benchmark_miscorrect','avg_benchmark_could_have_crashed');
-mean_success(policy,code) = geomean(avg_benchmark_successes);
+mean_success(policy,code) = 1-geomean(1-avg_benchmark_successes);
 %mean_miscorrect(policy,code) = geomean(avg_benchmark_miscorrect);
 %mean_panic(policy,code) = geomean(avg_benchmark_could_have_crashed);
 
@@ -24,7 +24,7 @@ mean_success(policy,code) = geomean(avg_benchmark_successes);
 policy=1;
 code=3;
 load('/Users/mark/Dropbox/SoftwareDefinedECC/data/rv64g/data-recovery/offline-dynamic/kaneda1982/144,128/hash-none/min-entropy4-pick-longest-run/crash-threshold-3/2017-03-18/postprocessed/postprocessed.mat','avg_benchmark_successes');%,'avg_benchmark_miscorrect','avg_benchmark_could_have_crashed');
-mean_success(policy,code) = geomean(avg_benchmark_successes);
+mean_success(policy,code) = 1-geomean(1-avg_benchmark_successes);
 %mean_miscorrect(policy,code) = geomean(avg_benchmark_miscorrect);
 %mean_panic(policy,code) = geomean(avg_benchmark_could_have_crashed);
 
@@ -32,7 +32,7 @@ mean_success(policy,code) = geomean(avg_benchmark_successes);
 policy=2;
 code=1;
 load('/Users/mark/Dropbox/SoftwareDefinedECC/data/rv64g/data-recovery/offline-dynamic/hsiao1970/72,64/hash-none/min-entropy8-pick-longest-run/crash-threshold-4.5/2017-03-15/postprocessed/postprocessed.mat','avg_benchmark_successes');%,'avg_benchmark_miscorrect','avg_benchmark_could_have_crashed');
-mean_success(policy,code) = geomean(avg_benchmark_successes);
+mean_success(policy,code) = 1-geomean(1-avg_benchmark_successes);
 %mean_miscorrect(policy,code) = geomean(avg_benchmark_miscorrect);
 %mean_panic(policy,code) = geomean(avg_benchmark_could_have_crashed);
 
@@ -40,7 +40,7 @@ mean_success(policy,code) = geomean(avg_benchmark_successes);
 policy=2;
 code=2;
 load('/Users/mark/Dropbox/SoftwareDefinedECC/data/rv64g/data-recovery/offline-dynamic/bose1960/79,64/hash-none/min-entropy8-pick-longest-run/crash-threshold-4.5/2017-03-13/postprocessed/postprocessed.mat','avg_benchmark_successes');%,'avg_benchmark_miscorrect','avg_benchmark_could_have_crashed');
-mean_success(policy,code) = geomean(avg_benchmark_successes);
+mean_success(policy,code) = 1-geomean(1-avg_benchmark_successes);
 %mean_miscorrect(policy,code) = geomean(avg_benchmark_miscorrect);
 %mean_panic(policy,code) = geomean(avg_benchmark_could_have_crashed);
 
@@ -48,7 +48,7 @@ mean_success(policy,code) = geomean(avg_benchmark_successes);
 policy=2;
 code=3;
 load('/Users/mark/Dropbox/SoftwareDefinedECC/data/rv64g/data-recovery/offline-dynamic/kaneda1982/144,128/hash-none/min-entropy8-pick-longest-run/crash-threshold-4.5/2017-03-16/postprocessed/postprocessed.mat','avg_benchmark_successes');%,'avg_benchmark_miscorrect','avg_benchmark_could_have_crashed');
-mean_success(policy,code) = geomean(avg_benchmark_successes);
+mean_success(policy,code) = 1-geomean(1-avg_benchmark_successes);
 %mean_miscorrect(policy,code) = geomean(avg_benchmark_miscorrect);
 %mean_panic(policy,code) = geomean(avg_benchmark_could_have_crashed);
 
@@ -56,7 +56,7 @@ mean_success(policy,code) = geomean(avg_benchmark_successes);
 policy=3;
 code=1;
 load('/Users/mark/Dropbox/SoftwareDefinedECC/data/rv64g/data-recovery/offline-dynamic/hsiao1970/72,64/hash-none/min-entropy16-pick-longest-run/crash-threshold-3.75/2017-03-16/postprocessed/postprocessed.mat','avg_benchmark_successes');%,'avg_benchmark_miscorrect','avg_benchmark_could_have_crashed');
-mean_success(policy,code) = geomean(avg_benchmark_successes);
+mean_success(policy,code) = 1-geomean(1-avg_benchmark_successes);
 %mean_miscorrect(policy,code) = geomean(avg_benchmark_miscorrect);
 %mean_panic(policy,code) = geomean(avg_benchmark_could_have_crashed);
 
@@ -64,7 +64,7 @@ mean_success(policy,code) = geomean(avg_benchmark_successes);
 policy=3;
 code=2;
 load('/Users/mark/Dropbox/SoftwareDefinedECC/data/rv64g/data-recovery/offline-dynamic/bose1960/79,64/hash-none/min-entropy16-pick-longest-run/crash-threshold-3.75/2017-03-18/postprocessed/postprocessed.mat','avg_benchmark_successes');%,'avg_benchmark_miscorrect','avg_benchmark_could_have_crashed');
-mean_success(policy,code) = geomean(avg_benchmark_successes);
+mean_success(policy,code) = 1-geomean(1-avg_benchmark_successes);
 %mean_miscorrect(policy,code) = geomean(avg_benchmark_miscorrect);
 %mean_panic(policy,code) = geomean(avg_benchmark_could_have_crashed);
 
@@ -72,7 +72,7 @@ mean_success(policy,code) = geomean(avg_benchmark_successes);
 policy=3;
 code=3;
 load('/Users/mark/Dropbox/SoftwareDefinedECC/data/rv64g/data-recovery/offline-dynamic/kaneda1982/144,128/hash-none/min-entropy16-pick-longest-run/crash-threshold-3.75/2017-03-14/postprocessed/postprocessed.mat','avg_benchmark_successes');%,'avg_benchmark_miscorrect','avg_benchmark_could_have_crashed');
-mean_success(policy,code) = geomean(avg_benchmark_successes);
+mean_success(policy,code) = 1-geomean(1-avg_benchmark_successes);
 %mean_miscorrect(policy,code) = geomean(avg_benchmark_miscorrect);
 %mean_panic(policy,code) = geomean(avg_benchmark_could_have_crashed);
 
@@ -80,7 +80,7 @@ mean_success(policy,code) = geomean(avg_benchmark_successes);
 policy=4;
 code=1;
 load('/Users/mark/Dropbox/SoftwareDefinedECC/data/rv64g/data-recovery/offline-dynamic/hsiao1970/72,64/hash-none/hamming-pick-longest-run/crash-threshold-0.5/2017-03-18/postprocessed/postprocessed.mat','avg_benchmark_successes');%,'avg_benchmark_miscorrect','avg_benchmark_could_have_crashed');
-mean_success(policy,code) = geomean(avg_benchmark_successes);
+mean_success(policy,code) = 1-geomean(1-avg_benchmark_successes);
 %mean_miscorrect(policy,code) = geomean(avg_benchmark_miscorrect);
 %mean_panic(policy,code) = geomean(avg_benchmark_could_have_crashed);
 
@@ -88,7 +88,7 @@ mean_success(policy,code) = geomean(avg_benchmark_successes);
 policy=4;
 code=2;
 load('/Users/mark/Dropbox/SoftwareDefinedECC/data/rv64g/data-recovery/offline-dynamic/bose1960/79,64/hash-none/hamming-pick-longest-run/crash-threshold-0.5/2017-03-18/postprocessed/postprocessed.mat','avg_benchmark_successes');%,'avg_benchmark_miscorrect','avg_benchmark_could_have_crashed');
-mean_success(policy,code) = geomean(avg_benchmark_successes);
+mean_success(policy,code) = 1-geomean(1-avg_benchmark_successes);
 %mean_miscorrect(policy,code) = geomean(avg_benchmark_miscorrect);
 %mean_panic(policy,code) = geomean(avg_benchmark_could_have_crashed);
 
@@ -96,7 +96,7 @@ mean_success(policy,code) = geomean(avg_benchmark_successes);
 policy=4;
 code=3;
 load('/Users/mark/Dropbox/SoftwareDefinedECC/data/rv64g/data-recovery/offline-dynamic/kaneda1982/144,128/hash-none/hamming-pick-longest-run/crash-threshold-0.5/2016-11-14/postprocessed/postprocessed.mat','avg_benchmark_successes');%,'avg_benchmark_miscorrect','avg_benchmark_could_have_crashed');
-mean_success(policy,code) = geomean(avg_benchmark_successes);
+mean_success(policy,code) = 1-geomean(1-avg_benchmark_successes);
 %mean_miscorrect(policy,code) = geomean(avg_benchmark_miscorrect);
 %mean_panic(policy,code) = geomean(avg_benchmark_could_have_crashed);
 
@@ -104,56 +104,56 @@ mean_success(policy,code) = geomean(avg_benchmark_successes);
 policy=5;
 code=1;
 load('/Users/mark/Dropbox/SoftwareDefinedECC/data/rv64g/data-recovery/offline-dynamic/hsiao1970/72,64/hash-none/dbx-longest-run-pick-lowest-weight/crash-threshold-0.5/2016-11-17/postprocessed/postprocessed.mat','avg_benchmark_successes');%,'avg_benchmark_miscorrect','avg_benchmark_could_have_crashed');
-mean_success(policy,code) = geomean(avg_benchmark_successes);
+mean_success(policy,code) = 1-geomean(1-avg_benchmark_successes);
 
 %% DBX-Longest-Run-Pick-Lowest-Weight Bose (79,64)
 policy=5;
 code=2;
 load('/Users/mark/Dropbox/SoftwareDefinedECC/data/rv64g/data-recovery/offline-dynamic/bose1960/79,64/hash-none/dbx-longest-run-pick-lowest-weight/crash-threshold-0.5/2016-11-17/postprocessed/postprocessed.mat','avg_benchmark_successes');%,'avg_benchmark_miscorrect','avg_benchmark_could_have_crashed');
-mean_success(policy,code) = geomean(avg_benchmark_successes);
+mean_success(policy,code) = 1-geomean(1-avg_benchmark_successes);
 
 %% DBX-Longest-Run-Pick-Lowest-Weight Kaneda (144,128)
 policy=5;
 code=3;
 load('/Users/mark/Dropbox/SoftwareDefinedECC/data/rv64g/data-recovery/offline-dynamic/kaneda1982/144,128/hash-none/dbx-longest-run-pick-lowest-weight/crash-threshold-1/2016-11-15/postprocessed/postprocessed.mat','avg_benchmark_successes');%,'avg_benchmark_miscorrect','avg_benchmark_could_have_crashed');
-mean_success(policy,code) = geomean(avg_benchmark_successes);
+mean_success(policy,code) = 1-geomean(1-avg_benchmark_successes);
 
 %% Longest-Run-Pick-Random Hsiao (72,64)
 policy=6;
 code=1;
 load('/Users/mark/Dropbox/SoftwareDefinedECC/data/rv64g/data-recovery/offline-dynamic/hsiao1970/72,64/hash-none/longest-run-pick-random/crash-threshold-0.5/2016-11-16/postprocessed/postprocessed.mat','avg_benchmark_successes');%,'avg_benchmark_miscorrect','avg_benchmark_could_have_crashed');
-mean_success(policy,code) = geomean(avg_benchmark_successes);
+mean_success(policy,code) = 1-geomean(1-avg_benchmark_successes);
 
 %% Longest-Run-Pick-Random Bose (79,64)
 policy=6;
 code=2;
 load('/Users/mark/Dropbox/SoftwareDefinedECC/data/rv64g/data-recovery/offline-dynamic/bose1960/79,64/hash-none/longest-run-pick-random/crash-threshold-0.5/2016-11-16/postprocessed/postprocessed.mat','avg_benchmark_successes');%,'avg_benchmark_miscorrect','avg_benchmark_could_have_crashed');
-mean_success(policy,code) = geomean(avg_benchmark_successes);
+mean_success(policy,code) = 1-geomean(1-avg_benchmark_successes);
 
 %% Longest-Run-Pick-Random Kaneda (144,128)
 policy=6;
 code=3;
 load('/Users/mark/Dropbox/SoftwareDefinedECC/data/rv64g/data-recovery/offline-dynamic/kaneda1982/144,128/hash-none/longest-run-pick-random/crash-threshold-1/2016-11-15/postprocessed/postprocessed.mat','avg_benchmark_successes');%,'avg_benchmark_miscorrect','avg_benchmark_could_have_crashed');
-mean_success(policy,code) = geomean(avg_benchmark_successes);
+mean_success(policy,code) = 1-geomean(1-avg_benchmark_successes);
 
 
 %% Delta-Pick-Random Hsiao (72,64)
 policy=7;
 code=1;
 load('/Users/mark/Dropbox/SoftwareDefinedECC/data/rv64g/data-recovery/offline-dynamic/hsiao1970/72,64/hash-none/delta-pick-random/crash-threshold-0.5/2016-11-16/postprocessed/postprocessed.mat','avg_benchmark_successes');%,'avg_benchmark_miscorrect','avg_benchmark_could_have_crashed');
-mean_success(policy,code) = geomean(avg_benchmark_successes);
+mean_success(policy,code) = 1-geomean(1-avg_benchmark_successes);
 
 %% Delta-Pick-Random Bose (79,64)
 policy=7;
 code=2;
 load('/Users/mark/Dropbox/SoftwareDefinedECC/data/rv64g/data-recovery/offline-dynamic/bose1960/79,64/hash-none/delta-pick-random/crash-threshold-0.5/2016-11-16/postprocessed/postprocessed.mat','avg_benchmark_successes');%,'avg_benchmark_miscorrect','avg_benchmark_could_have_crashed');
-mean_success(policy,code) = geomean(avg_benchmark_successes);
+mean_success(policy,code) = 1-geomean(1-avg_benchmark_successes);
 
 %% Delta-Pick-Random Kaneda (144,128)
 policy=7;
 code=3;
 load('/Users/mark/Dropbox/SoftwareDefinedECC/data/rv64g/data-recovery/offline-dynamic/kaneda1982/144,128/hash-none/delta-pick-random/crash-threshold-1/2016-11-15/postprocessed/postprocessed.mat','avg_benchmark_successes');%,'avg_benchmark_miscorrect','avg_benchmark_could_have_crashed');
-mean_success(policy,code) = geomean(avg_benchmark_successes);
+mean_success(policy,code) = 1-geomean(1-avg_benchmark_successes);
 
 %% Baseline-Pick-Random Hsiao (72,64)
 policy=8;
@@ -174,8 +174,8 @@ bar(mean_success',1);
 
 lgd = legend({'Entropy-4','Entropy-8','Entropy-16','Hamming','DBX','Longest-Run','Delta','Baseline'}, 'FontName', 'Arial', 'FontSize', 9);
 pos = get(lgd,'Position');
-pos(1) = pos(1)-0.2;
-pos(2) = pos(2)-0.42;
+pos(1) = pos(1)-0.22;
+pos(2) = pos(2)-0.50;
 set(lgd,'Position',pos);
 
 mycolors = NaN(num_policies,3);
@@ -191,15 +191,15 @@ set(gca, 'XColor','Black','YColor','Black');
 
 pos = get(gca,'Position');
 pos(3) = 0.5;
-pos(4) = 0.375;
+pos(4) = 0.3;
 set(gca,'Position',pos);
 
 grid on;
 
 ylbl = ylabel('Mean Success Rate','FontName','Arial','FontSize',9,'Color','Black');
 pos = get(ylbl,'Position');
-pos(1) = pos(1)-0.07;
+pos(1) = pos(1)-0.1;
 set(ylbl,'Position',pos);
 
 set(gca, 'XTickLabel', {'Hsiao [72,64,4]_2', 'DECTED [79,64,6]_2', 'SSCDSD [36,32,4]_{16}'}, 'FontName', 'Arial', 'FontSize', 9);
-xticklabel_rotate([],45,[],'fontsize',9)
+xticklabel_rotate([],15,[],'fontsize',9)
