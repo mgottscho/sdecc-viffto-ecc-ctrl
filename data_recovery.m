@@ -480,8 +480,10 @@ if verbose == 1
     target_message_index
 end
 
+if strcmp(policy, 'baseline-pick-random') == 1
+    suggest_to_crash = 0;
 %% Floating point-specific crash policy: suggest to crash if candidate messages or cacheline neighbors do not share common sign and exponent bits
-if strcmp(policy, 'fdelta-pick-random') == 1
+elseif strcmp(policy, 'fdelta-pick-random') == 1
     if k == 32
         signexp_start = 1;
         signexp_end = 9;
