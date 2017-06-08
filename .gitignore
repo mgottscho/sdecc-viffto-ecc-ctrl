@@ -6,3 +6,6 @@ readme.txt
 *.output*
 *.mat
 run*.sh
+*.o
+.sconsign.dblite
+sdelc

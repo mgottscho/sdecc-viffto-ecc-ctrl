@@ -48,3 +48,4 @@ int parse_binary_string(const char* s, const size_t len, word_t* w);
 int compute_syndrome(const word_t* received_string, uint64_t* syndrome);
 uint64_t extract_message(const uint64_t codeword);
 int compute_candidate_messages(const word_t received_string, word_t* candidate_messages, const size_t max_messages, size_t* num_messages);
+int hamming_distance_recovery(const word_t* candidate_messages, const size_t num_messages, const word_t* si, const size_t num_si, word_t* chosen_message);
