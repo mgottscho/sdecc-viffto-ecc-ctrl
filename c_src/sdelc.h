@@ -24,20 +24,20 @@ uint64_t H_rows[3] = {0x00783fffc, 0x0787c1ffa, 0x7807fe0f9};
 uint8_t H_columns[35] = {1,1,1,1,2,2,2,2,4,4,4,4,3,3,3,3,3,5,5,5,5,5,6,6,6,6,6,7,7,7,7,7,4,2,1};
 
 #define SYNDROME_NO_ERROR 0
-#define SYNDROME_CHUNK_1 1
-#define MASK_CHUNK_1 ((uint64_t)(0x780000001))
-#define SYNDROME_CHUNK_2 2
-#define MASK_CHUNK_2 ((uint64_t)(0x078000002))
-#define SYNDROME_CHUNK_3 4
-#define MASK_CHUNK_3 ((uint64_t)(0x007800004))
-#define SYNDROME_CHUNK_4 3
-#define MASK_CHUNK_4 ((uint64_t)(0x0007c0000))
-#define SYNDROME_CHUNK_5 5
-#define MASK_CHUNK_5 ((uint64_t)(0x00003e000))
-#define SYNDROME_CHUNK_6 6
-#define MASK_CHUNK_6 ((uint64_t)(0x000001f00))
-#define SYNDROME_CHUNK_7 7
-#define MASK_CHUNK_7 ((uint64_t)(0x0000000f8))
+//#define SYNDROME_CHUNK_1 1
+//#define MASK_CHUNK_1 ((uint64_t)(0x780000001))
+//#define SYNDROME_CHUNK_2 2
+//#define MASK_CHUNK_2 ((uint64_t)(0x078000002))
+//#define SYNDROME_CHUNK_3 4
+//#define MASK_CHUNK_3 ((uint64_t)(0x007800004))
+//#define SYNDROME_CHUNK_4 3
+//#define MASK_CHUNK_4 ((uint64_t)(0x0007c0000))
+//#define SYNDROME_CHUNK_5 5
+//#define MASK_CHUNK_5 ((uint64_t)(0x00003e000))
+//#define SYNDROME_CHUNK_6 6
+//#define MASK_CHUNK_6 ((uint64_t)(0x000001f00))
+//#define SYNDROME_CHUNK_7 7
+//#define MASK_CHUNK_7 ((uint64_t)(0x0000000f8))
 
 typedef union {
    uint64_t val;
