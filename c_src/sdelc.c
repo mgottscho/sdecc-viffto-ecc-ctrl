@@ -30,7 +30,7 @@ int compute_syndrome(const word_t* received_string, uint64_t* syndrome) {
 
     *syndrome = 0;
     for (int i = 0; i < PARITY_SIZE; i++)
-        *syndrome |= __builtin_popcountl(H_rows[i] & received_string->val) << (PARITY_SIZE-i-1);
+        *syndrome |= __builtin_parityl(H_rows[i] & received_string->val) << (PARITY_SIZE-i-1);
 
     return 0;
 }
