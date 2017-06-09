@@ -5,7 +5,7 @@
 
 #include <stdio.h>
 #include <string.h>
-//#include <spike_timer.h>
+#include <spike_timer.h>
 #include "sdecc_chipkill.h"
 
 int parse_binary_string(const char* s, const size_t len, word_t* w) {
@@ -62,11 +62,11 @@ word_t extract_message(const word_t codeword) {
 word_t flip_bit(const word_t codeword, int pos) {
     word_t w = codeword;
     if (CODEWORD_SIZE-pos-1 >= H_OFFSET)
-        w.val.H = w.val.H ^ ((uint64_t)(1) << CODEWORD_SIZE-pos-1 - H_OFFSET);
+        w.val.H = w.val.H ^ ((uint64_t)(1) << (CODEWORD_SIZE-pos-1 - H_OFFSET));
     else if (CODEWORD_SIZE-pos-1 >= M_OFFSET && CODEWORD_SIZE-pos-1 < H_OFFSET)
-        w.val.M = w.val.M ^ ((uint64_t)(1) << CODEWORD_SIZE-pos-1 - M_OFFSET);
+        w.val.M = w.val.M ^ ((uint64_t)(1) << (CODEWORD_SIZE-pos-1 - M_OFFSET));
     else if (CODEWORD_SIZE-pos-1 >= L_OFFSET && CODEWORD_SIZE-pos-1 < M_OFFSET)
-        w.val.L = w.val.L ^ ((uint64_t)(1) << CODEWORD_SIZE-pos-1 - L_OFFSET);
+        w.val.L = w.val.L ^ ((uint64_t)(1) << (CODEWORD_SIZE-pos-1 - L_OFFSET));
     return w; 
 }
 
@@ -164,7 +164,7 @@ int compute_candidate_messages(const word_t received_string, word_t* candidate_m
     if (syndrome == SYNDROME_NO_ERROR) { //No error
         candidate_messages[0] = extract_message(received_string);
         *num_messages = 1;
-        printf("no error\n");
+        //printf("no error\n");
         return 1;
     } else {
         *num_messages = 0;
@@ -178,7 +178,7 @@ int compute_candidate_messages(const word_t received_string, word_t* candidate_m
         if (outcome == 1) { //CE
             candidate_messages[0] = extract_message(corrected_codeword);
             *num_messages = 1;
-            printf("ce\n");
+            //printf("ce\n");
             return 0;
         }
         
@@ -223,7 +223,7 @@ int compute_candidate_messages(const word_t received_string, word_t* candidate_m
                     }
                 }
             }
-            printf("due\n");
+            //printf("due\n");
         }
 
 
@@ -319,7 +319,7 @@ int main(int argc, char** argv) {
 
     //Compute candidate codewords
 
-    //starttick();
+    starttick();
 
     word_t candidate_messages[20];
     size_t num_messages = 0;
@@ -328,8 +328,8 @@ int main(int argc, char** argv) {
         return 1;
     }
 
-    for (int i = 0; i < num_messages; i++)
-        printf("candidate_message[%d]: %016lx %016lx %016lx\n", i, candidate_messages[i].val.H, candidate_messages[i].val.M, candidate_messages[i].val.L); 
+    //for (int i = 0; i < num_messages; i++)
+        //printf("candidate_message[%d]: %016lx %016lx %016lx\n", i, candidate_messages[i].val.H, candidate_messages[i].val.M, candidate_messages[i].val.L); 
 
     //Choose a recovery target
     word_t chosen_message;
@@ -342,8 +342,8 @@ int main(int argc, char** argv) {
         }
     }
 
-    //stoptick();
-    //printtick();
+    stoptick();
+    printtick();
 
     printf("chosen message: %016lx %016lx %016lx\n", chosen_message.val.H, chosen_message.val.M, chosen_message.val.L);
 
