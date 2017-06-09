@@ -85,9 +85,15 @@ uint16_t H_columns[144] = {0x8710, 0x4fc0, 0x2b60, 0x1930, 0x8f20, 0x4b10, 0x29c
                            0x8000, 0x4000, 0x2000, 0x1000, 0x0800, 0x0400, 0x0200, 0x0100, 0x0080, 0x0040, 0x0020, 0x0010, 0x0008, 0x0004, 0x0002, 0x0001};
 
 #define SYNDROME_NO_ERROR 0
+#define H_OFFSET 2*sizeof(uint64_t)*8
+#define M_OFFSET sizeof(uint64_t)*8
+#define L_OFFSET 0
+
 
 int parse_binary_string(const char* s, const size_t len, word_t* w);
 int compute_syndrome(const word_t* received_string, uint64_t* syndrome);
 word_t extract_message(const word_t codeword);
 int compute_candidate_messages(const word_t received_string, word_t* candidate_messages, const size_t max_messages, size_t* num_messages);
+int chipkill_decoder(const word_t received_string, const uint64_t syndrome, int* num_errors, word_t* corrected_codeword);
 int entropyZ_recovery(const word_t* candidate_messages, const size_t num_messages, const word_t* si, const size_t num_si, word_t* chosen_message);
+word_t flip_bit(const word_t codeword, int pos);
