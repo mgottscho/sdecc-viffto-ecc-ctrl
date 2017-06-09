@@ -62,26 +62,95 @@ word_t extract_message(const word_t codeword) {
 word_t flip_bit(const word_t codeword, int pos) {
     word_t w = codeword;
     if (CODEWORD_SIZE-pos-1 >= H_OFFSET)
-        w.val.H = w.val.H ^ ((uint64_t)(1) << pos - H_OFFSET);
+        w.val.H = w.val.H ^ ((uint64_t)(1) << CODEWORD_SIZE-pos-1 - H_OFFSET);
     else if (CODEWORD_SIZE-pos-1 >= M_OFFSET && CODEWORD_SIZE-pos-1 < H_OFFSET)
-        w.val.M = w.val.M ^ ((uint64_t)(1) << pos - M_OFFSET);
+        w.val.M = w.val.M ^ ((uint64_t)(1) << CODEWORD_SIZE-pos-1 - M_OFFSET);
     else if (CODEWORD_SIZE-pos-1 >= L_OFFSET && CODEWORD_SIZE-pos-1 < M_OFFSET)
-        w.val.L = w.val.L ^ ((uint64_t)(1) << pos - L_OFFSET);
+        w.val.L = w.val.L ^ ((uint64_t)(1) << CODEWORD_SIZE-pos-1 - L_OFFSET);
     return w; 
 }
 
-int chipkill_decoder(const word_t received_string, const uint64_t syndrome, int* corrected, word_t* corrected_codeword) {
-    if (!num_errors || !corrected_codeword)
+int chipkill_decoder(const word_t received_string, const uint64_t syndrome, int* outcome, word_t* corrected_codeword) {
+    if (!outcome || !corrected_codeword)
         return 1;
+
+    if (syndrome == 0) { //No error
+        *corrected_codeword = received_string;
+        *outcome = 0;
+        return 0;
+    }
 
     //First check for single-bit errors within a symbol
     *corrected_codeword = received_string;
     for (int i = 0; i < CODEWORD_SIZE; i++) {
         if (syndrome == H_columns[i]) {
             *corrected_codeword = flip_bit(received_string, i);
+            *outcome = 1; //corrected
             return 0;
         }
     }
+
+    //Next check for quadruple-bit errors within a symbol, as this is a fast and simple case
+    for (int s = 0; s < CODEWORD_SIZE/SYMBOL_SIZE; s++) {
+        //Four-bit error if all columns in a symbol sum to the syndrome
+        uint64_t col_sum = 0;
+        for (int c = 0; c < SYMBOL_SIZE; c++)
+            col_sum += H_columns[s*SYMBOL_SIZE+c]; 
+        if (col_sum == syndrome) { //found it
+            *corrected_codeword = flip_bit(received_string, s*SYMBOL_SIZE);
+            *corrected_codeword = flip_bit(*corrected_codeword, s*SYMBOL_SIZE+1);
+            *corrected_codeword = flip_bit(*corrected_codeword, s*SYMBOL_SIZE+2);
+            *corrected_codeword = flip_bit(*corrected_codeword, s*SYMBOL_SIZE+3);
+            *outcome = 1; //corrected
+            return 0;
+        }
+    }
+
+    //Next we check for the triple bit flips. This is almost the same as checking for single-bit flips, only '0' and '1' are reversed. It looks ugly but is actually fast.
+    for (int s = 0; s < CODEWORD_SIZE/SYMBOL_SIZE; s++) {
+        int idx = s*SYMBOL_SIZE;
+        //This looks like an ugly triple for loop and it is. However, when symbol size is 4 bits, there are only 4 ways to have a three-bit error. This loop structure merely memoizes shared parts of 3-column sums.
+        for (int a = 0; a < 2; a++) { //a is the first bit flip position in the symbol
+            uint64_t col_a_plus_syndrome = H_columns[idx+a] ^ syndrome;
+            for (int b = a+1; b < 3; b++) { //b is the second bit flip position in the symbol
+                uint64_t col_a_b_plus_syndrome = H_columns[idx+b] ^ col_a_plus_syndrome;
+                for (int c = b+1; c < 4; c++) { //c is the third bit flip position in the symbol
+                    uint64_t cols_plus_syndrome = H_columns[idx+c] ^ col_a_b_plus_syndrome;
+                    //if sum of cols a, b, c in H are syndrome, then we found a three-bit error
+                    if (cols_plus_syndrome == 0) {
+                        *corrected_codeword = flip_bit(received_string, idx+a);
+                        *corrected_codeword = flip_bit(*corrected_codeword, idx+b);
+                        *corrected_codeword = flip_bit(*corrected_codeword, idx+c);
+                        *outcome = 1; //corrected
+                        return 0;
+                    }
+                }
+            }
+        }
+    }
+
+    //Next we check for all possible double bit flips. There are 6 ways to do this and this is the slowest case.
+    for (int s = 0; s < CODEWORD_SIZE/SYMBOL_SIZE; s++) {
+        int idx = s*SYMBOL_SIZE;
+        for (int a = 0; a < 3; a++) { //a is the first bit flip position in the symbol
+            uint64_t col_a_plus_syndrome = H_columns[idx+a] ^ syndrome;
+            for (int b = a+1; b < 4; b++) { //b is the second bit flip position in the symbol
+                uint64_t cols_plus_syndrome = H_columns[idx+b] ^ col_a_plus_syndrome;
+                //if sum of cols a, b, c in H are syndrome, then we found a three-bit error
+                if (cols_plus_syndrome == 0) {
+                    *corrected_codeword = flip_bit(received_string, idx+a);
+                    *corrected_codeword = flip_bit(*corrected_codeword, idx+b);
+                    *outcome = 1; //corrected
+                    return 0;
+                }
+            }
+        }
+    }
+
+    //If we got this far, it is a DUE
+    *corrected_codeword = received_string;
+    *outcome = 2; //DUE
+
     return 0;
 }
 
@@ -97,17 +166,24 @@ int compute_candidate_messages(const word_t received_string, word_t* candidate_m
         *num_messages = 1;
         return 1;
     } else {
-        //Generate candidates
         *num_messages = 0;
 
         //Check for correctable error
-        int corrected = 0;
+        int outcome = 0;
         word_t corrected_codeword;
-        if (chipkill_decoder(received_string, syndrome, &corrected, &corrected_codeword))
+        if (chipkill_decoder(received_string, syndrome, &outcome, &corrected_codeword))
             return 1;
 
-        if (corrected)
-            return 1;
+        if (outcome == 1) { //CE
+            candidate_messages[0] = extract_message(corrected_codeword);
+            *num_messages = 1;
+            return 0;
+        }
+        
+        if (outcome == 2) { //DUE, generate candidates
+            printf("due\n");
+        }
+
 
         if (*num_messages == 0)
             return 1;
@@ -173,13 +249,13 @@ int main(int argc, char** argv) {
 
     //Parse input
     word_t received_string;
-    word_t si[8];
+    word_t si[4];
 
     int fail = 0;
 
     fail = parse_binary_string(argv[1], strlen(argv[1]), &received_string);
     char* curr = strtok(argv[2], ",");
-    for (int i = 0; i < 7; i++) {
+    for (int i = 0; i < 3; i++) {
         if (!curr) {
             fail = 1;
             break;
@@ -199,7 +275,7 @@ int main(int argc, char** argv) {
     }
 
     printf("Received string: %016lx %016lx %016lx\n", received_string.val.H, received_string.val.M, received_string.val.L);
-    for (int i = 0; i < 7; i++)
+    for (int i = 0; i < 3; i++)
         printf("SI[%d]: %016lx %016lx %016lx\n", i, si[i].val.H, si[i].val.M, si[i].val.L); 
 
     //Compute candidate codewords
@@ -221,7 +297,7 @@ int main(int argc, char** argv) {
     if (num_messages == 1)
         chosen_message = candidate_messages[0];
     else {
-        if (hamming_distance_recovery(candidate_messages, num_messages, si, 7, &chosen_message)) {
+        if (hamming_distance_recovery(candidate_messages, num_messages, si, 3, &chosen_message)) {
             printf("bad recovery\n");
             return 1;
         }
