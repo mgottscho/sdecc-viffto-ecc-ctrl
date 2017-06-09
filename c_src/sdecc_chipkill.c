@@ -164,6 +164,7 @@ int compute_candidate_messages(const word_t received_string, word_t* candidate_m
     if (syndrome == SYNDROME_NO_ERROR) { //No error
         candidate_messages[0] = extract_message(received_string);
         *num_messages = 1;
+        printf("no error\n");
         return 1;
     } else {
         *num_messages = 0;
@@ -177,10 +178,51 @@ int compute_candidate_messages(const word_t received_string, word_t* candidate_m
         if (outcome == 1) { //CE
             candidate_messages[0] = extract_message(corrected_codeword);
             *num_messages = 1;
+            printf("ce\n");
             return 0;
         }
         
         if (outcome == 2) { //DUE, generate candidates
+            //For codes that correct t-sym errors and detect t+1-sym errors, we only need to iterate over a linear number of symbol "flip" positions.
+            uint64_t checksums[max_messages];
+            for (int s = 0; s < CODEWORD_SIZE/SYMBOL_SIZE; s++) { //Over all symbols
+                int idx = s*SYMBOL_SIZE;
+                for (uint8_t pat = 0; pat < 16; pat++) { //Over all symbol patterns
+                    uint8_t err = pat;
+                    word_t trial_string = received_string;
+                    for (int i = 0; i < SYMBOL_SIZE; i++) {
+                        if (err & 1)
+                            trial_string = flip_bit(trial_string, idx+3-i);
+                        err = err >> 1;
+                    }
+                    
+                    //Attempt to decode
+                    uint64_t trial_syndrome = 0;
+                    compute_syndrome(&trial_string, &trial_syndrome);
+                    if (chipkill_decoder(trial_string, trial_syndrome, &outcome, &corrected_codeword))
+                        return 1;
+
+                    if (outcome == 1) { //trial was a CE, found candidate
+                        //Make sure only unique candidates are committed
+                        uint64_t checksum = corrected_codeword.val.H + corrected_codeword.val.M + corrected_codeword.val.L;
+                        int duplicate = 0;
+                        for (int i = 0; i < *num_messages; i++) {
+                            if (checksum == checksums[i]) {
+                                duplicate = 1;
+                                break;
+                            }
+                        }
+
+                        if (!duplicate) {
+                            if (*num_messages == max_messages)
+                                return 1;
+                            
+                            checksums[*num_messages] = checksum;
+                            candidate_messages[(*num_messages)++] = extract_message(corrected_codeword);
+                        }
+                    }
+                }
+            }
             printf("due\n");
         }
 
@@ -205,25 +247,22 @@ int hamming_distance_recovery(const word_t* candidate_messages, const size_t num
     }
 
     //Compute average hamming distance of each candidate to all SI
-    double avg_hamming_dist[num_si];
-    double min_avg_hamming_dist = sizeof(word_t)*8;
+    double avg_hamming_dist[num_messages];
+    double min_avg_hamming_dist = (double)(CODEWORD_SIZE);
     int chosen_index = -1;
     for (int i = 0; i < num_messages; i++) {
-        avg_hamming_dist[i] = 0;
+        int dist = 0;
         for (int j = 0; j < num_si; j++) {
-            avg_hamming_dist[i] += (double)(__builtin_popcountl(candidate_messages[i].val.H ^ si[j].val.H));
-            avg_hamming_dist[i] += (double)(__builtin_popcountl(candidate_messages[i].val.M ^ si[j].val.M));
-            avg_hamming_dist[i] += (double)(__builtin_popcountl(candidate_messages[i].val.L ^ si[j].val.L));
+            dist += __builtin_popcountl((candidate_messages[i].val.H) ^ (si[j].val.H));
+            dist += __builtin_popcountl((candidate_messages[i].val.M) ^ (si[j].val.M));
+            dist += __builtin_popcountl((candidate_messages[i].val.L) ^ (si[j].val.L));
         }
-        avg_hamming_dist[i] /= num_si;
+        avg_hamming_dist[i] = (double)(dist) / (double)(num_si);
         if (avg_hamming_dist[i] <= min_avg_hamming_dist) {
             min_avg_hamming_dist = avg_hamming_dist[i];
             chosen_index = i;
         }
-        //printf("avg_hamming_dist[%d]: %f\n", i, avg_hamming_dist[i]);
-        //printf("chosen_index: %d\n", chosen_index);
     }
-
 
     if (chosen_index >= 0 && chosen_index < num_messages)
         *chosen_message = candidate_messages[chosen_index];
@@ -282,9 +321,9 @@ int main(int argc, char** argv) {
 
     //starttick();
 
-    word_t candidate_messages[10];
+    word_t candidate_messages[20];
     size_t num_messages = 0;
-    if (compute_candidate_messages(received_string, candidate_messages, 10, &num_messages)) {
+    if (compute_candidate_messages(received_string, candidate_messages, 20, &num_messages)) {
         printf("failed to compute candidates\n");
         return 1;
     }
