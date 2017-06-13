@@ -4,7 +4,7 @@ function [candidate_correct_messages, retval] = compute_candidate_correct_messag
 % Arguments:
 %    received_string -- String of length n binary characters, where each is either '0' or '1'.
 %    H -- Binary matrix of dimension (n-k) x n, where each is either 0 or 1. This is the parity-check matrix.
-%    code_type -- String: '[hsiao1970|davydov1991|bose1960|kaneda1982]' SECDED, DECTED, ChipKill-only for now.
+%    code_type -- String: '[hsiao1970|davydov1991|bose1960|kaneda1982|ULEL_float|ULEL_even|ULEL_riscv]' SECDED, DECTED, ChipKill, ULEL variants for now.
 %
 % Returns:
 %    candidate_correct_messages -- Character matrix of dimension c x k. Each row corresponds to a message that, when encoded and corrupted with a detected-but-uncorrectable error, could have resulted in the given received_string. Upon error in this function, candidate_correct_messages will be set to an n x k matrix of 'X'.
@@ -16,9 +16,9 @@ function [candidate_correct_messages, retval] = compute_candidate_correct_messag
 [r,n] = size(H);
 k = n-r;
 
-%if ~isdeployed
-%    addpath(['..' filesep 'common']); % Add sub-folders to MATLAB search paths for calling other functions we wrote
-%end
+if ~isdeployed
+    addpath(['..' filesep 'common']); % Add sub-folders to MATLAB search paths for calling other functions we wrote
+end
 
 x = 1;
 candidate_correct_messages = repmat('X',n,k); % Pre-allocate for worst-case capacity. X is placeholder. If something goes wrong, we expect this variable to not change and be returned as-is.
@@ -65,6 +65,18 @@ elseif strcmp(code_type, 'kaneda1982') == 1 % ChipKill
             end
         end
     end
+% Unequal-length error-locating codes (ULEL)
+elseif strcmp(code_type, 'ULEL_float') == 1 || strcmp(code_type, 'ULEL_even') == 1 || strcmp(code_type, 'ULEL_riscv') == 1
+    segment_locator_mask = ULEL_decoder(received_string,H);
+    candidate_error_locs = find(segment_locator_mask=='1');
+    num_candidates = nnz(candidate_error_locs);
+    trial_flip_matrix = repmat('0', num_candidates, n);
+    for i=1:num_candidates
+        trial_flip_matrix(i,candidate_error_locs(i)) = '1';
+        candidate_correct_codeword = my_bitxor(received_string, trial_flip_matrix(i,:));
+        candidate_correct_messages(i,:) = candidate_correct_codeword(:,1:k);
+    end
+    x = num_candidates+1;
 else
     display(['FATAL! Unsupported code type: ' code_type]);
     return;
@@ -74,5 +86,6 @@ end
 if x > 1
     candidate_correct_messages = candidate_correct_messages(1:x-1, :);
     candidate_correct_messages = unique(candidate_correct_messages,'rows','sorted'); % Sort feature is important
-    retval = 0;
 end
+
+retval = 0;

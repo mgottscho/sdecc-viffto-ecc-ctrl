@@ -1,4 +1,4 @@
-function [candidate_correct_message_scores, recovered_message, suggest_to_crash, recovered_successfully] = data_recovery(architecture, n, k, original_message, candidate_correct_messages, policy, cacheline_bin, message_blockpos, crash_threshold, verbose)
+function [candidate_correct_message_scores, recovered_message, suggest_to_crash, recovered_successfully] = data_recovery(architecture, k, original_message, candidate_correct_messages_bin, policy, cacheline_bin, message_blockpos, crash_threshold, verbose)
 % This function attempts to heuristically recover from a DUE affecting a single received string.
 % The message is assumed to be data of arbitrary type stored in memory.
 % To compute candidate codewords, we trial flip bits and decode using specified ECC decoder.
@@ -9,11 +9,10 @@ function [candidate_correct_message_scores, recovered_message, suggest_to_crash,
 %
 % Input arguments:
 %   architecture --     String: '[rv64g]'
-%   n --                String: '[17|18|19|33|34|35|39|45|72|79|144]'
 %   k --                String: '[16|32|64|128]'
 %   original_message -- Binary String of length k bits/chars
-%   candidate_correct_messages -- Nx1 cell array of binary strings, each k bits/chars long
-%   policy --           String: '[exact-single|exact-random|cluster3|cluster7|hamming-pick-random|hamming-pick-longest-run|longest-run-pick-random|delta-pick-random|fdelta-pick-random|dbx-longest-run-pick-random|dbx-weight-pick-longest-run|dbx-longest-run-pick-lowest-weight]'
+%   candidate_correct_messages_bin -- Set of k-bit binary strings, e.g. '00001111000...10010,0000000....00000,...'.
+%   policy --           String: '[baseline-pick-random|min-entropy[4|8|16]-pick-longest-run|exact-single|exact-random|cluster3|cluster7|hamming-pick-random|hamming-pick-longest-run|longest-run-pick-random|delta-pick-random|fdelta-pick-random|dbx-longest-run-pick-random|dbx-weight-pick-longest-run|dbx-longest-run-pick-lowest-weight]'
 %   cacheline_bin --    String: Set of words_per_block k-bit binary strings, e.g. '0001010101....00001,0000000000.....00000,...,111101010...00101'. words_per_block is inferred by the number of binary strings that are delimited by commas.
 %   message_blockpos -- String: '[0-(words_per_block-1)]' denoting the position of the message under test within the cacheline. This message should match original_message argument above.
 %   crash_threshold -- String of a scalar. Policy-defined semantics and range.
@@ -28,17 +27,15 @@ function [candidate_correct_message_scores, recovered_message, suggest_to_crash,
 % Authors: Mark Gottscho and Clayton Schoeny
 % Emails: mgottscho@ucla.edu, cschoeny@gmail.com
 
-n = str2double(n);
 k = str2double(k);
 crash_threshold = str2double(crash_threshold);
 verbose = str2double(verbose);
 
 if verbose == 1
     architecture
-    n
     k
     original_message
-    candidate_correct_messages
+    candidate_correct_messages_bin
     policy
     cacheline_bin
     message_blockpos
@@ -46,7 +43,7 @@ if verbose == 1
     verbose
 end
 
-%rng('shuffle'); % Seed RNG based on current time -- FIXME: comment out for speed? If we RNG in swd_ecc_offline_data_heuristic_recovery then we shouldn't need to do it again...
+rng('shuffle'); % Seed RNG based on current time
 
 %% Init some return values
 recovered_message = repmat('X',1,k);
@@ -55,6 +52,36 @@ recovered_successfully = 0;
 
 if ~isdeployed
     addpath ecc common rv64g % Add sub-folders to MATLAB search paths for calling other functions we wrote
+end
+
+%% Parse candidate_correct_messages_bin to convert into char matrix
+candidate_correct_messages = repmat('X',1,k);
+done_parsing = 0;
+i = 1;
+remain = candidate_correct_messages_bin;
+while done_parsing == 0
+   [token,remain] = strtok(remain,',');
+
+   % Check input validity of token to ensure k-bits of '0' or '1' and no other value
+   if (sum(token == '1')+sum(token == '0')) ~= size(token,2)
+       display(['FATAL! Candidate entry ' num2str(i) ' has non-binary character: ' token]);
+       return;
+   end
+   if size(token,2) ~= k
+       display(['FATAL! Candidate entry ' num2str(i) ' has ' num2str(size(token,2)) ' bits, but ' num2str(k) ' bits are needed.']);
+       return;
+   end
+
+   candidate_correct_messages(i,:) = token;
+   i = i+1;
+
+   if size(remain,2) == 0
+       done_parsing = 1;
+   end
+end
+
+if verbose == 1
+    candidate_correct_messages
 end
 
 %% Parse cacheline_bin to convert into cell array
@@ -114,6 +141,28 @@ if strcmp(policy, 'baseline-pick-random') == 1
         display('RECOVERY STEP 1: Each candidate-correct message is scored equally.');
     end
     candidate_correct_message_scores = ones(size(candidate_correct_messages,1),1); % All outcomes equally scored
+
+elseif strcmp(policy, 'min-entropy4-pick-longest-run') == 1 ...
+       || strcmp(policy, 'min-entropy8-pick-longest-run') == 1 ...
+       || strcmp(policy, 'min-entropy16-pick-longest-run') == 1
+    cacheline_clayton = zeros(1,(words_per_block-1)*k);
+    x = 1;
+    for blockpos=1:words_per_block
+        if blockpos ~= message_blockpos
+            cacheline_clayton(1,1+(x-1)*k:x*k) = parsed_cacheline_bin{blockpos} - '0';
+            x = x+1;
+        end
+    end
+    if strcmp(policy, 'min-entropy4-pick-longest-run') == 1
+        symbol_size = 4;
+    elseif strcmp(policy, 'min-entropy8-pick-longest-run') == 1
+        symbol_size = 8;
+    else % 16
+        symbol_size = 16;
+    end
+    candidates_clayton = candidate_correct_messages - '0';
+    candidate_correct_message_scores = entropy_list(symbol_size, cacheline_clayton, candidates_clayton);
+
 elseif strcmp(policy, 'exact-single') == 1 ...
     || strcmp(policy, 'exact-random') == 1
     % Clayton: In this policy, if no candidate codeword exactly matches any
@@ -121,7 +170,7 @@ elseif strcmp(policy, 'exact-single') == 1 ...
     % codeword matches then we select that one. For 'exact-single' if there
     % are multiple candidate codewords that match a cache-line word exactly
     % then we crash. For 'exact-random' we randomly choose from the
-    % candidate codewords that match a cache-line word. Since lower scored
+    % candidate codewords that match a cache-line word. Since lower scores
     % are better we're going to set the scores initially to 100 and if
     % there is a match then set it to 1.
     if verbose == 1
@@ -139,15 +188,15 @@ elseif strcmp(policy, 'exact-single') == 1 ...
         candidate_correct_message_scores(x) = score; %Score is 100 if no match and 1 if match.
     end
 elseif strcmp(policy, 'cluster3') == 1
-    %Clayton: For this policy, the score starts at 7. We decrease the score
+    %Clayton: For this policy, the score starts at words_per_block-1. We decrease the score
     %by 1 for each cache-line word that is within a Hamming distance of 3
     %from the candidate codeword. If all candidate codewords end up having
-    %a score of 7, the we suggest to crash.
+    %a score of words_per_block-1, the we suggest to crash.
     if verbose == 1
         display('RECOVERY STEP 1: Score candidate codewords by how many cache-line words are within a Hamming distance of 3.')
     end
     for x=1:size(candidate_correct_messages,1) % For each candidate message
-        score = 7; %The default score is 7, means that we are far from all 7.  The best score is 0.
+        score = words_per_block-1; %The default score is words_per_block-1, means that we are far from all neighbors.  The best score is 0.
         for blockpos=1:words_per_block % For each message in the cacheline (need to skip the message under test)
             if blockpos ~= message_blockpos
                 hamming_distance = sum(candidate_correct_messages(x,:) ~= parsed_cacheline_bin{blockpos});
@@ -159,15 +208,15 @@ elseif strcmp(policy, 'cluster3') == 1
         candidate_correct_message_scores(x) = score;
     end
 elseif strcmp(policy, 'cluster7') == 1
-    %Clayton: For this policy, the score starts at 7. We decrease the score
+    %Clayton: For this policy, the score starts at words_per_block-1. We decrease the score
     %by 1 for each cache-line word that is within a Hamming distance of 7
     %from the candidate codeword. If all candidate codewords end up having
-    %a score of 7, the we suggest to crash.
+    %a score of words_per_block-1, the we suggest to crash.
     if verbose == 1
-        display('RECOVERY STEP 1: Score candidate codewords by how many cache-line words are within a Hamming distance of 7.')
+        display('RECOVERY STEP 1: Score candidate codewords by how many cache-line words are within a Hamming distance of 3.')
     end
     for x=1:size(candidate_correct_messages,1) % For each candidate message
-        score = 7; %The default score is 7, means that we are far from all 7.  The best score is 0.
+        score = words_per_block-1; %The default score is words_per_block-1, means that we are far from all neighbors.  The best score is 0.
         for blockpos=1:words_per_block % For each message in the cacheline (need to skip the message under test)
             if blockpos ~= message_blockpos
                 hamming_distance = sum(candidate_correct_messages(x,:) ~= parsed_cacheline_bin{blockpos});
@@ -372,7 +421,10 @@ if strcmp(policy, 'baseline-pick-random') == 1
 elseif strcmp(policy, 'exact-single') == 1 || strcmp(policy, 'exact-random') == 1 || strcmp(policy, 'cluster3') == 1 || strcmp(policy, 'cluster7') == 1|| strcmp(policy, 'hamming-pick-random') == 1 || strcmp(policy, 'longest-run-pick-random') == 1 || strcmp(policy, 'delta-pick-random') == 1 || strcmp(policy, 'fdelta-pick-random') == 1 || strcmp(policy, 'dbx-longest-run-pick-random') == 1
     target_message_index = min_score_indices(randi(size(min_score_indices,1),1));
 elseif strcmp(policy, 'hamming-pick-longest-run') == 1 ...
-    || strcmp(policy, 'dbx-weight-pick-longest-run') == 1
+    || strcmp(policy, 'dbx-weight-pick-longest-run') == 1 ...
+    || strcmp(policy, 'min-entropy4-pick-longest-run') == 1 ...
+    || strcmp(policy, 'min-entropy8-pick-longest-run') == 1 ...
+    || strcmp(policy, 'min-entropy16-pick-longest-run') == 1
     if verbose == 1
         display('LAST STEP: CHOOSE TARGET. Pick the target that has the longest run of 0s or 1s. In a tie, pick first in sorted order.');
     end
@@ -425,8 +477,10 @@ if verbose == 1
     target_message_index
 end
 
+if strcmp(policy, 'baseline-pick-random') == 1
+    suggest_to_crash = 0;
 %% Floating point-specific crash policy: suggest to crash if candidate messages or cacheline neighbors do not share common sign and exponent bits
-if strcmp(policy, 'fdelta-pick-random') == 1
+elseif strcmp(policy, 'fdelta-pick-random') == 1
     if k == 32
         signexp_start = 1;
         signexp_end = 9;
@@ -448,15 +502,21 @@ if strcmp(policy, 'fdelta-pick-random') == 1
            end
         end
     end
-elseif strcmp(policy, 'exact-single') == 1 || strcmp(policy, 'exact-random') == 1
+elseif strcmp(policy, 'cluster3') == 1 || strcmp(policy, 'cluster7') == 1 %CLAYTON 2/13/2017
+    if min_score == words_per_block-1 %This is the case where no candidate codeword was within the given Hamming distance from any cache_line word.
+        suggest_to_crash = 1;
+    end
+elseif strcmp(policy, 'exact-single') == 1 || strcmp(policy, 'exact-random') == 1 %CLAYTON 2/12/17
     if min_score ~= 1 %This is the case where there was no match.
         suggest_to_crash = 1;
     end
     if strcmp(policy, 'exact-single') == 1 && size(min_score_indices,1) ~= 1 %This is the case where there is more than 1 CC that matches a cache-line word.
         suggest_to_crash = 1;
     end
-elseif strcmp(policy, 'cluster3') == 1 || strcmp(policy, 'cluster7') == 1
-    if min_score == 7 %This is the case where no candidate codeword was within a Ham distance of 3 (or 7) from any cache_line word.
+elseif strcmp(policy, 'min-entropy4-pick-longest-run') == 1 ...
+       || strcmp(policy, 'min-entropy8-pick-longest-run') == 1 ...
+       || strcmp(policy, 'min-entropy16-pick-longest-run') == 1
+    if size(min_score_indices,1) > 1 || mean(candidate_correct_message_scores) > crash_threshold
         suggest_to_crash = 1;
     end
 else
@@ -484,12 +544,21 @@ recovered_message = candidate_correct_messages(target_message_index,:);
 recovered_successfully = (strcmp(recovered_message, original_message) == 1);% ...
 %                         || (strcmp(recovered_message_backup, original_message) == 1);
 
+% Override all crash policies if there is only one candidate
+if size(candidate_correct_messages,1) == 1
+    suggest_to_crash = 0;
+end
+
 if verbose == 1
     recovered_successfully
     suggest_to_crash
 end
 
-fprintf(1,'%s\n', recovered_message);
+if suggest_to_crash == 1
+    fprintf(1, '%s SUGGEST_TO_CRASH\n', recovered_message);
+else
+    fprintf(1,'%s\n', recovered_message);
+end
 
 
 

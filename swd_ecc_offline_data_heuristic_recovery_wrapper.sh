@@ -15,13 +15,17 @@ CODE_TYPE=${12}
 POLICY=${13}
 CRASH_THRESHOLD=${14}
 VERBOSE_RECOVERY=${15}
+FILE_VERSION=${16}
+HASH_MODE=${17}
 
 if [[ "$MWG_MACHINE_NAME" == "hoffman" ]]; then
     MY_PRELOAD=$GCC5/lib64/libstdc++.so.6
 elif [[ "$MWG_MACHINE_NAME" == "nanocad-server-testbed" ]]; then
     MY_PRELOAD=/usr/lib/x86_64-linux-gnu/libstdc++.so.6
 elif [[ "$MWG_MACHINE_NAME" == "dfm" ]]; then
-    MY_PRELOAD=/usr/lib64/libstdc++.so.6 # Not working as of 9/26/2016
+    MY_PRELOAD=/app/apps.icsl/puneet/tools/gcc-5.4.0/lib64/libstdc++.so.6
+elif [[ "$MWG_MACHINE_NAME" == "mwg-desktop-ubuntuvm" ]]; then
+    MY_PRELOAD=/usr/lib/x86_64-linux-gnu/libstdc++.so.6
 fi
 
-LD_PRELOAD=$MY_PRELOAD LD_LIBRARY_PATH=$MCRROOT/bin/glnxa64:$MCRROOT/runtime/glnxa64:$LD_LIBRARY_PATH $BINARY_LOCATION/swd_ecc_offline_data_heuristic_recovery $ISA $BENCHMARK $N $K $NUM_WORDS $NUM_SAMPLED_ERROR_PATTERNS $WORDS_PER_BLOCK $INPUT_FILE $OUTPUT_FILE $NUM_THREADS $CODE_TYPE $POLICY $CRASH_THRESHOLD $VERBOSE_RECOVERY
+LD_PRELOAD=$MY_PRELOAD LD_LIBRARY_PATH=$MCRROOT/bin/glnxa64:$MCRROOT/runtime/glnxa64:$LD_LIBRARY_PATH $BINARY_LOCATION/swd_ecc_offline_data_heuristic_recovery $ISA $BENCHMARK $N $K $NUM_WORDS $NUM_SAMPLED_ERROR_PATTERNS $WORDS_PER_BLOCK $INPUT_FILE $OUTPUT_FILE $NUM_THREADS $CODE_TYPE $POLICY $CRASH_THRESHOLD $VERBOSE_RECOVERY $FILE_VERSION $HASH_MODE

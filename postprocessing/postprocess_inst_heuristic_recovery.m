@@ -2,18 +2,20 @@
 % Author: Mark Gottscho <mgottscho@ucla.edu>
 
 %%%%%%%% CHANGE ME AS NEEDED %%%%%%%%%%%%
-input_directory = 'D:\Dropbox\SoftwareDefinedECC\data\rv64g\inst-recovery\offline-dynamic-split-int-float\kaneda1982\144,128\filter-joint-frequency-sort-pick-longest-pad\crash-threshold-0.9\2016-11-10';
+input_directory = 'D:\Dropbox\SoftwareDefinedECC\data\rv64g\inst-recovery\offline-dynamic-split-int-float\ULEL_riscv\35,32\hash-none\filter-joint-frequency-sort-pick-longest-pad\crash-threshold-0.9\2017-04-01';
 output_directory = [input_directory filesep 'postprocessed'];
-inst_fields_file = ['D:\Dropbox' filesep 'SoftwareDefinedECC' filesep 'data' filesep 'rv64g' filesep 'rv64g_inst_field_bitmasks_revised.mat'];
+inst_fields_file = ['D:\Dropbox' filesep 'SoftwareDefinedECC' filesep 'data' filesep 'rv64g' filesep 'disassembly' filesep 'rv64g_inst_field_bitmasks_revised.mat'];
 num_inst = 1000;
 %num_error_patterns = 741; % For (39,32) SECDED
 %num_error_patterns = 2556; % For (72,64) SECDED
 %num_error_patterns = 14190; % For (45,32) DECTED
 %num_error_patterns = 79079; % For (79,64) DECTED
 %num_error_patterns = 141750; % For (144,128) ChipKill
-num_error_patterns = 1000; % sampled
+%num_error_patterns = 1000; % sampled
+num_error_patterns = 35; % ULEL
 architecture = 'rv64g';
-code_type = 'kaneda1982';
+code_type = 'ULEL_riscv';
+hash_mode = 'hash-none';
 policy = 'Filter-Joint-Frequency-Sort-Pick-Longest-Pad';
 
 mkdir(output_directory);
@@ -73,7 +75,7 @@ xlabel('Error Pattern ID', 'FontSize', 12, 'FontName', 'Arial');
 set(gca, 'FontSize', 12, 'FontName', 'Arial');
 ylabel('Average Rate of Heuristic Recovery', 'FontSize', 12, 'FontName', 'Arial');
 set(gca, 'FontSize', 12, 'FontName', 'Arial');
-title(['Average Rate of Heuristic Recovery for ' code_type ' (' num2str(n) ',' num2str(k) ') ' architecture ': ' policy ' Policy'],  'FontSize', 12, 'FontName', 'Arial');
+title(['Average Rate of Heuristic Recovery for ' code_type ' (' num2str(n) ',' num2str(k) ') ' hash_mode ' on ' architecture ': ' policy ' Policy'],  'FontSize', 12, 'FontName', 'Arial');
 savefig(gcf, [output_directory filesep 'overall_recovery.fig']);
 print(gcf, '-depsc2', [output_directory filesep 'overall_recovery.eps']);
 
@@ -87,7 +89,7 @@ xlim([0 1]);
 %ylim([0 22]);
 %set(gca,'YDir','reverse');
 xlabel('Average Rate of Heuristic Recovery', 'FontSize', 12, 'FontName', 'Arial');
-title(['Overall Average Rate of Heuristic Recovery for ' code_type ' (' num2str(n) ',' num2str(k) ') ' architecture ': ' policy ' Policy'],  'FontSize', 12, 'FontName', 'Arial');
+title(['Overall Average Rate of Heuristic Recovery for ' code_type ' (' num2str(n) ',' num2str(k) ') ' hash_mode ' on ' architecture ': ' policy ' Policy'],  'FontSize', 12, 'FontName', 'Arial');
 savefig(gcf, [output_directory filesep 'overall_recovery_avg.fig']);
 print(gcf, '-depsc2', [output_directory filesep 'overall_recovery_avg.eps']);
 
@@ -99,7 +101,7 @@ set(gca,'YTick', 1:size(benchmark_names,1));
 set(gca,'YTickLabel', benchmark_names, 'FontSize', 12, 'FontName', 'Arial');
 xlim([0 1]);
 xlabel('Average Rate of Crash Opt-In', 'FontSize', 12, 'FontName', 'Arial');
-title(['Overall Average Rate of Crash Opt-In for ' code_type ' (' num2str(n) ',' num2str(k) ') ' architecture ': ' policy ' Policy'],  'FontSize', 12, 'FontName', 'Arial');
+title(['Overall Average Rate of Crash Opt-In for ' code_type ' (' num2str(n) ',' num2str(k) ') ' hash_mode ' on ' architecture ': ' policy ' Policy'],  'FontSize', 12, 'FontName', 'Arial');
 savefig(gcf, [output_directory filesep 'overall_could_have_crashed_avg.fig']);
 print(gcf, '-depsc2', [output_directory filesep 'overall_could_have_crashed_avg.eps']);
 
@@ -111,7 +113,7 @@ set(gca,'YTick', 1:size(benchmark_names,1));
 set(gca,'YTickLabel', benchmark_names, 'FontSize', 12, 'FontName', 'Arial');
 xlim([0 1]);
 xlabel('Average Rate of Success With Crash Opt-in', 'FontSize', 12, 'FontName', 'Arial');
-title(['Overall Average Rate of Success With Crash Opt-In for ' code_type ' (' num2str(n) ',' num2str(k) ') ' architecture ': ' policy ' Policy'],  'FontSize', 12, 'FontName', 'Arial');
+title(['Overall Average Rate of Success With Crash Opt-In for ' code_type ' (' num2str(n) ',' num2str(k) ') ' hash_mode ' on ' architecture ': ' policy ' Policy'],  'FontSize', 12, 'FontName', 'Arial');
 savefig(gcf, [output_directory filesep 'overall_recovery_with_crash_option_avg.fig']);
 print(gcf, '-depsc2', [output_directory filesep 'overall_recovery_with_crash_option_avg.eps']);
 
@@ -123,7 +125,7 @@ set(gca,'YTick', 1:size(benchmark_names,1));
 set(gca,'YTickLabel', benchmark_names, 'FontSize', 12, 'FontName', 'Arial');
 %xlim([0 1]);
 xlabel('Average Rate of Miscorrection', 'FontSize', 12, 'FontName', 'Arial');
-title(['Overall Average Rate of Miscorrection With Crash Opt-In for ' code_type ' (' num2str(n) ',' num2str(k) ') ' architecture ': ' policy ' Policy'],  'FontSize', 12, 'FontName', 'Arial');
+title(['Overall Average Rate of Miscorrection With Crash Opt-In for ' code_type ' (' num2str(n) ',' num2str(k) ') ' hash_mode ' on ' architecture ': ' policy ' Policy'],  'FontSize', 12, 'FontName', 'Arial');
 savefig(gcf, [output_directory filesep 'overall_miscorrect_with_crash_option_avg.fig']);
 print(gcf, '-depsc2', [output_directory filesep 'overall_miscorrect_with_crash_option_avg.eps']);
 
@@ -134,7 +136,7 @@ set(gca,'YTick', 1:size(benchmark_names,1));
 set(gca,'YTickLabel', benchmark_names, 'FontSize', 12, 'FontName', 'Arial');
 xlim([0 1]);
 xlabel('Fraction of DUEs', 'FontSize', 12, 'FontName', 'Arial');
-title(['Breakdown of Successful Recovery and Miscorrections with No Crash Policy for ' code_type ' (' num2str(n) ',' num2str(k) ') ' architecture ': ' policy ' Policy'],  'FontSize', 12, 'FontName', 'Arial');
+title(['Breakdown of Successful Recovery and Miscorrections with No Crash Policy for ' code_type ' (' num2str(n) ',' num2str(k) ') ' hash_mode ' on ' architecture ': ' policy ' Policy'],  'FontSize', 12, 'FontName', 'Arial');
 savefig(gcf, [output_directory filesep 'overall_miscorrect_no_crash_policy_breakdown.fig']);
 print(gcf, '-depsc2', [output_directory filesep 'overall_miscorrect_no_crash_policy_breakdown.eps']);
 
@@ -156,7 +158,7 @@ xticklabel_rotate([],45,[],'fontsize',14);
 ylabel('Fraction of DUEs', 'FontSize', 12, 'FontName', 'Arial');
 colormap(flipud(prism));
 legend({'Successful Recovery', 'Forced Crash', 'Failed Recovery (MCE)'});
-title(['Breakdown of DUEs for ' code_type ' (' num2str(n) ',' num2str(k) ') ' architecture ': ' policy ' Policy'],  'FontSize', 12, 'FontName', 'Arial');
+title(['Breakdown of DUEs for ' code_type ' (' num2str(n) ',' num2str(k) ') ' hash_mode ' on ' architecture ': ' policy ' Policy'],  'FontSize', 12, 'FontName', 'Arial');
 savefig(gcf, [output_directory filesep 'due_breakdown.fig']);
 print(gcf, '-depsc2', [output_directory filesep 'due_breakdown.eps']);
 
@@ -171,13 +173,13 @@ subplot(1,2,2);
 pie([1-(avg_benchmark_could_have_crashed_mean+avg_benchmark_miscorrect_mean) avg_benchmark_could_have_crashed_mean avg_benchmark_miscorrect_mean]);
 colormap(flipud(prism));
 legend({'Successful Recovery', 'Forced Crash', 'Failed Recovery (MCE)'});
-title(['Breakdown of DUEs for ' code_type ' (' num2str(n) ',' num2str(k) ') ' architecture ': ' policy ' Policy'],  'FontSize', 12, 'FontName', 'Arial');
+title(['Breakdown of DUEs for ' code_type ' (' num2str(n) ',' num2str(k) ') ' hash_mode ' on ' architecture ': ' policy ' Policy'],  'FontSize', 12, 'FontName', 'Arial');
 savefig(gcf, [output_directory filesep 'due_breakdown.fig']);
 print(gcf, '-depsc2', [output_directory filesep 'due_breakdown.eps']);
 
 
 if strcmp(code_type,'hsiao1970') == 1 || strcmp(code_type,'davydov1991') == 1
-    secded_candidate_codewords_heatmap
+    secded_heatmap(results_candidate_messages);
     savefig(gcf, [output_directory filesep code_type '-' num2str(n) '-' num2str(k) '-cc-heatmap.fig']);
     print(gcf, '-depsc2', [output_directory filesep code_type '-' num2str(n) '-' num2str(k) '-cc-heatmap.eps']);
 end

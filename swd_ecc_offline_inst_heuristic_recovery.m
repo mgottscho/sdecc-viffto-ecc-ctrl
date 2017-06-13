@@ -1,4 +1,4 @@
-function swd_ecc_offline_inst_heuristic_recovery(architecture, benchmark, n, k, num_messages, num_sampled_error_patterns, input_filename, output_filename, n_threads, code_type, policy, mnemonic_hotness_filename, rd_hotness_filename, crash_threshold, verbose_recovery)
+function swd_ecc_offline_inst_heuristic_recovery(architecture, benchmark, n, k, num_messages, num_sampled_error_patterns, words_per_block, input_filename, output_filename, n_threads, code_type, policy, mnemonic_hotness_filename, rd_hotness_filename, crash_threshold, verbose_recovery, file_version, hash_mode)
 % This function evaluates heuristic recovery from corrupted instructions in an offline manner.
 %
 % It iterates over a series of instructions that are statically extracted from a compiled program.
@@ -16,14 +16,15 @@ function swd_ecc_offline_inst_heuristic_recovery(architecture, benchmark, n, k, 
 % Input arguments:
 %   architecture --     String: '[rv64g]'
 %   benchmark --        String
-%   n --                String: '[39|45|72|79|144]'
+%   n --                String: '[33|34|35|39|45|72|79|144]'
 %   k --                String: '[32|64|128]'
 %   num_messages --     String: '[1|2|3|...]'
 %   num_sampled_error_patterns -- String: '[1|2|3|...|number of possible ways for given code to have DUE|-1 for all possible (automatic)]'
+%   words_per_block --  String: '[1|2|3|...]'
 %   input_filename --   String
 %   output_filename --  String
 %   n_threads --        String: '[1|2|3|...]'
-%   code_type --        String: '[hsiao|davydov1991|bose1960|kaneda1982]'
+%   code_type --        String: '[hsiao|davydov1991|bose1960|kaneda1982|ULEL_even|ULEL_riscv]'
 %   policy --           String: '[  baseline-pick-random 
 %                                 | filter-pick-random
 %                                 | filter-rank-pick-random
@@ -46,6 +47,8 @@ function swd_ecc_offline_inst_heuristic_recovery(architecture, benchmark, n, k, 
 %   rd_hotness_filename -- String: full path to CSV file containing the relative frequency of each destination register address to use for ranking
 %   crash_threshold -- fraction from 0 to 1, expressed as a string, e.g. '0.5'.
 %   verbose_recovery -- String: '[0|1]'
+%   file_version --     String: '[micro17|cases17]'
+%   hash_mode --        String: '[none|4|8|16]'
 %
 % Returns:
 %   Nothing.
@@ -59,6 +62,7 @@ n = str2double(n)
 k = str2double(k)
 num_messages = str2double(num_messages)
 num_sampled_error_patterns = str2double(num_sampled_error_patterns)
+words_per_block = str2num(words_per_block)
 input_filename
 output_filename
 n_threads = str2double(n_threads)
@@ -68,6 +72,8 @@ mnemonic_hotness_filename
 rd_hotness_filename
 crash_threshold = str2double(crash_threshold)
 verbose_recovery = str2double(verbose_recovery)
+file_version
+hash_mode
 
 rng('shuffle'); % Seed RNG based on current time
 
@@ -81,7 +87,7 @@ end
 % Instead, we get the number of instructions by using the 'wc' command, with the assumption that each line in the file will
 % contain an instruction.
 display('Reading inputs...');
-[wc_return_code, wc_output] = system(['wc -l ' input_filename]);
+[wc_return_code, wc_output] = system(['wc -l "' input_filename '"']);
 if wc_return_code ~= 0
     display(['FATAL! Could not get line count (# inst) from ' input_filename '.']);
     return;
@@ -109,10 +115,11 @@ end
 % 0000abcd
 % ...
 %
+% (cases17 format shown)
 % If it is in CSV format, as output by our memdatatrace version of RISCV Spike simulator of the form
-% STEP,OPERATION,MEM_ACCESS_SEQ_NUM,VADDR,PADDR,USER_PERM,SUPER_PERM,ACCESS_SIZE,PAYLOAD,CACHE_BLOCKPOS,CACHE_BLOCK0,CACHE_BLOCK1,...,
+% STEP,OPERATION,REG_TYPE,MEM_ACCESS_SEQ_NUM,VADDR,PADDR,USER_PERM,SUPER_PERM,ACCESS_SIZE,PAYLOAD,CACHE_BLOCKPOS,CACHE_BLOCK0,CACHE_BLOCK1,...,
 % like so:
-% 1805000,I$ RD fr MEM,1898719,VADDR 0x0000000000001718,PADDR 0x0000000000001718,u---,sRWX,4B,PAYLOAD 0x63900706,BLKPOS 3,0x33d424011374f41f,0x1314340033848700,0x0335040093771500,0x63900706638e0908,0xeff09ff21355c500,0x1315a50013651500,0x2330a4001355a500,0x1b0979ff9317c500,
+% 1805000,I$ RD fr MEM,INT,1898719,VADDR 0x0000000000001718,PADDR 0x0000000000001718,u---,sRWX,4B,PAYLOAD 0x63900706,BLKPOS 3,0x33d424011374f41f,0x1314340033848700,0x0335040093771500,0x63900706638e0908,0xeff09ff21355c500,0x1315a50013651500,0x2330a4001355a500,0x1b0979ff9317c500,
 % ...
 % NOTE: memdatatrace payloads and cache blocks are in NATIVE byte order for
 % the simulated architecture. For RV64G this is LITTLE-ENDIAN!
@@ -137,7 +144,7 @@ if fid == -1
     return;
 end
 
-num_messages_in_cacheline = 512 / k;
+%num_messages_in_cacheline = 512 / k; % FIXME: hardcoded cacheline size TODO: implement hash/cachelines for instructions
 sampled_trace_raw = cell(num_messages,1);
 i = 1;
 j = 1;
@@ -168,25 +175,29 @@ while i <= total_num_inst && j <= num_messages
             end
         elseif strcmp(trace_mode, 'dynamic') == 1 % Dynamic trace mode
             remain = line;
-            for x=1:9 % 9 iterations because payload is 9th entry in a row of the above format
+            skip = 10;
+            if strcmp(file_version, 'micro17') == 1
+                skip = 9;
+            end
+            for x=1:skip % payload is skipth entry in a row of the above format
                 [token,remain] = strtok(remain,',');
             end
             [~, payload_remain] = strtok(token,'x'); % Find the part of "PAYLOAD 0xDEADBEEF" after the "0x" part.
             payload = payload_remain(2:end);
             % Now we have target instruction of interest, but have to find its packed message representation.
             [token, remain] = strtok(remain,','); % Throw away blockpos
-            cacheline = repmat('X',1,128);
-            for x=1:8 % 8 iterations, one per word in cacheline. Assume 64 bits per word. This is 128 hex symbols per cacheline
+            file_cacheline = repmat('X',1,words_per_block*(k/8)*2);
+            for x=1:words_per_block % 8 iterations, one per word in file_cacheline. Assume 64 bits per word. This is 128 hex symbols per file_cacheline
                 [token, remain] = strtok(remain,',');
                 [~, word_remain] = strtok(token,'x'); % Find the part of "0x000000000DEADBEEF" after the "0x" part.
-                cacheline(1,(x-1)*16+1:(x-1)*16+16) = word_remain(2:end);
+                file_cacheline(1,(x-1)*(k/8)*2+1:x*(k/8)*2) = word_remain(2:end);
             end
 
-            % Find starting hexpos of payload in cacheline
-            payload_start_hexpos = strfind(cacheline,payload);
+            % Find starting hexpos of payload in file_cacheline
+            payload_start_hexpos = strfind(file_cacheline,payload);
             payload_start_hexpos = payload_start_hexpos(1); % If multiple payloads appear, choose the first one FIXME
             payload_offset_in_message = mod(payload_start_hexpos,k/4);
-            packed_message = cacheline(1,payload_start_hexpos-payload_offset_in_message+1:payload_start_hexpos-payload_offset_in_message+k/4);
+            packed_message = file_cacheline(1,payload_start_hexpos-payload_offset_in_message+1:payload_start_hexpos-payload_offset_in_message+k/4);
 
             for packed_inst=1:num_packed_inst
                 packed_message((packed_inst-1)*8+1:(packed_inst-1)*8+8) = reverse_byte_order(packed_message((packed_inst-1)*8+1:(packed_inst-1)*8+8)); % Put the packed instruction in big-endian format.
@@ -247,53 +258,12 @@ if verbose_recovery == 1
     sampled_trace_hex
 end
 
-%% Construct a matrix containing all possible (t+1)-bit error patterns as bit-strings.
-display('Constructing error-pattern matrix...');
-if strcmp(code_type,'hsiao1970') == 1 || strcmp(code_type,'davydov1991') == 1 % SECDED
-    num_error_patterns = nchoosek(n,2);
-    error_patterns = repmat('0',num_error_patterns,n);
-    num_error = 1;
-    for i=1:n-1
-        for j=i+1:n
-            error_patterns(num_error, i) = '1';
-            error_patterns(num_error, j) = '1';
-            num_error = num_error + 1;
-        end
-    end
-elseif strcmp(code_type,'bose1960') == 1 % DECTED
-    num_error_patterns = nchoosek(n,3);
-    error_patterns = repmat('0',num_error_patterns,n);
-    num_error = 1;
-    for i=1:n-2
-        for j=i+1:n-1
-            for l=j+1:n
-                error_patterns(num_error, i) = '1';
-                error_patterns(num_error, j) = '1';
-                error_patterns(num_error, l) = '1';
-                num_error = num_error + 1;
-            end
-        end
-    end
-elseif strcmp(code_type,'kaneda1982') == 1 % ChipKill
-    num_error_patterns = nchoosek(n/4,2) * 15^2;
-    error_patterns = repmat('0',num_error_patterns,n);
-    sym_error_patterns = dec2bin(1:15);
-    num_error = 1;
-    for sym1=1:n/4-1
-        for sym2=sym1:n/4
-            for sym1_error_index=1:size(sym_error_patterns,1)
-                for sym2_error_index=1:size(sym_error_patterns,1)
-                    error_patterns(num_error,(sym1-1)*4+1:(sym1-1)*4+4) = sym_error_patterns(sym1_error_index,:);
-                    error_patterns(num_error,(sym2-1)*4+1:(sym2-1)*4+4) = sym_error_patterns(sym2_error_index,:);
-                    num_error = num_error+1;
-                end
-            end
-        end
-    end
-else
-    display(['FATAL! Unsupported code type: ' code_type]);
-    return;
+%% Get error patterns
+if verbose_recovery == 1
+    display('Constructing error-pattern matrix...');
 end
+error_patterns = construct_error_pattern_matrix(n, code_type);
+num_error_patterns = size(error_patterns,1);
 
 if num_sampled_error_patterns < 0 || num_sampled_error_patterns > num_error_patterns
     num_sampled_error_patterns = num_error_patterns;
@@ -310,20 +280,11 @@ if verbose_recovery == 1
     sampled_error_pattern_indices
 end
 
-%% Get the G and H for our code
+%% Get our ECC encoder and decoder matrices
 if verbose_recovery == 1
     display('Getting ECC encoder and decoder matrices...');
 end
-
-if strcmp(code_type, 'hsiao1970') == 1 || strcmp(code_type, 'davydov1991') == 1 % SECDED
-    [G,H] = getSECDEDCodes(n,code_type);
-elseif strcmp(code_type, 'bose1960') == 1 % DECTED
-    [G,H] = getDECTEDCodes(n);
-elseif strcmp(code_type, 'kaneda1982') == 1 % ChipKill
-    [G,H] = getChipkillCodes(n);
-else
-    display(['FATAL! Unsupported code type: ' code_type]);
-end
+[G,H] = getECCConstruction(n,code_type);
 
 %% Read mnemonic and rd distributions from files now
 display('Importing side information...');
@@ -412,6 +373,29 @@ parfor j=1:num_sampled_error_patterns % Parallelize loop across separate threads
                 candidate_correct_messages(x,:) = my_bitxor(candidate_correct_messages_zero_message(x,:),original_message_bin); 
             end
             candidate_correct_messages = unique(candidate_correct_messages,'rows','sorted'); % Sort feature is important
+            
+            % Optional: filter candidates using a hash
+            if strcmp(hash_mode, 'none') ~= 1
+                if strcmp(hash_mode, '4') == 1
+                    hash_size = 4;
+                elseif strcmp(hash_mode, '8') == 1
+                    hash_size = 8;
+                elseif strcmp(hash_mode, '16') == 1
+                    hash_size = 16;
+                end
+                % Pearson hash only
+                %correct_hash = pearson_hash(original_message_bin-'0',hash_size);
+                correct_hash = parity_hash_uneven(original_message_bin-'0',hash_size);
+                fake_cacheline = original_message_bin;
+                candidate_correct_messages = hash_filter_candidates(candidate_correct_messages, fake_cacheline, 1, hash_size, correct_hash);
+            end
+            actual_num_candidate_messages = size(candidate_correct_messages,1);
+            
+            %% Serialize candidate messages into a string, as data_recovery() requires this instead of cell array.
+            serialized_candidate_correct_messages_bin = candidate_correct_messages(1,:); % init
+            for x=2:size(candidate_correct_messages,1)
+                serialized_candidate_correct_messages_bin = [serialized_candidate_correct_messages_bin ',' candidate_correct_messages(x,:)];
+            end
 
             if verbose_recovery == 1
                 original_message_hex
@@ -451,10 +435,10 @@ parfor j=1:num_sampled_error_patterns % Parallelize loop across separate threads
             %    return;
             %end
 
-            [num_valid_messages, recovered_message, estimated_prob_correct, suggest_to_crash, recovered_successfully] = inst_recovery('rv64g', num2str(n), num2str(k), original_message_bin, candidate_correct_messages, policy, instruction_mnemonic_hotness, instruction_rd_hotness, num2str(crash_threshold), num2str(verbose_recovery));
+            [num_valid_messages, recovered_message, estimated_prob_correct, suggest_to_crash, recovered_successfully] = inst_recovery('rv64g', num2str(k), original_message_bin, serialized_candidate_correct_messages_bin, policy, instruction_mnemonic_hotness, instruction_rd_hotness, num2str(crash_threshold), num2str(verbose_recovery));
 
             %% Store results for this instruction/error pattern pair
-            results_candidate_messages(i,j) = num_candidate_messages;
+            results_candidate_messages(i,j) = actual_num_candidate_messages;
             results_valid_messages(i,j) = num_valid_messages;
             success(i,j) = recovered_successfully;
             could_have_crashed(i,j) = suggest_to_crash;
